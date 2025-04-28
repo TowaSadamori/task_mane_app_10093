@@ -1,0 +1,12 @@
+<p>
+    {{title()}}
+
+    <br>
+
+    is complete: {{isComplete()}}
+
+    <br>
+
+    <button type="button" [disabled]="isButtonDisabled()"  (click)="toggleComplete()">Update to complete</button>
+
+</p>

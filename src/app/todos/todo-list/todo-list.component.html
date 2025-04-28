@@ -1,0 +1,17 @@
+<div class="todos">
+<h2>This is Todo List</h2>
+
+<ul>
+
+@for (item of todos; track $index) {
+    <app-todo-list-item [title]="item.title"></app-todo-list-item>
+}
+
+</ul>
+</div>
+
+<!-- <app-todo-list-item [title]="'Title 1'"></app-todo-list-item>
+<app-todo-list-item [title]="'Title 2'"></app-todo-list-item>
+<app-todo-list-item [title]="'Title 3'"></app-todo-list-item>
+<app-todo-list-item [title]="'Title 4'"></app-todo-list-item>
+<app-todo-list-item [title]="'Title 5'"></app-todo-list-item> -->
