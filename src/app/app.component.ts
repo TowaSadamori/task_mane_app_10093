@@ -1,25 +1,21 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { TodoListComponent } from './todos/todo-list/todo-list.component';
+import { HeaderComponent } from './core/components/header/header.component';
+import { NavigationComponent } from './core/components/navigation/navigation.component';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, TodoListComponent],
+  imports: [
+    CommonModule,
+    RouterOutlet,
+    HeaderComponent,
+    NavigationComponent,
+  ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
   title = 'taskapp';
-
-  environment = EnvironmentName.Prod;
-  
-}
-
-enum EnvironmentName {
-  Dev = 'dev',
-  Test = 'test',
-  Prod = 'prod'
-
-
 }

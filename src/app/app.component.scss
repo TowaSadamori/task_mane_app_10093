@@ -1,0 +1,38 @@
+.app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.app-header-area {
+    flex-shrink: 0;
+}
+
+.app-body {
+    display: flex;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.app-navigation-area  {
+    flex-shrink: 0;
+    width: 240px;
+    background-color: #f4f4f4;
+    overflow-y: auto;
+}
+
+.app-content-area {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.app-footer-area {
+    flex-shrink: 0;
+}
+
+body {
+    margin: 0;
+    font-family: sans-serif;
+}
+

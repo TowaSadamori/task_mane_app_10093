@@ -1,0 +1,13 @@
+<header class="app-header">
+    <div class="header-content">
+        <span class="app-title">課題管理アプリ</span>
+
+        <div *ngIf="user$ | async as user; else loggedOutContent" class="user-info">
+            <span class="user-email">ようこそ、{{user.email}}さん</span>
+            <button class="logout-button" (click)="onLogout()">ログアウト</button></div>
+
+            <ng-template #loggedOutContent>
+            </ng-template>
+     </div>
+</header>
+
