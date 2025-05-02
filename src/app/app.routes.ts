@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './auth/login/login.component'; 
 import { AuthGuard } from './core/auth.guard';
 import { AppLayoutComponent } from './layout/app-layout/app-layout.component'; 
+// import { UserCreateComponent } from './features/admin/components/user-create/user-create.component';
 
 export const routes: Routes = [
   {
@@ -14,8 +15,16 @@ export const routes: Routes = [
     canActivate: [AuthGuard],  
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }, 
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
+      }
     ]
   },
+  // {
+  //   path: 'admin-create-test',
+  //   component: UserCreateComponent
+  // },
   {
     path: '',
     redirectTo: '/app', 

@@ -6,6 +6,7 @@
 
 .app-header-area {
     flex-shrink: 0;
+    height: 60px;
 }
 
 .app-body {
@@ -36,3 +37,8 @@ body {
     font-family: sans-serif;
 }
 
+@media (max-width: 767px) {
+    .app-navigation-area {
+        display: none;
+    }
+}

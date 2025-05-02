@@ -1,0 +1,55 @@
+<h2>新規ユーザー登録</h2>
+
+<form [formGroup]="userCreateForm" (ngSubmit)="onSubmit()">
+
+    <mat-form-field appearance="outline">
+        <mat-label>メールアドレス</mat-label>
+        <input matInput type="email" placeholder="例: new.user@example.com" formControlName="email" required>
+        <mat-error *ngIf="userCreateForm.get('email')?.hasError('required') && userCreateForm.get('email')?.touched">
+            メールアドレスを入力してください
+        </mat-error>
+        <mat-error *ngIf="userCreateForm.get('email')?.hasError('email') && userCreateForm.get('email')?.touched">
+            有効なメールアドレスを入力してください
+            </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+        <mat-label>初期パスワード</mat-label>
+        <input matInput type="password" placeholder="初期パスワードを入力" formControlName="password" required>
+        <mat-error *ngIf="userCreateForm.get('password')?.hasError('required') && userCreateForm.get('password')?.touched">
+            パスワードを入力してください
+        </mat-error>
+        <mat-error *ngIf="userCreateForm.get('password')?.hasError('minlength') && userCreateForm.get('password')?.touched">
+            パスワードは {{ userCreateForm.get('password')?.errors?.['minlength']?.requiredLength }} 文字以上で入力してください
+        </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+        <mat-label>表示名</mat-label>
+        <input matInput type="text" placeholder="例: 鈴木 一郎" formControlName="displayName">
+        <mat-error>
+
+        </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+        <mat-label>役割</mat-label>
+        <mat-select formControlName="role" required>
+            <mat-option value="admin">管理者</mat-option>
+            <mat-option value="general">一般ユーザー</mat-option>
+            <mat-option value="partner">協力会社</mat-option>
+
+        </mat-select>
+        <mat-error *ngIf="userCreateForm.get('role')?.hasError('required') && userCreateForm.get('role')?.touched">
+            役割を選択してください
+        </mat-error>
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" type="submit" [disabled]="userCreateForm.invalid || isLoading">
+            {{ isLoading ? '登録中...' : 'ユーザー登録' }}
+        </button>
+
+        <div *ngIf="registrationError" class="error-message">
+            {{ registrationError }}
+            </div>
+</form>
