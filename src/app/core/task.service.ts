@@ -12,6 +12,10 @@ import {
   updateDoc,
   deleteDoc,
   DocumentReference, 
+  ServerTimestamp,
+  Timestamp,
+  query,
+  orderBy,
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 
@@ -26,6 +30,27 @@ export interface Task {
 }
 
 type NewTaskData = Omit<Task, 'id' | 'createdAt'>;
+
+export interface DailyLog {
+  id: string;
+  workDate: Timestamp;
+  reporterId: string;
+  plannedStartTime?: Timestamp | null;
+  plannedEndTime?: Timestamp | null;
+  plannedBreakTime?: number | null;
+  actualStartTime?: Timestamp | null;
+  actualEndTime?: Timestamp | null;
+  actualBreakTime?: number | null;
+  progressRate?: number | null;
+  workerCount?: number | null;
+  supervisor?: string | null;
+  photos?: {
+    before?: string;
+    after?: string;
+  } | null;
+  comment?: string | null;
+  createdAt: Timestamp;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -66,5 +91,12 @@ export class TaskService {
     const taskDocRef = doc(this.firestore, 'Tasks', taskId);
     return deleteDoc(taskDocRef);
   }
-  
+
+  getDailyLogs(taskId: string): Observable<DailyLog[]> {
+    const taskDocRef = doc(this.firestore, 'Tasks', taskId);
+    const dailyLogsCollectionRef = collection(taskDocRef, 'DailyLogs');
+    const q = query(dailyLogsCollectionRef, orderBy('workDate', 'asc'));
+    return collectionData<DailyLog>(q, { idField: 'id' });
+  }
+
 }

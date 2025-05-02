@@ -1,1 +1,39 @@
-<p>task-detail works!</p>
+<div *ngIf="task$ | async as task; else loadingOrNotFound">
+
+<div *ngIf="!isEditing">
+
+    <mat-card>
+        <mat-card-header>
+                <mat-card-title>{{ task.title }}</mat-card-title>
+                <mat-card-subtitle>ステータス: {{ task.status }} / ID: {{ task.id }}</mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content>
+            <p><strong>プロジェクトID:</strong> {{ task.projectId }}</p>
+            <p><strong>担当者ID:</strong> {{ task.assigneeId }}</p>
+            <p><strong>期限:</strong> {{ task.dueDate | date:'yyyy/MM/dd' }}</p>
+            <p><strong>作成日時</strong> {{ task.createdAt | date:'yyyy/MM/dd HH:mm' }}</p>
+        </mat-card-content>
+
+        <mat-card-actions align="end">
+            <button mat-button color="primary" (click)="toggleEditMode()">
+                {{ !isEditing ? '編集' : 'キャンセル' }}
+            </button>
+            <button mat-button color="warn" (click)="deleteTask(task.id)">削除</button>
+        </mat-card-actions>
+    </mat-card>
+</div>
+
+<div *ngIf="isEditing">
+    <app-task-form [initialData]="task"></app-task-form>
+
+</div>
+
+</div>
+
+<ng-template #loadingOrNotFound>
+    <div class="loading-container">
+        <mat-spinner diameter="50"></mat-spinner>
+        <p>読み込み中...</p>
+    </div>
+</ng-template>

@@ -1,0 +1,72 @@
+<h2 *ngIf="!initialData">新しいタスクを作成</h2>
+<h2 *ngIf="initialData">タスクを編集</h2>
+
+<form class="task-form" [formGroup]="taskForm"(ngSubmit)="onSubmit()">
+
+    <mat-form-field appearance="outline">
+        <mat-label>タイトル</mat-label>
+        <input matInput type="text" placeholder="タスクのタイトルを入力" formControlName="title" required>
+        <mat-error *ngIf="taskForm.get('title')?.hasError('required') && taskForm.get('title')?.touched">
+            タイトルは必須です
+        </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+        <mat-label>プロジェクトID</mat-label>
+        <input matInput type="text" placeholder="関連するプロジェクトIDを入力" formControlName="projectId" required>
+        <mat-error *ngIf="taskForm.get('projectId')?.hasError('required') && taskForm.get('projectId')?.touched">
+            プロジェクトIDは必須です
+        </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+        <mat-label>担当者ID</mat-label>
+        <input matInput type="text" placeholder="担当者のIDを入力" formControlName="assigneeId"required>
+        <mat-error *ngIf="taskForm.get('assigneeId')?.hasError('required') && taskForm.get('assigneeId')?.touched">
+            担当者IDは必須です
+        </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+        <mat-label>ステータス</mat-label>
+        <mat-select formControlName="status" required>
+            <mat-option value="todo">未着手</mat-option>
+            <mat-option value="doing">進行中</mat-option>
+            <mat-option value="done">完了</mat-option>
+        </mat-select>
+        <mat-error *ngIf="taskForm.get('status')?.hasError('required') && taskForm.get('status')?.touched">
+            ステータスを選択してください
+        </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+        <mat-label>予定開始日</mat-label>
+        <input matInput [matDatepicker]="plannedStartPicker" placeholder="日付を選択" formControlName="plannedStartDate" required>
+        <mat-datepicker-toggle matSuffix [for]="plannedStartPicker"></mat-datepicker-toggle>
+        <mat-datepicker #plannedStartPicker></mat-datepicker>
+        <mat-error *ngIf="taskForm.get('plannedStartDate')?.hasError('required') && taskForm.get('plannedStartDate')?.touched">
+            予定開始日は必須です
+        </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+        <mat-label>予定終了日</mat-label>
+        <input matInput [matDatepicker]="plannedEndPicker" placeholder="日付を選択" formControlName="plannedEndDate" required>
+        <mat-datepicker-toggle matSuffix [for]="plannedEndPicker"></mat-datepicker-toggle>
+        <mat-datepicker #plannedEndPicker></mat-datepicker>
+        <mat-error *ngIf="taskForm.get('plannedEndDate')?.hasError('required') && taskForm.get('plannedEndDate')?.touched">
+            予定終了日は必須です
+        </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+        <mat-label>詳細(任意)</mat-label>
+        <textarea matInput rows="4" placeholder="タスクの詳細を入力" formControlName="description"></textarea>
+    </mat-form-field>
+
+    <button mat-raised-button color="primary" type="submit" [disabled]="taskForm.invalid || isLoading">
+        <span *ngIf="!initialData">{{ isLoading ? '作成中...' : 'タスク作成' }}</span>
+        <span *ngIf="initialData">{{ isLoading ? '更新中...' : '更新' }}</span>
+    </button>
+
+</form>
