@@ -1,1 +1,85 @@
-<p>daily-log-form works!</p>
+<h2>日時作業ログ入力</h2>
+
+<form class="daily-log-form" [formGroup]="dailyLogForm" (ngSubmit)="onSubmit()">
+    
+    <mat-form-field appearance="outline">
+        <mat-label>作業日</mat-label>
+        <input matInput [matDatepicker]="workDatePicker" placeholder="日付を選択" formControlName="workDate" required>
+        <mat-datepicker-toggle matSuffix [for]="workDatePicker"></mat-datepicker-toggle>
+        <mat-datepicker #workDatePicker></mat-datepicker>
+        <mat-error *ngIf="dailyLogForm.get('workDate')?.hasError('required') && dailyLogForm.get('workDate')?.touched">
+            作業日は必須です。
+        </mat-error>      
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+        <mat-label>実績開始時刻</mat-label>
+        <input matInput type="time" placeholder="HH:mm" formControlName="actualStartTime" required>
+        <mat-error *ngIf="dailyLogForm.get('actualStartTime')?.hasError('required') && dailyLogForm.get('actualStartTime')?.touched">
+            実績開始時刻は必須です
+        </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+        <mat-label>実績終了時刻</mat-label>
+        <input matInput type="time" placeholder="HH:mm" formControlName="actualEndTime" required>
+        <mat-error *ngIf="dailyLogForm.get('actualEndTime')?.hasError('required') && dailyLogForm.get('actualEndTime')?.touched">
+            実績終了時刻は必須です
+        </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+        <mat-label>実績休憩時間(分)</mat-label>
+        <input matInput type="number" placeholder="例:60" formControlName="actualBreakTime" required>
+        <mat-error *ngIf="dailyLogForm.get('actualBreakTime')?.hasError('required') && dailyLogForm.get('actualBreakTime')?.touched">
+            実績休憩時間は必須です(分単位)
+        </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+        <mat-label>進捗率（％）</mat-label>
+        <input matInput type="number" placeholder="0-100" formControlName="progressRate" min="0" max="100" required>
+        <mat-error *ngIf="dailyLogForm.get('progressRate')?.hasError('required') && dailyLogForm.get('progressRate')?.touched">
+            進捗率（0-100%）は必須です。
+        </mat-error>
+        <mat-error *ngIf="dailyLogForm.get('progressRate')?.hasError('min') || dailyLogForm.get('progressRate')?.hasError('max')">
+            0から100の間で入力してください。
+        </mat-error>
+        </mat-form-field>
+            
+
+    <mat-form-field appearance="outline">
+        <mat-label>作業員構成（人数）</mat-label>
+        <input matInput type="number" placeholder="例:3" formControlName="workerCount" min="1" required>
+        <mat-error *ngIf="dailyLogForm.get('workerCount')?.hasError('min') || dailyLogForm.get('workerCount')?.touched">
+            作業員数は必須です
+        </mat-error>
+        <mat-error *ngIf="dailyLogForm.get('workerCount')?.hasError('min') && dailyLogForm.get('workerCount')?.touched">
+            1以上の値を入力してください。
+        </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+        <mat-label>作業指示者</mat-label>
+        <input matInput type="text" placeholder="指示者名を入力" formControlName="supervisor" required>
+        <mat-error *ngIf="dailyLogForm.get('supervisor')?.hasError('required') && dailyLogForm.get('supervisor')?.touched">
+            作業指示者は必須です
+        </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+        <mat-label>コメント（任意）</mat-label>
+        <textarea matInput rows="4" placeholder="特記事項などを入力" formControlName="comment"></textarea>
+    </mat-form-field>
+
+    <div>
+        <p><strong>写真添付（任意）:</strong></p>
+        <p>作業前:(ここにファイルアップロード機能を後で追加)</p>
+        <p>作業後:(ここにファイルアップロード機能を後で追加)</p>
+    </div>
+
+    <button mat-raised-button color="primary" type="submit" [disabled]="dailyLogForm.invalid || isLoading" style="margin-top: 20px;">
+       {{ isLoading ? '保存中...' : ' ログ保存' }}
+    </button>
+
+</form>
