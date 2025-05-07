@@ -35,7 +35,7 @@ export class TaskFormComponent implements OnInit {
   formError: string | null = null;
   isLoading = false;
   private taskService = inject(TaskService);
-  initialData?: Task | null;
+  initialData: Task | null = null;
 
   constructor(
     private dialogRef: MatDialogRef<TaskFormComponent>,
@@ -91,7 +91,7 @@ export class TaskFormComponent implements OnInit {
         this.dialogRef.close('created');
       }
 
-    } catch (error:unKnown) {
+    } catch (error:unknown) {
       let errorMessage = 'タスクの処理中にエラーが発生しました。';
       if (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string') {
         errorMessage = error.message;

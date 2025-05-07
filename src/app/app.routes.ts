@@ -25,7 +25,7 @@ export const routes: Routes = [
       },
       {
         path: 'tasks/:taskId',
-        loadComponent: () => import('./features/task/task-detail/task-detail.component').then(m => m.TaskDetailComponent)
+        loadComponent: () => import('./features/task/task/task-detail/task-detail.component').then(m => m.TaskDetailComponent)
       }
     ]
   },

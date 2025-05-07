@@ -1,14 +1,14 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
-import { Observable, switchMap, of } from 'rxjs';
-import { Task, TaskService, } from '../../../core/task.service';
+import { Observable, switchMap, of, filter } from 'rxjs';
+import { Task, TaskService, } from '../../../../core/task.service';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { TaskFormComponent } from '../task-form/task-form.component';
-import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { TaskFormComponent } from '../../task-form/task-form.component';
+import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-task-detail',
@@ -20,8 +20,8 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
     MatProgressSpinnerModule,
     MatButtonModule,
     MatDialogModule,
-    TaskFormComponent,
-    ConfirmDialogComponent,
+    // TaskFormComponent,
+    // ConfirmDialogComponent,
   ],
   templateUrl: './task-detail.component.html',
   styleUrl: './task-detail.component.scss'
@@ -34,9 +34,9 @@ export class TaskDetailComponent implements OnInit {
   private router = inject(Router);
 
   task$!: Observable<Task | undefined>
-  // isEditing = false;
+  
 
-  constructor() {}
+  // constructor() {}
 
   ngOnInit(): void {
     this.task$ = this.route.paramMap.pipe(
@@ -51,10 +51,7 @@ export class TaskDetailComponent implements OnInit {
     )
   }
 
-  // enterEditMode(): void {
-  //   this.isEditing = true;
-  //   console.log('編集モード開始');
-  // }
+
 
   openEditDialog(task: Task): void {
     const dialogRef = this.dialog.open(TaskFormComponent,{
@@ -72,10 +69,7 @@ export class TaskDetailComponent implements OnInit {
     })
   }
 
-  toggleEditMode(): void {
-    this.isEditing = !this.isEditing;
-    console.log('isEditing:', this.isEditing);
-  }
+
 
   deleteTask(taskId: string): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
