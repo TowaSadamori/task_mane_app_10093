@@ -52,7 +52,7 @@ export interface DailyLog {
   createdAt: Timestamp;
 }
 
-type NewDailyLogData = Omit<DailyLog, 'id' | 'createdAt'>;
+export type NewDailyLogData = Omit<DailyLog, 'id' | 'createdAt'>;
 
 @Injectable({
   providedIn: 'root'

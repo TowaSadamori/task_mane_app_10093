@@ -2,13 +2,16 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { Observable, switchMap, of, filter } from 'rxjs';
-import { Task, TaskService, } from '../../../../core/task.service';
+import { Task, TaskService, DailyLog } from '../../../../core/task.service';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { TaskFormComponent } from '../../task-form/task-form.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { MatTableModule } from '@angular/material/table';
+import { MatIconModule } from '@angular/material/icon';
+import { DailyLogFormComponent } from '../../daily-log-form/daily-log-form.component';
 
 @Component({
   selector: 'app-task-detail',
@@ -22,6 +25,9 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
     MatDialogModule,
     // TaskFormComponent,
     // ConfirmDialogComponent,
+    MatTableModule,
+    MatIconModule,
+    // DailyLogFormComponent,
   ],
   templateUrl: './task-detail.component.html',
   styleUrl: './task-detail.component.scss'
@@ -34,6 +40,34 @@ export class TaskDetailComponent implements OnInit {
   private router = inject(Router);
 
   task$!: Observable<Task | undefined>
+  // isEditing = false;
+
+  openDailyLogForm(taskId: string, log?: DailyLog): void {
+    if (!taskId) {
+      console.error('タスクIDが不明なため、日次ログフォームを開けません。');
+      return;
+    }
+
+    console.log('日次ログフォームを開きます。 TaskId:', taskId, '編集対象:', log);
+    const dialogRef = this.dialog.open(DailyLogFormComponent, {
+      width: '700px',
+      data: {
+        taskId: taskId,
+        initialData: log ?? null,
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      console.log('日次ダイアログが閉じられました。結果:', result);
+      if (result === 'saved') {
+        console.log('日次ログが保存/更新されたため、ログリストを更新します。');
+      }
+    })
+  }
+
+  dailyLogs$!: Observable<DailyLog[]>;
+  readonly dailyLogColumns: string[] = ['workDate', 'actualTime', 'progressRate', 'workCount', 'supervisor', 'comment'];
+
   
 
   // constructor() {}
@@ -43,14 +77,18 @@ export class TaskDetailComponent implements OnInit {
       switchMap(params => {
         const taskId = params.get('taskId');
         if (taskId) {
+          this._loadDailyLogs(taskId);
           return this.taskService.getTask(taskId);
         } else {
           return of(undefined);
         }
       })
-    )
+    );
   }
 
+  private _loadDailyLogs(taskId: string): void {
+    this.dailyLogs$ = this.taskService.getDailyLogs(taskId);
+  }
 
 
   openEditDialog(task: Task): void {
