@@ -20,6 +20,10 @@ import {
 } from '../../../core/task.service';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Timestamp } from '@angular/fire/firestore';
+import { MatIconModule } from '@angular/material/icon';
+import { StorageService } from '../../../core/storage.service';
+import { Observable, BehaviorSubject } from 'rxjs';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 export interface DailyLogData {
   taskId: string;
@@ -38,6 +42,8 @@ export interface DailyLogData {
     MatDatepickerModule,
     MatNativeDateModule,
     // MatDialogModule,
+    MatIconModule,
+    MatProgressBarModule,
   ],
   templateUrl:'./daily-log-form.component.html',
   styleUrls: ['./daily-log-form.component.scss'],
@@ -52,6 +58,12 @@ export class DailyLogFormComponent implements OnInit {
   private taskId!: string;
   private initialData: DailyLog | null = null;
   isEditMode = false;
+
+  private storageService = inject(StorageService);
+  selectedFileName: string | null = null;
+  private progressSubject = new BehaviorSubject<number | undefined>(undefined);
+
+  uploadProgress$ : Observable<number | undefined> = this.progressSubject.asObservable();
 
   // @Input() taskId!: string;
 
@@ -179,9 +191,69 @@ export class DailyLogFormComponent implements OnInit {
       }
     }
 
-    // onCancelClick(): void{
-    //   this.dialogRef.close();
-    // }
+    onFileSelect(event: Event): void {
+      const element = event.currentTarget as HTMLInputElement;
+      const fileList : FileList | null = element.files;
+
+      if (fileList && fileList.length > 0) {
+        const file = fileList[0];
+        this.selectedFileName = file.name;
+        console.log('File selected:', file);
+        this.startUpload(file);
+        element.value = '';
+      } else {
+        this.selectedFileName = null;
+      }
+    }
+
+    private startUpload(file: File): void {
+      if (!this.taskId) {
+        console.error('Task ID is missing, cannot upload file');
+        alert('エラー:タスクIDがないためファイルをアップロードできません。');
+        this.selectedFileName = null;
+        this.progressSubject.next(undefined);
+        return;
+      }
+      const timestamp = Date.now();
+      const safeFileName = encodeURIComponent(file.name);
+      const filePath = `task_photos/${this.taskId}/${timestamp}_${safeFileName}`;
+
+      console.log(`Uploading file to: ${filePath}`);
+      this.progressSubject.next(0);
+      const uploadTask = this.storageService.uploadFile(file, filePath);
+
+      uploadTask.on('state_changed',
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          this.progressSubject.next(progress);
+          console.log('Upload is' + progress + '% done');
+        },
+        (error) => {
+          console.error('Upload filed during progress monitoring:', error);
+          this.progressSubject.next(undefined);
+          this.selectedFileName = null;
+        }
+      );
+
+      uploadTask.then(
+        async (snapshot) => {
+          console.log('Upload successful!', snapshot);
+          alert('ファイルアップロード成功');
+          this.selectedFileName = file.name + '(アップロード完了)';
+          this.progressSubject.next(undefined);
+        },
+        (error) => {
+          console.error('Upload failed (Promise catch):', error);
+          this.progressSubject.next(undefined);
+          this.selectedFileName = null;
+          alert(`ファイルアップロード失敗: ${error.message || '不明なエラー'}`);
+        }
+      );
+    }
+
+    onCancelClick(): void{
+      this.dialogRef.close();
+    }
 
     // console.log('Daily Log Form Submitted!', this.dailyLogForm.value);
   }

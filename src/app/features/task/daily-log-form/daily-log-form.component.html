@@ -74,8 +74,15 @@
 
     <div>
         <p><strong>写真添付（任意）:</strong></p>
-        <p>作業前:(ここにファイルアップロード機能を後で追加)</p>
-        <p>作業後:(ここにファイルアップロード機能を後で追加)</p>
+        <button mat-raised-button type="button" (click)="fileInput.click()">
+            <mat-icon>attach_file</mat-icon>
+            ファイルを選択
+        </button>
+
+        <input type="file" #fileInput (change)="onFileSelect($event)" aaccept="image/*,video/*">
+        <span *ngIf="selectedFileName" style="margin-left: 8px;">選択中:{{ selectedFileName }}</span>
+
+        <mat-progress-bar *ngIf="uploadProgress$ | async as progress" mode="determinate" [value]="progress" style="margin-top: 8px;"></mat-progress-bar>
     </div>
 
     <button mat-raised-button color="primary" type="submit" [disabled]="dailyLogForm.invalid || isLoading" style="margin-top: 20px;">

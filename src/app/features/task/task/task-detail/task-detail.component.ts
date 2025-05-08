@@ -12,6 +12,8 @@ import { ConfirmDialogComponent } from '../../../../shared/components/confirm-di
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
 import { DailyLogFormComponent } from '../../daily-log-form/daily-log-form.component';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 
 @Component({
   selector: 'app-task-detail',
@@ -28,10 +30,14 @@ import { DailyLogFormComponent } from '../../daily-log-form/daily-log-form.compo
     MatTableModule,
     MatIconModule,
     // DailyLogFormComponent,
+    MatSelectModule,
+    MatFormFieldModule,
   ],
   templateUrl: './task-detail.component.html',
   styleUrl: './task-detail.component.scss'
 })
+
+
 
 export class TaskDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
@@ -104,6 +110,24 @@ export class TaskDetailComponent implements OnInit {
         this.task$ = this.taskService.getTask(task.id);
 
       }
+    })
+  }
+
+  onBlockerChange(newStatus: string | null, taskId: string): void {
+    if (!taskId) {
+      console.error('Task ID is missing in onBlockerChange');
+      alert('エラー:タスクIDが見つからないため、ブロッカー状況を更新できません。');
+      return;
+    }
+    console.log(`タスク ${taskId} のブロッカー状況を '${newStatus}' に変更します...`);
+
+    this.taskService.updateTaskBlockerStatus(taskId, newStatus)
+    .then(() =>{
+      console.log(`タスク ${taskId} のブロッカー状況を正常に更新しました。`);
+    })
+    .catch(error => {
+      console.error('ブロッカー状況の更新に失敗しました:', error);
+      alert(`ブロッカー状況の更新中にエラーが発生しました。\n${error.message || ''}`);
     })
   }
 

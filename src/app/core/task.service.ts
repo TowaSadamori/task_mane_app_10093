@@ -19,6 +19,7 @@ import {
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 
+
 export interface Task {
   id: string;
   title: string;
@@ -27,6 +28,7 @@ export interface Task {
   status: 'todo' | 'doing' | 'done';
   dueDate: Date | null;
   createdAt: Date;
+  blockerStatus: string | null;
 }
 
 type NewTaskData = Omit<Task, 'id' | 'createdAt'>;
@@ -115,5 +117,19 @@ export class TaskService {
     const dailyLogDocRef = doc(this.firestore, 'Tasks', taskId, 'DailyLogs', logId);
     return updateDoc(dailyLogDocRef, updatedData);
   }
+
+  updateTaskBlockerStatus(taskId: string, newStatus: string | null ): Promise<void> {
+    if (!taskId) {
+      console.error('Task ID is required to update blocker status');
+      return Promise.reject(new Error('Task ID is required.'));
+    }
+    const taskDocRef = doc(this.firestore, `Tasks/${taskId}`);
+    return updateDoc(taskDocRef, {
+      blockerStatus: newStatus,
+      updatedAt: serverTimestamp(),
+    });
+  }
+
+  
 
 }
