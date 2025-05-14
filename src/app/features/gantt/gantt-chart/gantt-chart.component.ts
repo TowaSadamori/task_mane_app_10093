@@ -4,6 +4,7 @@ import { Project, ProjectService, GanttTaskDisplayItem, NewGanttTaskData } from 
 import { Timestamp } from '@angular/fire/firestore';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AddTaskDialogComponent } from './components/add-task-dialog/add-task-dialog.component';
+import { MatButtonModule } from '@angular/material/button';
 interface TimelineDay {
   dayNumber: number; // 日 (1, 2, ..., 31)
   isWeekend: boolean;
@@ -32,6 +33,7 @@ interface TimelineYear {
   imports: [
     CommonModule,
     MatDialogModule,
+    MatButtonModule,
   ],
   templateUrl: './gantt-chart.component.html',
   styleUrl: './gantt-chart.component.scss'
@@ -40,6 +42,7 @@ interface TimelineYear {
 
 export class GanttChartComponent implements OnInit {
   private projectService = inject(ProjectService);
+  public selectedTask: GanttTaskDisplayItem | null = null;
 
 
 
@@ -263,7 +266,7 @@ getBarWidth(startDate: Date, endDate: Date): number {
   
 
   dialogRef.afterClosed().subscribe(result => {
-    // console.log('ダイアログが閉じられました。結果:', result);
+     console.log('ダイアログが閉じられました。結果:', result);
     if (result && result.taskName && result.plannedStartDate && result.plannedEndDate) {
       const newTaskToSave: NewGanttTaskData = {
         name: result.taskName,
@@ -336,36 +339,135 @@ getBarWidth(startDate: Date, endDate: Date): number {
       }
     });
 
+  
+
     dialogRef.afterClosed().subscribe(result => { // ダイアログが閉じた後の処理
       console.log('編集ダイアログが閉じられました。結果:', result);
       if (result) { // ダイアログから何らかの結果が返ってきた場合 (キャンセルでなければ)
         // result には、ダイアログのフォームで編集されたタスク情報が入っていると期待される
         console.log('更新用データを受け取りました:', result);
 
-        // ★★★ 今後のステップで実装するタスク更新処理の場所 ★★★
-        // const taskIdToUpdate = taskToEdit.id; // 更新対象のタスクID (ダイアログに渡した元のタスクのID)
-        // this.projectService.updateGanttTask(taskIdToUpdate, result) // result を更新データとして渡す
-        //   .then(() => {
-        //     console.log('タスクがFirestoreで更新されました。ID:', taskIdToUpdate);
-        //     // 画面の this.ganttTasks 配列も更新する
-        //     const index = this.ganttTasks.findIndex(task => task.id === taskIdToUpdate);
-        //     if (index !== -1) {
-        //       // 更新された情報で置き換える (result がそのまま新しいタスク情報か、部分的な更新かによる)
-        //       // ここでは result が更新後の全情報を持っていると仮定
-        //       this.ganttTasks[index] = { ...this.ganttTasks[index], ...result, id: taskIdToUpdate };
-        //       this.ganttTasks = [...this.ganttTasks]; // 変更検知のため新しい参照に
-        //       this.cdr.detectChanges();
-        //       console.log('画面のタスクリストを更新しました。');
-        //     }
-        //   })
-        //   .catch(error => {
-        //     console.error('Firestoreのタスク更新に失敗しました:', error);
-        //   });
+        const taskIdToUpdate = taskToEdit.id; // 更新対象のタスクID (ダイアログに渡した元のタスクのID)
+        this.projectService.updateGanttTask(taskIdToUpdate, result) // result を更新データとして渡す
+          .then(() => {
+            console.log('タスクがFirestoreで更新されました。ID:', taskIdToUpdate);
+            // 画面の this.ganttTasks 配列も更新する
+            const index = this.ganttTasks.findIndex(task => task.id === taskIdToUpdate);
+            if (index !== -1) {
+              // 更新された情報で置き換える (result がそのまま新しいタスク情報か、部分的な更新かによる)
+              // ここでは result が更新後の全情報を持っていると仮定
+              this.ganttTasks[index] = { ...this.ganttTasks[index], ...result, id: taskIdToUpdate };
+              this.ganttTasks = [...this.ganttTasks]; // 変更検知のため新しい参照に
+              this.cdr.detectChanges();
+              console.log('画面のタスクリストを更新しました。');
+            }
+          })
+          .catch(error => {
+            console.error('Firestoreのタスク更新に失敗しました:', error);
+          });
       } else {
         console.log('編集ダイアログがキャンセルされたか、データがありませんでした。');
       }
     }); // subscribe の閉じ括弧
   } // openEditTaskDialog メソッドの閉じ括弧
+
+    // ... (openEditTaskDialog メソッドの後など、クラス内の適切な場所) ...
+
+    selectTask(task: GanttTaskDisplayItem): void {
+      console.log('selectTask CALLED with task name:', task.name, 'and ID:', task.id);
+    
+      if (this.selectedTask && this.selectedTask.id === task.id) {
+        this.selectedTask = null;
+        console.log('タスク選択解除:', task.name);
+      } else {
+        this.selectedTask = task;
+        console.log('タスク選択:', this.selectedTask);
+      }
+    
+      // ★★★ ここからが重要 ★★★
+      if (this.selectedTask) {
+        // クリックされたタスク（task）と、現在選択されているタスク（this.selectedTask）のIDを比較
+        // HTMLのngClassの条件と同じ比較。taskItem.id === selectedTask?.id に対応するのは、
+        // this.selectedTask が null でないことを確認した上で、ループで回ってくる各 task (ここでは引数の task) と
+        // 現在選択されている this.selectedTask.id を比較することになる。
+        // しかし、ngClass の評価は各行で行われるため、ここでの比較は少し意味合いが異なる。
+        // ngClass の条件を正しく評価するためには、ループ内の taskItem と、コンポーネント全体の selectedTask を比較する。
+        // このメソッドが呼ばれた時点での task は、まさに ngClass で評価される taskItem と同じ。
+        // そして、this.selectedTask は ngClass で評価される selectedTask と同じ。
+        const idsAreEqual = task.id === this.selectedTask.id; 
+        console.log(`IDs for ngClass evaluation: task.id ('${task.id}', type: ${typeof task.id}) === this.selectedTask.id ('${this.selectedTask.id}', type: ${typeof this.selectedTask.id}). Result: ${idsAreEqual}`);
+        
+        // デバッグ用に、HTMLのngClassが参照する selectedTask のIDも確認
+        console.log(`Current this.selectedTask.id for ngClass: '${this.selectedTask.id}' (type: ${typeof this.selectedTask.id})`);
+    
+      } else {
+        console.log('selectedTask is now null. ngClass condition will be false.');
+      }
+      // ★★★ ここまで ★★★
+    
+      this.cdr.detectChanges();
+    }
+    // ★ 削除確認と実行のメソッド (雛形)
+    confirmDeleteTask(): void {
+      if (!this.selectedTask) {
+        console.warn('削除対象のタスクが選択されていません。');
+        return;
+      }
+  
+      const taskToDelete = this.selectedTask; // 削除実行前に保持
+  
+      // ここで MatDialog を使って確認ダイアログを開く
+      // const dialogRef = this.dialog.open(YourConfirmDialogComponent, { // 確認ダイアログ用のコンポーネントが必要
+      //   width: '300px',
+      //   data: { message: `タスク「${taskToDelete.name}」を削除してもよろしいですか？ (子タスクも全て削除されます)` }
+      // });
+  
+      // dialogRef.afterClosed().subscribe(result => {
+      //   if (result === true) { // 確認ダイアログで「はい」がクリックされた場合
+      //     console.log('削除を実行します:', taskToDelete);
+      //     // this.projectService.deleteGanttTaskRecursive(taskToDelete.id)
+      //     //   .then(() => {
+      //     //     console.log('タスク削除成功 (Firestore):', taskToDelete.id);
+      //     //     this.ganttTasks = this.ganttTasks.filter(t => t.id !== taskToDelete.id); // ★ 画面からも削除 (子タスクの画面からの削除も必要)
+      //     //     // TODO: 子タスクも ganttTasks 配列からフィルタリングする必要がある
+      //     //     this.selectedTask = null; // 選択解除
+      //     //     this.cdr.detectChanges();
+      //     //   })
+      //     //   .catch(error => {
+      //     //     console.error('タスク削除失敗 (Firestore):', error);
+      //     //     // ユーザーにエラー通知
+      //     //   });
+      //   } else {
+      //     console.log('削除がキャンセルされました。');
+      //   }
+      // });
+      alert(`（仮）タスク「${taskToDelete.name}」の削除処理を実行します。(確認ダイアログと実際の削除ロジックは後ほど実装)`); // ★ 現時点ではalertで仮実装
+    }
+  // ... (クラスの残りの部分) ...
+
+  public logTestClick(task: GanttTaskDisplayItem | null): void {
+    const taskName = task ? task.name : 'Unknown or Null Task';
+    const taskId = task ? task.id : 'N/A';
+  
+    // ★★★ 最初のalert ★★★
+    // このalertが表示されれば、クリックイベントがこのメソッドを呼び出せていることを意味します。
+    alert(`DEBUG: logTestClick - Step 1\nTask Name: ${taskName}\nTask ID: ${taskId}`); 
+  
+    // if (task) { // ★★★ このifブロックは、次のステップまでコメントアウトしておいてください ★★★
+    //   this.selectTask(task); 
+    // }
+    // ★★★ /ここまでコメントアウト ★★★
+  
+    // ★★★ メソッドの最後に到達したか確認するalert ★★★
+    // このalertが表示されれば、メソッドが途中で中断されずに最後まで実行されたことを意味します。
+    alert('DEBUG: logTestClick - Step 2: Reached end of method.'); 
+  }
+
+
+  // gantt-chart.component.ts の GanttChartComponent クラス内
+
+// ... (他のメソッドの近くなど) ...
+
 
 // ... (クラスの残りの部分)
 } // GanttChartComponent クラスの閉じ括弧

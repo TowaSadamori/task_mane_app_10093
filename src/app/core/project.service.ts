@@ -72,6 +72,25 @@ export type NewGanttTaskData = Omit<GanttTaskItem, 'id' | 'createdAt' | 'updated
   actualEndDate?: Date | Timestamp | null;
 };
 
+
+export type GanttTaskUpdatePayload = Partial<Omit<GanttTaskItem, 'id' | 'createdAt' | 'updatedAt'>> & {
+  name?: string; // 明示的に更新可能なフィールドを列挙
+  plannedStartDate?: Date | Timestamp;
+  plannedEndDate?: Date | Timestamp;
+  wbsNumber?: string;
+  category?: string | null;
+  primaryAssigneeId?: string | null;
+  otherAssigneeIds?: string[] | null;
+  decisionMakerId?: string | null;
+  status?: string | null;
+  actualStartDate?: Date | Timestamp | null;
+  actualEndDate?: Date | Timestamp | null;
+  progress?: number | null;
+  level?: number | null;
+  parentId?: string | null;
+};
+
+
 @Injectable({
   providedIn: 'root'
 })
@@ -108,6 +127,62 @@ export class ProjectService {
     return updateDoc(projectDocRef, updateData);
    }
 
+   updateGanttTask(
+    taskId: string,
+    updateData: GanttTaskUpdatePayload
+  ): Promise<void> {
+    const taskDocRef = doc(this.firestore, 'ganttTasks', taskId);
+    const dataToUpdate: Partial<GanttTaskItem> = {};
+
+    for (const key in updateData) {
+      if (Object.prototype.hasOwnProperty.call(updateData, key)) {
+        
+        if (key !== 'plannedStartDate' && key !== 'plannedEndDate' && key !== 'actualStartDate' && key !== 'actualEndDate') {
+        
+          (dataToUpdate as Record<string, unknown>)[key] = updateData[key as keyof GanttTaskUpdatePayload];
+        }
+      }
+    }
+
+   
+
+    // 日付フィールドをTimestampに変換
+    if (updateData.plannedStartDate) {
+      dataToUpdate.plannedStartDate =
+        updateData.plannedStartDate instanceof Date
+          ? Timestamp.fromDate(updateData.plannedStartDate)
+          : updateData.plannedStartDate;
+    }
+    if (updateData.plannedEndDate) {
+      dataToUpdate.plannedEndDate =
+        updateData.plannedEndDate instanceof Date
+          ? Timestamp.fromDate(updateData.plannedEndDate)
+          : updateData.plannedEndDate;
+    }
+    if (Object.prototype.hasOwnProperty.call(updateData, 'actualStartDate')) {
+      dataToUpdate.actualStartDate =
+        updateData.actualStartDate instanceof Date
+          ? Timestamp.fromDate(updateData.actualStartDate)
+          : (updateData.actualStartDate === null ? null : updateData.actualStartDate);
+    }
+    if (Object.prototype.hasOwnProperty.call(updateData, 'actualEndDate')) {
+      dataToUpdate.actualEndDate =
+        updateData.actualEndDate instanceof Date
+          ? Timestamp.fromDate(updateData.actualEndDate)
+          : (updateData.actualEndDate === null ? null : updateData.actualEndDate);
+    }
+
+    Object.keys(dataToUpdate).forEach(key => {
+      if ((dataToUpdate as Record<string, unknown>)[key] === undefined) {
+        delete (dataToUpdate as Record<string, unknown>)[key];
+      }
+    });
+
+    // 更新日時を追加
+    (dataToUpdate as Record<string, unknown>)['updatedAt'] = serverTimestamp(); // updatedAt を追加
+  return updateDoc(taskDocRef, dataToUpdate);
+  }
+
    deleteProject(projectId: string): Promise<void> {
     const projectDocRef = doc(this.firestore, 'Projects', projectId);
     return deleteDoc(projectDocRef);
@@ -115,9 +190,7 @@ export class ProjectService {
 
    // ... (addGanttTask メソッド内)
   addGanttTask(taskData: NewGanttTaskData): Promise<DocumentReference<GanttTaskItem>> {
-    // Firestoreに保存するデータの型 (GanttTaskItemからidを除外し、日付はTimestampであることを期待)
-    // NewGanttTaskData から id, createdAt, updatedAt を除いたものに、日付をTimestampに変換した形
-    // もっとも、GanttTaskItem のオプショナルでないプロパティは必須となる
+   
     const dataToSave: Omit<GanttTaskItem, 'id' | 'createdAt' | 'updatedAt'> & { plannedStartDate: Timestamp, plannedEndDate: Timestamp, actualStartDate?: Timestamp | null, actualEndDate?: Timestamp | null} = {
       // ...taskData から id, createdAt, updatedAt を除いたプロパティをコピー
       name: taskData.name,
@@ -179,5 +252,5 @@ export class ProjectService {
   }
 
 
-  // updateGanttTask や deleteGanttTask も同様に将来的に追加
+  
 }

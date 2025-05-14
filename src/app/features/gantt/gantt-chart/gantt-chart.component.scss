@@ -7,13 +7,6 @@
     // height: 80vh;
 }
 
-.timeline-header {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    overflow-x: auto;
-    border: 1px solid #ccc;
-}
 
 .timeline-header {
     display: flex;
@@ -43,15 +36,20 @@
 .main-gantt-area {
     display: flex;
     flex-direction: row;
-    flex-grow: 1;
-    overflow: hidden;
-}
+    width: 100%; // 親要素いっぱいに広がることを想定
+    // overflow: hidden; // ★ 一旦コメントアウトして影響を見るか、状況に応じて overflow-x: auto; などに変更
+  }
+  
 
-.task-list-area {
-   flex-shrink: 0;
-   border-right: 1px solid #eee;
-   align-items: center;
-}
+  .task-list-area {
+    flex-shrink: 0;
+    width: 450px; /* ★★★ 例: 固定幅を指定。実際のデザインに合わせて調整してください ★★★ */
+    // flex-basis: 450px; /* または flex-basis を使用 */
+    border-right: 1px solid #eee;
+    overflow-y: auto; 
+    position: relative; /* ★ 追加: z-index のスタッキングコンテキストを作るため */
+    z-index: 1;      /* ★ 追加: gantt-bars-area より手前に来るように */
+  }
 
 .task-list-header {
     background-color: #f0f0f0;
@@ -73,7 +71,7 @@
 }
 
 .gantt-row-background {
-    display: fled;
+    display: flex;
     position: absolute;
     top: 0;
     left: 0;
@@ -82,7 +80,7 @@
     z-index: 0;
 }
 
-.gatt-day-cell {
+.gantt-day-cell {
     min-width: 50px;
     height: 100%;
     border-right: 1px dotted #eee;
@@ -95,24 +93,17 @@
 
 
 .gantt-bars-area {
-    position: relative;
-    min-height: 400px !important;  /* ★ !important を付けて強制的に高さを確保 */
-    background-color: lightgoldenrodyellow !important; /* ★ !important */
-    border: 3px dashed purple !important; /* ★ !important */
-    overflow: auto; /* 横スクロールはここで有効にする */
-    flex-grow: 1; /* これも重要 */
+    position: relative; 
+    flex-grow: 1;     
+    min-width: 0;     /* ★ 追加: flexアイテムが内容によって不必要に広がるのを防ぐ */
+    overflow-x: auto; 
+    z-index: 0;      /* ★ 追加: task-list-area より背面にいくように (必要に応じて調整) */
+    // 以前のデバッグ用の !important スタイルは削除またはコメントアウト
+    // background-color: lightgoldenrodyellow !important; 
+    // border: 3px dashed purple !important; 
   }
   
-.gantt-row {
-    display: flex;
-    height: 35px;
-    position: relative;
-    height: 35px;
-    position: relative;
-    border-bottom: 1px solid #f0f0f0;
-    background-color: rgba(173, 216, 230, 0.5) !important; /* 薄い青色、!important */
-    box-sizing: border-box;
-  }
+
   
   .gantt-bar {
     position: absolute;
@@ -129,6 +120,41 @@
     text-overflow: ellipsis;
     box-sizing: border-box;
     cursor: pointer;
+  }
+
+  // gantt-chart.component.scss
+
+// ... (既存のスタイル) ...
+
+.task-list-row {
+    // ... (既存のスタイルがあれば) ...
+    cursor: pointer; // クリック可能であることを示すカーソル
+    &:hover {
+      background-color: #f0f0f0; // ホバー時の背景色 (任意)
+    }
+  }
+  
+  .selected-task {
+    background-color: #e0e0ff !important; // 選択された行の背景色 (任意の色に変更してください)
+    // 必要であれば他のスタイルも追加 (例: font-weight: bold;)
+  }
+  
+  // オプション: ガントバーエリアの選択インジケーター用スタイル
+  .selected-task-bar-indicator {
+    .gantt-bar { // もしバー自体の見た目を変えたい場合
+      // border: 2px solid blue; // 例: 選択されたタスクのバーに枠線を追加
+      opacity: 0.7; // 例: 選択されたタスクのバーを少し透過させる
+    }
+    // あるいは、行全体に何かスタイルを適用する場合
+    // background-color: rgba(0, 0, 255, 0.05); // 例：行の背景を薄い青に
+  }
+  
+  .action-buttons-container { // ボタンコンテナ用のスタイル（既にあれば調整）
+    margin-bottom: 10px;
+    text-align: right;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px; // ボタン間のスペース
   }
 
 
