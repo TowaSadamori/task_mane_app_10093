@@ -4,6 +4,7 @@
     width: 100%;
     overflow-x: auto;
     border: 1px solid #ccc;
+    // height: 80vh;
 }
 
 .timeline-header {
@@ -92,11 +93,43 @@
     border-right: none;
 }
 
+
+.gantt-bars-area {
+    position: relative;
+    min-height: 400px !important;  /* ★ !important を付けて強制的に高さを確保 */
+    background-color: lightgoldenrodyellow !important; /* ★ !important */
+    border: 3px dashed purple !important; /* ★ !important */
+    overflow: auto; /* 横スクロールはここで有効にする */
+    flex-grow: 1; /* これも重要 */
+  }
+  
 .gantt-row {
     display: flex;
     height: 35px;
     position: relative;
+    height: 35px;
+    position: relative;
+    border-bottom: 1px solid #f0f0f0;
+    background-color: rgba(173, 216, 230, 0.5) !important; /* 薄い青色、!important */
+    box-sizing: border-box;
+  }
+  
+  .gantt-bar {
+    position: absolute;
+    top: 5px;
+    height: 25px;
+    background-color: crimson !important; /* 強制的に赤色 */
+    z-index: 10 !important;
+    color: white;
+    font-size: 0.8em;
+    padding: 0 5px;
+    line-height: 25px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+    cursor: pointer;
+  }
 
-}
 
-
+  

@@ -18,6 +18,8 @@ import {
   orderBy,
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
+// import { AdminUserService } from '../features/admin/services/admin-user.service';
+
 
 
 export interface Task {
@@ -29,6 +31,17 @@ export interface Task {
   dueDate: Date | null;
   createdAt: Date;
   blockerStatus: string | null;
+}
+
+export interface PhotoEntry {
+  id: string;
+  url: string;
+  fileName?: string;
+  uploadedAt?: Timestamp;
+  caption?: string | null;
+  wasTakenByCamera?: boolean;
+  processed?: string;
+  processedAt?: Timestamp;
 }
 
 type NewTaskData = Omit<Task, 'id' | 'createdAt'>;
@@ -46,10 +59,7 @@ export interface DailyLog {
   progressRate?: number | null;
   workerCount?: number | null;
   supervisor?: string | null;
-  photos?: {
-    before?: string;
-    after?: string;
-  } | null;
+  photos?: PhotoEntry[];
   comment?: string | null;
   createdAt: Timestamp;
 }

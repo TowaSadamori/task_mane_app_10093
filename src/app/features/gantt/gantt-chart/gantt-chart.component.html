@@ -1,51 +1,69 @@
 <div class="gantt-container">
     <div class="timeline-header">
-        <div class="timeline-row thimeline-year-month">
-            <div class="timeline-cell">2025年</div>
-            <div class="timeline-cell">5月</div>
-            <div class="timeline-cell">6月</div>
-            <div class="timeline-cell">7月</div>
-
+        <div class="timeline-row timeline-year">
+            <div *ngFor="let yearItem of timelineYears" 
+                 class="timeline-cell year-cell" 
+                 [style.minWidth.px]="yearItem.colspan * 50" [style.flexBasis.px]="yearItem.colspan * 50"> 
+                {{ yearItem.year }}年
+            </div>
         </div>
-
+        <div class="timeline-row timeline-month">
+            <ng-container *ngFor="let yearItem of timelineYears">
+                <div *ngFor="let monthItem of yearItem.months" 
+                     class="timeline-cell month-cell"
+                     [style.minWidth.px]="monthItem.colspan * 50"
+                     [style.flexBasis.px]="monthItem.colspan * 50">
+                    {{ monthItem.monthName }}
+                </div>
+            </ng-container>
+        </div>
         <div class="timeline-row timeline-days">
-            <div class="timeline-cell">1</div>
-            <div class="timeline-cell">2</div>
-            <div class="timeline-cell">3</div>
-            <div class="timeline-cell">31</div>
+            <div *ngFor="let dayItem of allDaysInTimeline" 
+                 class="timeline-cell day-cell"
+                 [class.weekend]="dayItem.isWeekend"> {{ dayItem.dayNumber }}
+            </div>
         </div>
     </div>
 
     <div class="main-gantt-area">
         <div class="task-list-area">
-            <div class="task-list-header">
+            <div class="add-task-button-container" style="margin-bottom: 10px; text-align: right;">
+                <button (click)="openAddTaskDialog()">タスク追加</button>
+              </div>
+              <div class="task-list-header">
                 <div class="task-list-cell header-cell" style="width: 50px;">番号</div>
                 <div class="task-list-cell header-cell" style="width: 150px">タスク名</div>
                 <div class="task-list-cell header-cell" style="width: 100px">担当者</div>
                 <div class="task-list-cell header-cell" style="width: 80px">状況</div>
                 <div class="task-list-cell header-cell" style="width: 100px">予定開始日</div>
                 <div class="task-list-cell header-cell" style="width: 100px">予定終了日</div>
-            </div>
-            <div class="task-list-row">
-                <div class="task-list-cell" style="width: 50px;">1</div>
-                <div class="task-list-cell" style="width: 150px">最初のタスク</div>
-                <div class="task-list-cell" style="width: 100px">山田</div>
-                <div class="task-list-cell" style="width: 80px">未着手</div>
-                <div class="task-list-cell" style="width: 100px">2025/05/01</div>
-                <div class="task-list-cell" style="width: 100px">2025/05/10</div>
+                <div class="task-list-cell header-cell" style="width: 70px;">操作</div>
+             </div>
+            
+             <div *ngFor="let taskItem of ganttTasks; let i = index" class="task-list-row">
+                <div class="task-list-cell" style="width: 50px;">{{ taskItem.wbsNumber || (i + 1) }}</div>
+                <div class="task-list-cell" style="width: 150px;"
+                [style.paddingLeft.px]="taskItem.level ? taskItem.level * 20 : 0"> {{ taskItem.name }}</div>
+                <div class="task-list-cell" style="width: 100px;">{{ taskItem.primaryAssigneeId || '-' }}</div>
+                <div class="task-list-cell" style="width: 80px;">{{ taskItem.status || '未定義' }}</div>
+                <div class="task-list-cell" style="width: 100px;">{{ taskItem.plannedStartDate | date:'yyyy/MM/dd' }}</div>
+                <div class="task-list-cell" style="width: 100px;">{{ taskItem.plannedEndDate | date:'yyyy/MM/dd' }}</div>
+                <div class="task-list-cell" style="width: 70px;">
+                     <button (click)="openEditTaskDialog(taskItem)">編集</button> 
+                </div>
             </div>
     </div>
 
     <div class="gantt-bars-area">
-        <div class="gantt-row-background">
-            <div class="gantt-day-cell"></div>
-            <div class="gantt-day-cell"></div>
-            <div class="gantt-day-cell"></div>
-            <div class="gantt-day-cell"></div>
-
+        <div class="gantt-row-background"> <div *ngFor="let day of allDaysInTimeline" class="gantt-day-cell"></div>
         </div>
-        <div class="gantt-row">
+        <div *ngFor="let taskItem of ganttTasks" class="gantt-row">
+            <div class="gantt-bar"
+            [style.left.px]="getBarLeftPosition(taskItem.plannedStartDate)"
+            [style.width.px]="getBarWidth(taskItem.plannedStartDate, taskItem.plannedEndDate)"
+            [title]="taskItem.name + ' (' + (taskItem.plannedStartDate | date:'MM/dd') + '-' + (taskItem.plannedEndDate | date:'MM/dd') + ')'"> {{ taskItem.name }}
+       </div>
         </div>
-    </div>
+      </div>
   </div>
 </div>

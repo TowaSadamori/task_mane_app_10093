@@ -74,19 +74,42 @@
 
     <div>
         <p><strong>写真添付（任意）:</strong></p>
-        <button mat-raised-button type="button" (click)="fileInput.click()">
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <button mat-stroked-button type="button" (click)="fileInput.click()">
             <mat-icon>attach_file</mat-icon>
             ファイルを選択
         </button>
+        <input hidden type="file" #fileInput (change)="onFileSelect($event, false)" accept="image/*,video/*" multiple>
 
-        <input type="file" #fileInput (change)="onFileSelect($event)" aaccept="image/*,video/*">
+        <button mat-stroked-button type="button" (click)="cameraInput.click()">
+            <mat-icon>photo_camera</mat-icon>
+            カメラで撮影
+        </button>
+        <input hidden type="file" #cameraInput (change)="onFileSelect($event, true)" accept="image/*" capture="environment">
+        </div>
+        
         <span *ngIf="selectedFileName" style="margin-left: 8px;">選択中:{{ selectedFileName }}</span>
 
         <mat-progress-bar *ngIf="uploadProgress$ | async as progress" mode="determinate" [value]="progress" style="margin-top: 8px;"></mat-progress-bar>
+
+        <div *ngIf="uploadedPhotos.length > 0" style="margin-top: 10px;">
+            <strong>添付ファイル一覧:</strong>
+            <ul style="list-style-type: disc; margin-left: 20px;">
+                <li *ngFor="let photo of uploadedPhotos; let i = index" style="margin-bottom: 5px; display: flex; align-items: center;">
+                    <span style="flex-grow: 1;">{{ photo.fileName }}</span>
+                    <button mat-icon-button type="button" (click)="removePhoto(i)" color="warn" aria-label="添付ファイルを削除">
+                        <mat-icon>delete</mat-icon>
+                    </button>
+                </li>
+            </ul>
+        </div>
     </div>
 
+    <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
     <button mat-raised-button color="primary" type="submit" [disabled]="dailyLogForm.invalid || isLoading" style="margin-top: 20px;">
        {{ isLoading ? '保存中...' : ' ログ保存' }}
     </button>
+    <button mat-stroked-button type="button" (click)="onCancelClick()">キャンセル</button>
+    </div>
 
 </form>

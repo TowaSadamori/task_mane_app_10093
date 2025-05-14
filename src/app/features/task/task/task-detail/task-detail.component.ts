@@ -60,7 +60,10 @@ export class TaskDetailComponent implements OnInit {
       data: {
         taskId: taskId,
         initialData: log ?? null,
-      }
+      },
+
+      disableClose: true,
+
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -72,7 +75,8 @@ export class TaskDetailComponent implements OnInit {
   }
 
   dailyLogs$!: Observable<DailyLog[]>;
-  readonly dailyLogColumns: string[] = ['workDate', 'actualTime', 'progressRate', 'workCount', 'supervisor', 'comment'];
+  readonly dailyLogColumns: string[] = ['workDate', 'actualTime', 'progressRate', 'workerCount', 'supervisor', 'comment','photo'];
+
 
   
 
@@ -156,6 +160,13 @@ export class TaskDetailComponent implements OnInit {
     alert('タスクの削除に失敗しました。');
   }
   });
+  }
+
+
+   openPhotoViewer(photoUrl: string): void {
+    console.log('Attempting to open photo viewer for URL:', photoUrl);
+    alert('写真表示機能は現在準備中です。\nURL: ' + photoUrl);}
+
 
 }
-}
+

@@ -1,0 +1,38 @@
+<h1 mat-dialog-title>タスク追加</h1>
+
+<form [formGroup]="taskForm" (ngSubmit)="onSubmit()">
+  <div mat-dialog-content>
+    <mat-form-field appearance="fill" class="full-width">
+      <mat-label>タスク名</mat-label>
+      <input matInput formControlName="taskName" placeholder="タスクの名称を入力" required>
+      <mat-error *ngIf="taskForm.get('taskName')?.hasError('required')">
+        タスク名は必須です。
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="full-width">
+      <mat-label>予定開始日</mat-label>
+      <input matInput [matDatepicker]="pickerStart" formControlName="plannedStartDate" placeholder="開始日を選択" required>
+      <mat-datepicker-toggle matSuffix [for]="pickerStart"></mat-datepicker-toggle>
+      <mat-datepicker #pickerStart></mat-datepicker>
+      <mat-error *ngIf="taskForm.get('plannedStartDate')?.hasError('required')">
+        予定開始日は必須です。
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="full-width">
+      <mat-label>予定終了日</mat-label>
+      <input matInput [matDatepicker]="pickerEnd" formControlName="plannedEndDate" placeholder="終了日を選択" required>
+      <mat-datepicker-toggle matSuffix [for]="pickerEnd"></mat-datepicker-toggle>
+      <mat-datepicker #pickerEnd></mat-datepicker>
+      <mat-error *ngIf="taskForm.get('plannedEndDate')?.hasError('required')">
+        予定終了日は必須です。
+      </mat-error>
+      </mat-form-field>
+  </div>
+
+  <div mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="onNoClick()">キャンセル</button>
+    <button mat-raised-button color="primary" type="submit" [disabled]="taskForm.invalid">追加</button> 
+    </div>
+</form>
