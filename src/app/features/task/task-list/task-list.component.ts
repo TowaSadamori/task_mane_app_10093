@@ -1,7 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Observable } from 'rxjs';
-import { TaskService, Task } from '../../../core/task.service';
+// Task の隣に TaskDisplay を追加
+import { TaskService, TaskDisplay } from '../../../core/task.service';
 import { MatListModule } from '@angular/material/list';
 import { MatTableModule } from '@angular/material/table';
 import { DatePipe } from '@angular/common';
@@ -21,11 +22,12 @@ import { DatePipe } from '@angular/common';
 
 export class TaskListComponent implements OnInit {
   private taskService = inject(TaskService);
-  tasks$!: Observable<Task[]>;
+  // Observable<Task[]> から Observable<TaskDisplay[]> へ変更
+  tasks$!: Observable<TaskDisplay[]>;
 
   displayedColumns: string[] = ['id', 'title', 'status', 'projectId', 'assigneeId', 'dueDate', 'createdAt'];
 
-  constructor() {}
+  // constructor() {}
 
   ngOnInit(): void {
     this.tasks$ = this.taskService.getTasks();

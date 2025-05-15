@@ -21,7 +21,7 @@ export interface CreateUserResponse {
 export class AdminUserService {
   private functions : Functions = inject(Functions);
 
-  constructor() {}
+  // constructor() {}
 
   createUser(userData: CreateUserData): Observable<CreateUserResponse> {
     const createUserFn = httpsCallableData<CreateUserData,CreateUserResponse>(this.functions, 'createUser');

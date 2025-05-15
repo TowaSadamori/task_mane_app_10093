@@ -1,10 +1,14 @@
-import { Component, OnInit, inject, ChangeDetectorRef  } from '@angular/core'; // 重複を削除し、OnInit と inject を確実に追加
+import { Component, OnInit, inject, ChangeDetectorRef, ElementRef } from '@angular/core'; // 重複を削除し、OnInit と inject を確実に追加
 import { CommonModule } from '@angular/common';
-import { Project, ProjectService, GanttTaskDisplayItem, NewGanttTaskData } from '../../../core/project.service'; // パスはユーザー様の環境に合わせてください
+import { Project, ProjectService, GanttTaskDisplayItem, NewGanttTaskData } from '../../../core/project.service'; 
+import { TaskService, NewDailyLogData } from '../../../core/task.service'; 
 import { Timestamp } from '@angular/fire/firestore';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AddTaskDialogComponent } from './components/add-task-dialog/add-task-dialog.component';
 import { MatButtonModule } from '@angular/material/button';
+import { ConfirmDialogComponent, ConfirmDialogData } from './components/confirm-dialog/confirm-dialog.component'; 
+import { Router } from '@angular/router';
+
 interface TimelineDay {
   dayNumber: number; // 日 (1, 2, ..., 31)
   isWeekend: boolean;
@@ -43,13 +47,19 @@ interface TimelineYear {
 export class GanttChartComponent implements OnInit {
   private projectService = inject(ProjectService);
   public selectedTask: GanttTaskDisplayItem | null = null;
-
+  public el: ElementRef;
+  private taskService = inject(TaskService);
+  private currentProjectId = 'test-project-00'; 
+  private router = inject(Router);
 
 
   constructor(
     public dialog: MatDialog,
-    private cdr: ChangeDetectorRef
-  ){}
+    private cdr: ChangeDetectorRef,
+    el: ElementRef
+  ){
+    this.el = el;
+  }
 
   private generateTimelineHeaders(): void {
     this.timelineYears = []; // 初期化
@@ -135,6 +145,7 @@ export class GanttChartComponent implements OnInit {
         // ユーザーへのエラー通知などをここで行う
       }
     });
+    console.log('Current Project ID for Gantt Chart (in ngOnInit):', this.currentProjectId);
   }
   
 //   private createSampleGanttTasks(): void {
@@ -187,22 +198,32 @@ export class GanttChartComponent implements OnInit {
 
 private mapProjectsToGanttItems(projects: Project[]): GanttTaskDisplayItem[] { // ★ 返り値の型を変更
   return projects.map(project => {
-    const ganttItem: GanttTaskDisplayItem = { // ★ 型を変更
+    const ganttItem: GanttTaskDisplayItem = {
       id: project.id,
       name: project.name,
+      title: project.name, // 例: nameと同じ値をセット
+      projectId: project.id, // 例: プロジェクトIDをセット（適切な値に変更してください）
+      assigneeId: '', // 例: 空文字や適切な値をセット
+      blockerStatus: null, // 例: nullや適切な値をセット
       plannedStartDate: project.startDate instanceof Date
         ? project.startDate
         : (project.startDate instanceof Timestamp
             ? project.startDate.toDate()
-            : new Date()), // Date型に
+            : new Date()),
       plannedEndDate: project.endDate instanceof Date
         ? project.endDate
         : (project.endDate instanceof Timestamp
             ? project.endDate.toDate()
-            : new Date(new Date().setDate(new Date().getDate() + 7))), // Date型に
-      // GanttTaskDisplayItem に合わせて他の必須・オプショナルプロパティのデフォルト値を設定
-      status: project.status === 'active' ? '作業中' : (project.status === 'completed' ? '完了' : '未着手'), // 例
-      // ... category, wbsNumber, level, parentId など、GanttTaskDisplayItem の他のプロパティも適切に設定
+            : new Date(new Date().setDate(new Date().getDate() + 7))),
+      status: project.status === 'active' ? 'doing' : (project.status === 'completed' ? 'done' : 'todo'),
+      // 他の必須・オプショナルプロパティも同様に追加
+      progress: null,
+      level: 0,
+      parentId: null,
+      wbsNumber: '',
+      category: null,
+      otherAssigneeIds: [],
+      decisionMakerId: null,
     };
     return ganttItem;
   });
@@ -216,15 +237,15 @@ private mapProjectsToGanttItems(projects: Project[]): GanttTaskDisplayItem[] { /
  // ... (DAY_CELL_WIDTH の定義の後)
 
  getBarLeftPosition(startDate: Date): number { // 引数は Date 型を期待
-  console.log('[getBarLeftPosition] timelineStartDate:', this.timelineStartDate, 'taskStartDate:', startDate); // ★デバッグログ追加
+  // console.log('[getBarLeftPosition] timelineStartDate:', this.timelineStartDate, 'taskStartDate:', startDate); // ★デバッグログ追加
   if (!this.timelineStartDate || !startDate || !(startDate instanceof Date)) { // ★ startDate が Date インスタンスか確認
-    console.warn('[getBarLeftPosition] Invalid arguments or startDate is not a Date object');
+    // console.warn('[getBarLeftPosition] Invalid arguments or startDate is not a Date object');
     return 0;
   }
   const diffTime = startDate.getTime() - this.timelineStartDate.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   const leftPosition = Math.max(0, diffDays) * this.DAY_CELL_WIDTH;
-  console.log('[getBarLeftPosition] diffDays:', diffDays, 'leftPosition:', leftPosition); // ★デバッグログ追加
+  // console.log('[getBarLeftPosition] diffDays:', diffDays, 'leftPosition:', leftPosition); // ★デバッグログ追加
   return leftPosition;
 }
 
@@ -232,7 +253,7 @@ private mapProjectsToGanttItems(projects: Project[]): GanttTaskDisplayItem[] { /
 
 getBarWidth(startDate: Date, endDate: Date): number {
   // 元の日時もログ出力（デバッグに役立つ場合がある）
-  console.log('[getBarWidth] original taskStartDate:', startDate, 'original taskEndDate:', endDate);
+  // console.log('[getBarWidth] original taskStartDate:', startDate, 'original taskEndDate:', endDate);
 
   if (!startDate || !endDate || !(startDate instanceof Date) || !(endDate instanceof Date) || endDate < startDate) {
     console.warn('[getBarWidth] Invalid arguments or dates are not Date objects or endDate is before startDate');
@@ -248,75 +269,151 @@ getBarWidth(startDate: Date, endDate: Date): number {
 
 
   const barWidth = durationDays * this.DAY_CELL_WIDTH;
-  console.log('[getBarWidth] calculated startDay:', startDay, 'calculated endDay:', endDay);
-  console.log('[getBarWidth] durationDays:', durationDays, 'barWidth:', barWidth);
+  // console.log('[getBarWidth] calculated startDay:', startDay, 'calculated endDay:', endDay);
+  // console.log('[getBarWidth] durationDays:', durationDays, 'barWidth:', barWidth);
   return barWidth;
 }
 
-// ... (openAddTaskDialog メソッドなど)
+navigateToTaskDetail(taskId: string): void {
+  if (taskId) {
+    this.router.navigate(['/app/tasks', taskId]);
+  } else {
+    console.error('Task ID is missing, cannot navigate to task detail.');
+  }
+}
 
-// ... (openAddTaskDialog メソッドなど)
+
 
  openAddTaskDialog(): void {
+  if (!this.currentProjectId) {
+    console.error('プロジェクトIDが設定されていません。タスク追加ダイアログを開けません。');
+    // ユーザーへの通知（例: alertやSnackbarなど）
+    alert('エラー: プロジェクトが選択されていません。先にプロジェクトを選択するか、管理者に問い合わせてください。');
+    return; // currentProjectId がないので処理を中断
+  }
   const dialogRef = this.dialog.open(AddTaskDialogComponent, {
     width: '400px',
-    // data: { ... } // ダイアログに初期値を渡す場合はここ
+    data: { // ▼▼▼ data オブジェクトを修正 ▼▼▼
+      isEditMode: false,
+      task: null, // 新規作成なので task は null
+      projectId: this.currentProjectId // ★ 現在のプロジェクトIDを渡す
+    }
   });
 
   
 
   dialogRef.afterClosed().subscribe(result => {
-     console.log('ダイアログが閉じられました。結果:', result);
-    if (result && result.taskName && result.plannedStartDate && result.plannedEndDate) {
+    console.log('ダイアログが閉じられました。結果:', result);
+    // ▼▼▼ ステップAの修正 ▼▼▼
+    if (result && result.taskName && result.plannedStartDate && result.plannedEndDate && result.assigneeId) {
+      // ▼▼▼ ステップBの修正 ▼▼▼
       const newTaskToSave: NewGanttTaskData = {
-        name: result.taskName,
-            plannedStartDate: result.plannedStartDate, // Date オブジェクト
-            plannedEndDate: result.plannedEndDate,     // Date オブジェクト
-            wbsNumber: (this.ganttTasks.length + 1).toString(),
-            category: '未分類',        // または null
-            primaryAssigneeId: null,         
-            decisionMakerId: null,  
-            otherAssigneeIds: [],   
-            status: '未着手',          // または null
-            actualStartDate: null,
-            actualEndDate: null,
-            progress: 0,               // または null
-            level: 0,                  // または null
-            parentId: null,
+        title: result.taskName,
+        plannedStartDate: result.plannedStartDate,
+        plannedEndDate: result.plannedEndDate,
+        assigneeId: result.assigneeId,
+        dueDate: result.dueDate instanceof Date
+          ? result.dueDate
+          : (result.dueDate && typeof (result.dueDate as Timestamp).toDate === 'function')
+            ? (result.dueDate as Timestamp).toDate()
+            : null,
+        category: result.category || null,
+        decisionMakerId: result.decisionMakerId || null,
+        projectId: this.currentProjectId,
+        status: 'todo',
+        level: 0,
+        parentId: null,
+        wbsNumber: (this.ganttTasks.length + 1).toString(),
+        otherAssigneeIds: [],
+        blockerStatus: null,
+        actualStartDate: null,
+        actualEndDate: null,
+        progress: 0,
       };
 
-      this.projectService.addGanttTask(newTaskToSave)
-        .then(docRef => {
-          console.log('新しいタスクがFirestoreに保存されました。ID:', docRef.id);
+      console.log('作成するnewTaskToSaveオブジェクト (gantt-chart.component):', newTaskToSave);
 
-          // ★ 画面のタスクリストを更新 (楽観的更新)
-          // Firestoreが生成したIDと、クライアントで保持している情報で表示用オブジェクトを作成
+      this.projectService.addGanttTask(newTaskToSave)
+        .then(ganttTaskDocRef => {
+          console.log('新しいガントタスク(Task)がFirestoreに保存されました。ID:', ganttTaskDocRef.id);
+
+          const newDailyLogEntry: NewDailyLogData = {
+            workDate: Timestamp.fromDate(new Date()),
+            reporterId: 'SYSTEM_AUTO_GENERATED',
+            progressRate: 0,
+            comment: `ガントチャートタスク「${newTaskToSave.title}」から自動生成されたToDoエントリ`,
+            ganttTaskId: ganttTaskDocRef.id,
+            plannedStartTime: newTaskToSave.plannedStartDate instanceof Date
+                              ? Timestamp.fromDate(newTaskToSave.plannedStartDate)
+                              : newTaskToSave.plannedStartDate, // Timestampの可能性も考慮
+            plannedEndTime: newTaskToSave.plannedEndDate instanceof Date
+                            ? Timestamp.fromDate(newTaskToSave.plannedEndDate)
+                            : newTaskToSave.plannedEndDate, // Timestampの可能性も考慮
+          };
+
+          if (ganttTaskDocRef.id) {
+            this.taskService.addDailyLog(ganttTaskDocRef.id, newDailyLogEntry)
+              .then(dailyLogDocRef => {
+                console.log(`自動生成されたDailyLogがFirestoreに保存されました。DailyLog ID: ${dailyLogDocRef.id}, 関連付けられたTask ID: ${ganttTaskDocRef.id}`);
+              })
+              .catch(dailyLogError => {
+                console.error('自動生成されたDailyLogのFirestoreへの保存に失敗しました:', dailyLogError);
+                alert('自動生成されたToDoの保存に失敗しました。詳細はコンソールを確認してください。');
+              });
+          } else {
+            console.error('Task ID (ganttTaskDocRef.id) が見つかりません。DailyLogを紐付けることができませんでした。');
+            alert('ガントタスクのIDが見つからないため、自動生成されたToDoを紐付けることができませんでした。');
+          }
+
+          // 画面表示用のnewTaskForDisplay作成は次の提案で調整します
+          // ... (現在のnewTaskForDisplay作成と画面更新ロジック) ...
           const newTaskForDisplay: GanttTaskDisplayItem = {
-            id: docRef.id, // Firestoreが生成したID
-            name: newTaskToSave.name,
-            plannedStartDate: result.plannedStartDate, 
-            plannedEndDate: result.plannedEndDate,
-            wbsNumber: newTaskToSave.wbsNumber,
-            category: newTaskToSave.category,
-            status: newTaskToSave.status,
-            progress: newTaskToSave.progress,
+            id: ganttTaskDocRef.id,
+            name: newTaskToSave.title,
+            title: newTaskToSave.title,
+            projectId: newTaskToSave.projectId,
+            assigneeId: newTaskToSave.assigneeId,
+            status: newTaskToSave.status as 'todo' | 'doing' | 'done',
+            dueDate: newTaskToSave.dueDate instanceof Date
+              ? newTaskToSave.dueDate
+              : (newTaskToSave.dueDate && typeof (newTaskToSave.dueDate as Timestamp).toDate === 'function')
+                ? (newTaskToSave.dueDate as Timestamp).toDate()
+                : null,
+            createdAt: new Date(),
+            plannedStartDate: newTaskToSave.plannedStartDate instanceof Date
+              ? newTaskToSave.plannedStartDate
+              : (newTaskToSave.plannedStartDate && typeof (newTaskToSave.plannedStartDate as Timestamp).toDate === 'function')
+                ? (newTaskToSave.plannedStartDate as Timestamp).toDate()
+                : null,
+            plannedEndDate: newTaskToSave.plannedEndDate instanceof Date
+              ? newTaskToSave.plannedEndDate
+              : (newTaskToSave.plannedEndDate && typeof (newTaskToSave.plannedEndDate as Timestamp).toDate === 'function')
+                ? (newTaskToSave.plannedEndDate as Timestamp).toDate()
+                : null,
             level: newTaskToSave.level,
             parentId: newTaskToSave.parentId,
-            // createdAt, updatedAt はFirestoreから読み込む際にセットされるため、ここでは undefined
-            // actualStartDate, actualEndDate も最初は null か undefined
+            wbsNumber: newTaskToSave.wbsNumber,
+            category: newTaskToSave.category,
+            otherAssigneeIds: newTaskToSave.otherAssigneeIds || [],
+            decisionMakerId: newTaskToSave.decisionMakerId,
+            blockerStatus: newTaskToSave.blockerStatus,
+            actualStartDate: null,
+            actualEndDate: null,
+            progress: newTaskToSave.progress,
+            // ganttItemId や updatedAt は GanttTaskDisplayItem の型定義に含まれていれば、
+            // 必要に応じて newTaskToSave から、または固定値で設定します。
+            // ganttItemId: ganttTaskDocRef.id, // 例
+            // updatedAt: new Date(), // 例
           };
           this.ganttTasks = [...this.ganttTasks, newTaskForDisplay];
-          console.log('画面のタスクリストに新しいタスクを追加しました:', newTaskForDisplay);
           this.cdr.detectChanges();
 
         })
         .catch(error => {
-          console.error('Firestoreへのタスク保存に失敗しました:', error);
-          // ユーザーにエラーを通知する処理などをここに追加 (例: Snackbar)
+          console.error('Firestoreへのガントタスク(Task)保存に失敗しました:', error);
         });
-
     } else {
-      console.log('ダイアログがキャンセルされたか、無効なデータが渡されました。');
+      console.log('ダイアログがキャンセルされたか、必須データ(taskName, dates, assigneeId)が不足しています。');
     }
   });
 }
@@ -339,7 +436,6 @@ getBarWidth(startDate: Date, endDate: Date): number {
       }
     });
 
-  
 
     dialogRef.afterClosed().subscribe(result => { // ダイアログが閉じた後の処理
       console.log('編集ダイアログが閉じられました。結果:', result);
@@ -373,94 +469,132 @@ getBarWidth(startDate: Date, endDate: Date): number {
 
     // ... (openEditTaskDialog メソッドの後など、クラス内の適切な場所) ...
 
+    public trackByTaskId(index: number, taskItem: GanttTaskDisplayItem): string {
+      return taskItem.id;
+    }
+
     selectTask(task: GanttTaskDisplayItem): void {
-      console.log('selectTask CALLED with task name:', task.name, 'and ID:', task.id);
+      // console.log(`%cselectTask CALLED with task: ${task.name} (ID: ${task.id})`, 'color: blue; font-weight: bold;');
     
-      if (this.selectedTask && this.selectedTask.id === task.id) {
+      const isCurrentlySelected = this.selectedTask && this.selectedTask.id === task.id;
+      // console.log(`  - Currently selected task ID: ${this.selectedTask ? this.selectedTask.id : 'null'}`);
+      // console.log(`  - Clicked task ID: ${task.id}`);
+      // console.log(`  - Is this task currently selected (this.selectedTask.id === task.id)?: ${isCurrentlySelected}`);
+    
+      if (isCurrentlySelected) {
+        // console.log('  - DESELECTING task...');
         this.selectedTask = null;
-        console.log('タスク選択解除:', task.name);
-      } else {
-        this.selectedTask = task;
-        console.log('タスク選択:', this.selectedTask);
-      }
-    
-      // ★★★ ここからが重要 ★★★
-      if (this.selectedTask) {
-        // クリックされたタスク（task）と、現在選択されているタスク（this.selectedTask）のIDを比較
-        // HTMLのngClassの条件と同じ比較。taskItem.id === selectedTask?.id に対応するのは、
-        // this.selectedTask が null でないことを確認した上で、ループで回ってくる各 task (ここでは引数の task) と
-        // 現在選択されている this.selectedTask.id を比較することになる。
-        // しかし、ngClass の評価は各行で行われるため、ここでの比較は少し意味合いが異なる。
-        // ngClass の条件を正しく評価するためには、ループ内の taskItem と、コンポーネント全体の selectedTask を比較する。
-        // このメソッドが呼ばれた時点での task は、まさに ngClass で評価される taskItem と同じ。
-        // そして、this.selectedTask は ngClass で評価される selectedTask と同じ。
-        const idsAreEqual = task.id === this.selectedTask.id; 
-        console.log(`IDs for ngClass evaluation: task.id ('${task.id}', type: ${typeof task.id}) === this.selectedTask.id ('${this.selectedTask.id}', type: ${typeof this.selectedTask.id}). Result: ${idsAreEqual}`);
+        // console.log('  - AFTER DESELECT: this.selectedTask is now:', this.selectedTask);
+        this.cdr.detectChanges(); // ★★★ 選択解除直後に変更検知 ★★★
+        // console.log('  - detectChanges called immediately after setting selectedTask to null');
         
-        // デバッグ用に、HTMLのngClassが参照する selectedTask のIDも確認
-        console.log(`Current this.selectedTask.id for ngClass: '${this.selectedTask.id}' (type: ${typeof this.selectedTask.id})`);
-    
+        const clickedRowElement = this.el.nativeElement.querySelector('#task-row-' + task.id);
+        if (clickedRowElement && typeof clickedRowElement.blur === 'function') {
+          clickedRowElement.blur();
+          // console.log(`Blurred element: #task-row-${task.id}`);
+        }
+
       } else {
-        console.log('selectedTask is now null. ngClass condition will be false.');
+        // console.log('  - SELECTING task...');
+        this.selectedTask = task;
+        // console.log('  - AFTER SELECT: this.selectedTask is now:', this.selectedTask);
+        this.cdr.detectChanges(); 
       }
-      // ★★★ ここまで ★★★
     
-      this.cdr.detectChanges();
-    }
-    // ★ 削除確認と実行のメソッド (雛形)
-    confirmDeleteTask(): void {
-      if (!this.selectedTask) {
-        console.warn('削除対象のタスクが選択されていません。');
-        return;
+      if (this.selectedTask) {
+        console.log(`  - For [ngClass] evaluation (after update): current this.selectedTask.id = '${this.selectedTask.id}' (type: ${typeof this.selectedTask.id})`);
+      } else {
+        console.log('  - For [ngClass] evaluation (after update): this.selectedTask is null. All rows should be unselected.');
       }
-  
-      const taskToDelete = this.selectedTask; // 削除実行前に保持
-  
-      // ここで MatDialog を使って確認ダイアログを開く
-      // const dialogRef = this.dialog.open(YourConfirmDialogComponent, { // 確認ダイアログ用のコンポーネントが必要
-      //   width: '300px',
-      //   data: { message: `タスク「${taskToDelete.name}」を削除してもよろしいですか？ (子タスクも全て削除されます)` }
-      // });
-  
-      // dialogRef.afterClosed().subscribe(result => {
-      //   if (result === true) { // 確認ダイアログで「はい」がクリックされた場合
-      //     console.log('削除を実行します:', taskToDelete);
-      //     // this.projectService.deleteGanttTaskRecursive(taskToDelete.id)
-      //     //   .then(() => {
-      //     //     console.log('タスク削除成功 (Firestore):', taskToDelete.id);
-      //     //     this.ganttTasks = this.ganttTasks.filter(t => t.id !== taskToDelete.id); // ★ 画面からも削除 (子タスクの画面からの削除も必要)
-      //     //     // TODO: 子タスクも ganttTasks 配列からフィルタリングする必要がある
-      //     //     this.selectedTask = null; // 選択解除
-      //     //     this.cdr.detectChanges();
-      //     //   })
-      //     //   .catch(error => {
-      //     //     console.error('タスク削除失敗 (Firestore):', error);
-      //     //     // ユーザーにエラー通知
-      //     //   });
-      //   } else {
-      //     console.log('削除がキャンセルされました。');
-      //   }
-      // });
-      alert(`（仮）タスク「${taskToDelete.name}」の削除処理を実行します。(確認ダイアログと実際の削除ロジックは後ほど実装)`); // ★ 現時点ではalertで仮実装
+    
+      this.cdr.detectChanges(); // ★★★ メソッドの最後に再度変更検知 ★★★
+      console.log('%cselectTask FINISHED and final detectChanges called', 'color: blue; font-weight: bold;');
     }
-  // ... (クラスの残りの部分) ...
+
+
+    // gantt-chart.component.ts
+
+// ... (import文や他のプロパティ・メソッドは変更なし) ...
+
+confirmDeleteTask(): void {
+  if (!this.selectedTask) {
+    // console.warn('削除対象のタスクが選択されていません。');
+    // 必要であればユーザーへの通知（Snackbarなど）
+    return;
+  }
+
+  const taskToDelete = this.selectedTask;
+  const taskName = taskToDelete.name;
+
+  const dialogRef = this.dialog.open<ConfirmDialogComponent, ConfirmDialogData, boolean>(ConfirmDialogComponent, {
+    width: '450px',
+    data: { message: `タスク「${taskName}」を削除してもよろしいですか？\nこの操作は取り消せません。\n子タスクがある場合、それらも全て削除されます。` }
+  });
+
+  dialogRef.afterClosed().subscribe(result => {
+    // console.log('確認ダイアログが閉じられました。結果:', result);
+    if (result === true) { // ダイアログで「削除」が選択された場合
+      // console.log('削除を実行します:', taskToDelete);
+      
+      this.projectService.deleteGanttTaskRecursive(taskToDelete.id) // ★ ProjectServiceのメソッド呼び出し
+        .then(() => {
+          // console.log(`タスク「${taskName}」(ID: ${taskToDelete.id}) およびその子タスクがFirestoreから正常に削除されました。`);
+          
+          // UI（ローカルのganttTasks配列）を更新
+          this.removeTaskAndChildrenFromLocalList(taskToDelete.id);
+
+          this.selectedTask = null; // 選択状態をリセット
+          this.cdr.detectChanges();   // UIを更新
+
+          // ユーザーに成功を通知 (例: Snackbar)
+          // this.snackbar.open(`タスク「${taskName}」を削除しました。`, '閉じる', { duration: 3000 });
+          alert(`タスク「${taskName}」を削除しました。`); // 現状はalert
+
+        })
+        .catch(error => {
+          // console.error(`タスク「${taskName}」の削除中にエラーが発生しました:`, error);
+          // ユーザーにエラーを通知 (例: Snackbar)
+          // this.snackbar.open(`タスク「${taskName}」の削除に失敗しました。`, '閉じる', { duration: 5000 });
+          alert(`タスク「${taskName}」の削除に失敗しました。エラー: ${error.message || error}`);
+        });
+    } else {
+      // console.log('削除がキャンセルされました。');
+    }
+  });
+}
+
+// UI（ローカルのganttTasks配列）からタスクとその子タスクを削除するヘルパーメソッド
+private removeTaskAndChildrenFromLocalList(parentIdToDelete: string): void {
+  const tasksToRemove = new Set<string>(); // 削除対象のIDを格納するSet
+  
+  // 再帰的に削除対象のIDを収集する内部関数
+  const collectIdsToDelete = (currentParentId: string) => {
+    tasksToRemove.add(currentParentId); // まず親を追加
+    const children = this.ganttTasks.filter(task => task.parentId === currentParentId);
+    for (const child of children) {
+      collectIdsToDelete(child.id); // 子に対して再帰呼び出し
+    }
+  };
+
+  collectIdsToDelete(parentIdToDelete); // 最初の親IDから収集開始
+
+  // 収集したIDに基づいてローカルリストからタスクを削除
+  this.ganttTasks = this.ganttTasks.filter(task => !tasksToRemove.has(task.id));
+  console.log('ローカルのタスクリストから削除対象をフィルタリングしました。残りのタスク数:', this.ganttTasks.length);
+}
+  
 
   public logTestClick(task: GanttTaskDisplayItem | null): void {
-    const taskName = task ? task.name : 'Unknown or Null Task';
-    const taskId = task ? task.id : 'N/A';
+
+    // const taskName = task ? task.name : 'Unknown or Null Task';
+    // const taskId = task ? task.id : 'N/A';
+    // alert(`DEBUG: logTestClick - Step 1\nTask Name: ${taskName}\nTask ID: ${taskId}`); 
   
-    // ★★★ 最初のalert ★★★
-    // このalertが表示されれば、クリックイベントがこのメソッドを呼び出せていることを意味します。
-    alert(`DEBUG: logTestClick - Step 1\nTask Name: ${taskName}\nTask ID: ${taskId}`); 
-  
-    // if (task) { // ★★★ このifブロックは、次のステップまでコメントアウトしておいてください ★★★
-    //   this.selectTask(task); 
-    // }
-    // ★★★ /ここまでコメントアウト ★★★
-  
-    // ★★★ メソッドの最後に到達したか確認するalert ★★★
-    // このalertが表示されれば、メソッドが途中で中断されずに最後まで実行されたことを意味します。
-    alert('DEBUG: logTestClick - Step 2: Reached end of method.'); 
+     if (task) { 
+       this.selectTask(task); 
+     }
+
+    // alert('DEBUG: logTestClick - Step 2: Reached end of method.'); 
   }
 
 
@@ -470,6 +604,19 @@ getBarWidth(startDate: Date, endDate: Date): number {
 
 
 // ... (クラスの残りの部分)
+
+isTimestamp(obj: unknown): obj is { toDate: () => Date } {
+  return !!obj && typeof (obj as { toDate?: unknown }).toDate === 'function';
+}
+
+get dueDateForDisplay(): Date | null {
+  const dueDate = this.selectedTask?.dueDate;
+  if (!dueDate) return null;
+  if (typeof (dueDate as unknown as { toDate?: unknown }).toDate === 'function') {
+    return (dueDate as unknown as { toDate: () => Date }).toDate();
+  }
+  return dueDate as Date;
+}
 } // GanttChartComponent クラスの閉じ括弧
 
 

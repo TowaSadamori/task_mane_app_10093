@@ -1,6 +1,26 @@
 <h1 mat-dialog-title>タスク追加</h1>
 
 <form [formGroup]="taskForm" (ngSubmit)="onSubmit()">
+
+  <!-- <div style="border: 1px dashed red; padding: 10px; margin-bottom: 10px;">
+    <p><strong>Debug Info (HTML Template):</strong></p>
+    <p>Project Members Count: {{ projectMembers?.length }}</p>
+    <ul *ngIf="projectMembers && projectMembers.length > 0">
+      <li *ngFor="let pMember of projectMembers">
+        ID: {{ pMember?.id }}, Name: {{ pMember?.displayName }}
+      </li>
+    </ul>
+    <p *ngIf="!projectMembers || projectMembers.length === 0">No project members to display.</p>
+
+    <hr>
+    <p>Decision Makers Count: {{ decisionMakers?.length }}</p>
+    <ul *ngIf="decisionMakers && decisionMakers.length > 0">
+      <li *ngFor="let dMaker of decisionMakers">
+        ID: {{ dMaker?.id }}, Name: {{ dMaker?.displayName }}
+      </li>
+    </ul>
+    <p *ngIf="!decisionMakers || decisionMakers.length === 0">No decision makers to display.</p>
+  </div> -->
   <div mat-dialog-content>
     <mat-form-field appearance="fill" class="full-width">
       <mat-label>タスク名</mat-label>
@@ -28,11 +48,45 @@
       <mat-error *ngIf="taskForm.get('plannedEndDate')?.hasError('required')">
         予定終了日は必須です。
       </mat-error>
-      </mat-form-field>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="full-width">
+      <mat-label>担当者</mat-label>
+      <mat-select formControlName="assigneeId" required>
+        <mat-option *ngFor="let member of projectMembers" [value]="member.id">
+          {{ member.displayName }}
+        </mat-option>
+      </mat-select>
+      <mat-error *ngIf="taskForm.get('assigneeId')?.hasError('required') && taskForm.get('assigneeId')?.touched">
+        担当者は必須です。
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="full-width">
+      <mat-label>ToDo期限</mat-label>
+      <input matInput [matDatepicker]="pickerDueDate" formControlName="dueDate" placeholder="期限を選択 (任意)">
+      <mat-datepicker-toggle matSuffix [for]="pickerDueDate"></mat-datepicker-toggle>
+      <mat-datepicker #pickerDueDate></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="full-width">
+      <mat-label>カテゴリ</mat-label>
+      <input matInput type="text" formControlName="category" placeholder="カテゴリを入力 (任意)">
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" class="full-width">
+      <mat-label>意思決定者</mat-label>
+      <mat-select formControlName="decisionMakerId">
+        <mat-option value="">(指定なし)</mat-option>
+        <mat-option *ngFor="let manager of decisionMakers" [value]="manager.id">
+          {{ manager.displayName }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
   </div>
 
   <div mat-dialog-actions align="end">
     <button mat-button type="button" (click)="onNoClick()">キャンセル</button>
-    <button mat-raised-button color="primary" type="submit" [disabled]="taskForm.invalid">追加</button> 
-    </div>
+    <button mat-raised-button color="primary" type="submit" [disabled]="taskForm.invalid">追加</button>
+  </div>
 </form>

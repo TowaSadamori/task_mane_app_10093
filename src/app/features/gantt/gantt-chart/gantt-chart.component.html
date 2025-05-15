@@ -23,6 +23,13 @@
                  [class.weekend]="dayItem.isWeekend"> {{ dayItem.dayNumber }}
             </div>
         </div>
+
+        <div class="task-list-header">
+            <div class="task-list-cell header-cell" style="width: 80px">状況</div>
+            <div class="task-list-cell header-cell" style="width: 70px;">進捗率</div>
+            <div class="task-list-cell header-cell" style="width: 100px">予定開始日</div>
+        </div>
+
     </div>
 
     <div class="main-gantt-area">
@@ -42,22 +49,41 @@
                 <div class="task-list-cell header-cell" style="width: 100px">予定終了日</div>
                 <div class="task-list-cell header-cell" style="width: 70px;">操作</div>
             </div>
+
             
-            <div *ngFor="let taskItem of ganttTasks; let i = index" 
+            <div *ngFor="let taskItem of ganttTasks; let i = index; trackBy: trackByTaskId"
                  class="task-list-row"
-                 (click)="logTestClick(taskItem)" tabindex="0"
+                 [id]="'task-row-' + taskItem.id" (click)="selectTask(taskItem)"
+                 tabindex="0"
                  (keydown.enter)="selectTask(taskItem)"
                  (keydown.space)="selectTask(taskItem)"
                  [ngClass]="{'selected-task': taskItem.id === selectedTask?.id}">
+
                 <div class="task-list-cell" style="width: 50px;">{{ taskItem.wbsNumber || (i + 1) }}</div>
-                <div class="task-list-cell" style="width: 150px;"
-                     [style.paddingLeft.px]="taskItem.level ? taskItem.level * 20 : 0"> {{ taskItem.name }}</div>
-                <div class="task-list-cell" style="width: 100px;">{{ taskItem.primaryAssigneeId || '-' }}</div>
+                <div class="task-list-cell"
+                     style="width: 150px; cursor: pointer; text-decoration: underline; color: blue;"
+                     [style.paddingLeft.px]="taskItem.level ? taskItem.level * 20 : 0"
+                     (click)="navigateToTaskDetail(taskItem.id); $event.stopPropagation()"
+                     (keydown.enter)="navigateToTaskDetail(taskItem.id); $event.stopPropagation()"
+                     (keydown.space)="navigateToTaskDetail(taskItem.id); $event.stopPropagation()"
+                     tabindex="0"
+                     role="link"
+                     [attr.aria-label]="'タスク「' + taskItem.name + '」の詳細を開く'">
+                     {{ taskItem.name }}
+                </div>
+                <div class="task-list-cell" style="width: 100px;">{{ taskItem.assigneeId || '-' }}</div>
                 <div class="task-list-cell" style="width: 80px;">{{ taskItem.status || '未定義' }}</div>
-                <div class="task-list-cell" style="width: 100px;">{{ taskItem.plannedStartDate | date:'yyyy/MM/dd' }}</div>
-                <div class="task-list-cell" style="width: 100px;">{{ taskItem.plannedEndDate | date:'yyyy/MM/dd' }}</div>
                 <div class="task-list-cell" style="width: 70px;">
-                    <button (click)="openEditTaskDialog(taskItem); $event.stopPropagation()">編集</button> 
+                  {{ taskItem.progress === null || taskItem.progress === undefined ? '-' : (taskItem.progress + '%') }}
+                </div>
+                <div class="task-list-cell" style="width: 100px;">
+                    {{ isTimestamp(taskItem.plannedStartDate) ? taskItem.plannedStartDate.toDate() : taskItem.plannedStartDate | date:'yyyy/MM/dd' }}
+                </div>
+                <div class="task-list-cell" style="width: 100px;">
+                    {{ isTimestamp(taskItem.plannedEndDate) ? taskItem.plannedEndDate.toDate() : taskItem.plannedEndDate | date:'yyyy/MM/dd' }}
+                </div>
+                <div class="task-list-cell" style="width: 70px;">
+                    <button (click)="openEditTaskDialog(taskItem); $event.stopPropagation()">編集</button>
                 </div>
             </div>
         </div>
@@ -68,8 +94,8 @@
             <div *ngFor="let taskItem of ganttTasks" 
                  class="gantt-row"
                  [ngClass]="{'selected-task-bar-indicator': taskItem.id === selectedTask?.id}"> <div class="gantt-bar"
-                     [style.left.px]="getBarLeftPosition(taskItem.plannedStartDate)"
-                     [style.width.px]="getBarWidth(taskItem.plannedStartDate, taskItem.plannedEndDate)"
+                     [style.left.px]="getBarLeftPosition(taskItem.plannedStartDate || timelineStartDate)"
+                     [style.width.px]="getBarWidth(taskItem.plannedStartDate || timelineStartDate, taskItem.plannedEndDate || timelineStartDate)"
                      [title]="taskItem.name + ' (' + (taskItem.plannedStartDate | date:'MM/dd') + '-' + (taskItem.plannedEndDate | date:'MM/dd') + ')'"> 
                      {{ taskItem.name }}
                 </div>

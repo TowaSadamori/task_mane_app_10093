@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { Observable, switchMap, of, filter } from 'rxjs';
-import { Task, TaskService, DailyLog } from '../../../../core/task.service';
+import {  TaskService, DailyLog, TaskDisplay } from '../../../../core/task.service';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
@@ -45,7 +45,7 @@ export class TaskDetailComponent implements OnInit {
   private dialog = inject(MatDialog);
   private router = inject(Router);
 
-  task$!: Observable<Task | undefined>
+  task$!: Observable<TaskDisplay | undefined>;
   // isEditing = false;
 
   openDailyLogForm(taskId: string, log?: DailyLog): void {
@@ -78,7 +78,6 @@ export class TaskDetailComponent implements OnInit {
   readonly dailyLogColumns: string[] = ['workDate', 'actualTime', 'progressRate', 'workerCount', 'supervisor', 'comment','photo'];
 
 
-  
 
   // constructor() {}
 
@@ -101,10 +100,10 @@ export class TaskDetailComponent implements OnInit {
   }
 
 
-  openEditDialog(task: Task): void {
+  openEditDialog(task: TaskDisplay): void {
     const dialogRef = this.dialog.open(TaskFormComponent,{
       width: '600px',
-      data: task,
+      data: task, // TaskDisplay 型の task を渡す
     });
 
     dialogRef.afterClosed().subscribe(result => {

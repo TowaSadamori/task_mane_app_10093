@@ -127,11 +127,13 @@
 // ... (既存のスタイル) ...
 
 .task-list-row {
-    // ... (既存のスタイルがあれば) ...
-    cursor: pointer; // クリック可能であることを示すカーソル
-    &:hover {
-      background-color: #f0f0f0; // ホバー時の背景色 (任意)
-    }
+    cursor: pointer;
+    // &:not(.selected-task):hover { /* ★ :not(.selected-task) を追加して、hoverを有効化 */
+    //   background-color: #f0f0f0; /* ホバー時の背景色 */
+    // }
+  }
+  .selected-task {
+    background-color: #e0e0ff !important; /* 選択された行の背景色 */
   }
   
   .selected-task {

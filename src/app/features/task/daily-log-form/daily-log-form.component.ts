@@ -134,11 +134,11 @@ export class DailyLogFormComponent implements OnInit {
 
     const logData : NewDailyLogData = {
       workDate: Timestamp.fromDate(workDate),
-      reporterId: 'TODO: Get current user ID',
+      reporterId: 'TODO: Get current user ID', // ★ 要実際のユーザーID取得
       actualStartTime: formValue.actualStartTime ? this.timeStringToTimestamp(workDate, formValue.actualStartTime) : null,
       actualEndTime: formValue.actualEndTime ? this.timeStringToTimestamp(workDate, formValue.actualEndTime) : null,
       actualBreakTime: formValue.actualBreakTime,
-      progressRate: formValue.progressRate,
+      progressRate: formValue.progressRate, // ★ この進捗率を使用する
       workerCount: formValue.workerCount,
       supervisor: formValue.supervisor,
       comment: formValue.comment,
@@ -146,17 +146,41 @@ export class DailyLogFormComponent implements OnInit {
       plannedEndTime: this.initialData?.plannedEndTime ?? null,
       plannedBreakTime: this.initialData?.plannedBreakTime ?? null,
       photos: photosToSave ? photosToSave : [],
-
+      // ganttTaskId は NewDailyLogData には不要 (DailyLog が属する親TaskのIDが taskId として渡ってくるため)
     };
 
     try { 
+
+      const progressToUpdate = formValue.progressRate; // 日次ログフォームの進捗率
+      if (typeof progressToUpdate === 'number') { // number型であり、nullやundefinedでないことを確認
+        try {
+          await this.taskService.updateTaskProgress(this.taskId, progressToUpdate);
+          console.log(`Task ID: ${this.taskId} の進捗を ${progressToUpdate}% に更新しました。`);
+        } catch (taskUpdateError) {
+          console.error(`Task ID: ${this.taskId} の進捗更新に失敗しました。`, taskUpdateError);
+          // ここでユーザーに通知することも検討 (例: alert や Snackbar)
+          // ただし、日次ログ自体の保存は続行する（あるいはエラー処理方針による）
+          this.formError = 'タスク本体の進捗更新に失敗しましたが、日次ログの保存は試みます。';
+        }
+      } else {
+        console.warn(`Task ID: ${this.taskId} の進捗更新はスキップされました。progressRateが不正です:`, progressToUpdate);
+      }
+
+
       if(this.isEditMode && this.initialData?.id) {
         await this.taskService.updateDailyLog(this.taskId, this.initialData.id, logData);
         console.log('日次ログ更新成功: Log ID:', this.initialData.id);
+
+
+
         this.dialogRef.close('saved');
       } else {
         const docRef = await this.taskService.addDailyLog(this.taskId, logData);
         console.log('日次ログ保存成功: Document written with ID:', docRef.id);
+
+
+
+
         this.dialogRef.close('created');
       }
 
