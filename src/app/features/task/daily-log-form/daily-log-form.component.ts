@@ -1,10 +1,10 @@
-import { 
-  Component, 
-  OnInit, 
-  inject, 
-//  Input, 
+import {
+  Component,
+  OnInit,
+  inject,
+//  Input,
   Inject
- } from '@angular/core';
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -12,19 +12,20 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { 
+import {
   TaskService,
-  // Task,
   DailyLog,
   NewDailyLogData,
   PhotoEntry,
+  Task // ★ Task インターフェースをインポート
 } from '../../../core/task.service';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { Timestamp } from '@angular/fire/firestore';
+import { Timestamp, serverTimestamp } from '@angular/fire/firestore'; // ★ serverTimestamp をインポート
 import { MatIconModule } from '@angular/material/icon';
 import { StorageService } from '../../../core/storage.service';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable, BehaviorSubject, firstValueFrom, of } from 'rxjs'; // ★ firstValueFrom, of をインポート
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { catchError } from 'rxjs/operators'; // ★ catchError をインポート
 
 export interface DailyLogData {
   taskId: string;
@@ -42,14 +43,12 @@ export interface DailyLogData {
     MatButtonModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    // MatDialogModule,
     MatIconModule,
     MatProgressBarModule,
   ],
   templateUrl:'./daily-log-form.component.html',
   styleUrls: ['./daily-log-form.component.scss'],
 })
-
 export class DailyLogFormComponent implements OnInit {
   dailyLogForm!: FormGroup;
   formError: string | null = null;
@@ -63,19 +62,14 @@ export class DailyLogFormComponent implements OnInit {
   private storageService = inject(StorageService);
   selectedFileName: string | null = null;
   private progressSubject = new BehaviorSubject<number | undefined>(undefined);
-
   uploadProgress$ : Observable<number | undefined> = this.progressSubject.asObservable();
-
   uploadPhotoUrl: string | null = null;
-  
   uploadedPhotos: PhotoEntry[] = [];
-
-  // @Input() taskId!: string;
 
   constructor(
     private dialogRef: MatDialogRef<DailyLogFormComponent>,
     @Inject(MAT_DIALOG_DATA) public data: DailyLogData
-  ) { 
+  ) {
     if(data?.taskId) {
       this.taskId = data.taskId;
     }
@@ -87,7 +81,7 @@ export class DailyLogFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.dailyLogForm = new FormGroup({
-      'workDate': new FormControl<Timestamp | null>(null, [Validators.required]),
+      'workDate': new FormControl<Date | null>(null, [Validators.required]), // ★ 型を Date | null に変更 (MatDatepickerはDateを返す)
       'actualStartTime': new FormControl('', [Validators.required]),
       'actualEndTime': new FormControl('', [Validators.required]),
       'actualBreakTime': new FormControl<number | null>(null, [Validators.required, Validators.min(0)]),
@@ -103,8 +97,7 @@ export class DailyLogFormComponent implements OnInit {
         workDate: this.initialData.workDate?.toDate() ?? null,
         actualStartTime: this.timestampToTimeString(this.initialData.actualStartTime),
         actualEndTime: this.timestampToTimeString(this.initialData.actualEndTime),
-      }
-
+      };
       this.dailyLogForm.patchValue(formData);
       console.log('編集モード: フォームに初期値を設定しました', formData);
     }
@@ -122,7 +115,9 @@ export class DailyLogFormComponent implements OnInit {
     this.formError = null;
 
     const formValue = this.dailyLogForm.value;
-    const workDate = formValue.workDate instanceof Date ? formValue.workDate : (formValue.workDate ?.toDate ? formValue.workDate.toDate() : new Date());
+    // workDate はフォームから Date オブジェクトとして取得できるはず
+    const workDate = formValue.workDate instanceof Date ? formValue.workDate : new Date();
+
 
     let photosToSave: PhotoEntry[] | undefined = undefined;
     if(this.uploadedPhotos.length > 0) {
@@ -131,14 +126,13 @@ export class DailyLogFormComponent implements OnInit {
       photosToSave = this.initialData.photos;
     }
 
-
     const logData : NewDailyLogData = {
-      workDate: Timestamp.fromDate(workDate),
-      reporterId: 'TODO: Get current user ID', // ★ 要実際のユーザーID取得
+      workDate: Timestamp.fromDate(workDate), // DateからTimestampに変換
+      reporterId: 'TODO: Get current user ID',
       actualStartTime: formValue.actualStartTime ? this.timeStringToTimestamp(workDate, formValue.actualStartTime) : null,
       actualEndTime: formValue.actualEndTime ? this.timeStringToTimestamp(workDate, formValue.actualEndTime) : null,
       actualBreakTime: formValue.actualBreakTime,
-      progressRate: formValue.progressRate, // ★ この進捗率を使用する
+      progressRate: formValue.progressRate,
       workerCount: formValue.workerCount,
       supervisor: formValue.supervisor,
       comment: formValue.comment,
@@ -146,201 +140,246 @@ export class DailyLogFormComponent implements OnInit {
       plannedEndTime: this.initialData?.plannedEndTime ?? null,
       plannedBreakTime: this.initialData?.plannedBreakTime ?? null,
       photos: photosToSave ? photosToSave : [],
-      // ganttTaskId は NewDailyLogData には不要 (DailyLog が属する親TaskのIDが taskId として渡ってくるため)
     };
 
-    try { 
-
-      const progressToUpdate = formValue.progressRate; // 日次ログフォームの進捗率
-      if (typeof progressToUpdate === 'number') { // number型であり、nullやundefinedでないことを確認
+    try {
+      // --- Taskの進捗とステータス更新 ---
+      const progressToUpdate = formValue.progressRate;
+      if (typeof progressToUpdate === 'number' && progressToUpdate >= 0 && progressToUpdate <= 100) {
+        let newStatus: 'todo' | 'doing' | 'done' = 'todo';
+        if (progressToUpdate > 0 && progressToUpdate < 100) {
+          newStatus = 'doing';
+        } else if (progressToUpdate === 100) {
+          newStatus = 'done';
+        }
         try {
-          await this.taskService.updateTaskProgress(this.taskId, progressToUpdate);
-          console.log(`Task ID: ${this.taskId} の進捗を ${progressToUpdate}% に更新しました。`);
+          await this.taskService.updateTaskProgressAndStatus(this.taskId, progressToUpdate, newStatus);
+          console.log(`Task ID: ${this.taskId} の進捗を ${progressToUpdate}%、ステータスを「${newStatus}」に更新しました。`);
         } catch (taskUpdateError) {
-          console.error(`Task ID: ${this.taskId} の進捗更新に失敗しました。`, taskUpdateError);
-          // ここでユーザーに通知することも検討 (例: alert や Snackbar)
-          // ただし、日次ログ自体の保存は続行する（あるいはエラー処理方針による）
-          this.formError = 'タスク本体の進捗更新に失敗しましたが、日次ログの保存は試みます。';
+          console.error(`Task ID: ${this.taskId} の進捗およびステータス更新に失敗しました。`, taskUpdateError);
+          this.formError = 'タスク本体の進捗・ステータス更新に失敗しましたが、日次ログの保存は試みます。';
         }
       } else {
         console.warn(`Task ID: ${this.taskId} の進捗更新はスキップされました。progressRateが不正です:`, progressToUpdate);
       }
 
-
+      // --- 日次ログ自体の保存処理 ---
       if(this.isEditMode && this.initialData?.id) {
         await this.taskService.updateDailyLog(this.taskId, this.initialData.id, logData);
         console.log('日次ログ更新成功: Log ID:', this.initialData.id);
-
-
-
-        this.dialogRef.close('saved');
       } else {
         const docRef = await this.taskService.addDailyLog(this.taskId, logData);
         console.log('日次ログ保存成功: Document written with ID:', docRef.id);
+      }
 
+      // ▼▼▼ 実績開始日・終了日の更新ロジック (ここから挿入) ▼▼▼
+      try {
+        const allLogsObservable = this.taskService.getDailyLogs(this.taskId);
+        const allLogs = await firstValueFrom(allLogsObservable.pipe(catchError(err => {
+          console.error('実績日更新のための日次ログ取得エラー:', err);
+          return of([]);
+        })));
 
+        let taskUpdateNeeded = false;
+        const taskUpdateData: Partial<Task> = {};
 
+        if (allLogs && allLogs.length > 0) {
+          const sortedLogsByWorkDateAsc = [...allLogs].sort((a, b) =>
+            (this.getMillis(a.workDate) ?? Infinity) - (this.getMillis(b.workDate) ?? Infinity)
+          );
+          const earliestLog = sortedLogsByWorkDateAsc[0];
 
+          if (earliestLog && earliestLog.workDate) {
+            const newActualStartDate = earliestLog.workDate; // This is a Timestamp
+
+            const currentTask = await firstValueFrom(this.taskService.getTask(this.taskId).pipe(catchError(() => of(undefined))));
+            if (currentTask) { // currentTask が undefined でないことを確認
+                if (!currentTask.actualStartDate ||
+                    (currentTask.actualStartDate instanceof Timestamp && // 型ガードを追加
+                     this.getMillis(newActualStartDate) !== undefined &&
+                     this.getMillis(currentTask.actualStartDate) !== undefined &&
+                     this.getMillis(newActualStartDate)! < this.getMillis(currentTask.actualStartDate)!)) {
+                  taskUpdateData.actualStartDate = newActualStartDate;
+                  taskUpdateNeeded = true;
+                }
+            } else { // currentTask が見つからない場合 (通常はありえないが念のため)
+                 taskUpdateData.actualStartDate = newActualStartDate; // 新規タスクで初めてログを付ける場合など
+                 taskUpdateNeeded = true;
+            }
+          }
+
+          const currentTaskForEndDate = await firstValueFrom(this.taskService.getTask(this.taskId).pipe(catchError(() => of(undefined))));
+          if (currentTaskForEndDate && currentTaskForEndDate.status === 'done') {
+            const latestLogForEndDate = sortedLogsByWorkDateAsc[sortedLogsByWorkDateAsc.length - 1];
+            if (latestLogForEndDate && latestLogForEndDate.workDate) {
+              const newActualEndDate = latestLogForEndDate.workDate; // This is a Timestamp
+              if (!currentTaskForEndDate.actualEndDate ||
+                  (currentTaskForEndDate.actualEndDate instanceof Timestamp && // 型ガードを追加
+                   this.getMillis(newActualEndDate) !== undefined &&
+                   this.getMillis(currentTaskForEndDate.actualEndDate) !== undefined &&
+                   this.getMillis(newActualEndDate)! > this.getMillis(currentTaskForEndDate.actualEndDate)!)) {
+                taskUpdateData.actualEndDate = newActualEndDate;
+                taskUpdateNeeded = true;
+              }
+            }
+          }
+        }
+
+        if (taskUpdateNeeded) {
+          taskUpdateData.updatedAt = serverTimestamp();
+          await this.taskService.updateTask(this.taskId, taskUpdateData);
+          console.log(`Task ID: ${this.taskId} の実績日が更新されました。`, taskUpdateData);
+        }
+      } catch (dateUpdateError) {
+        console.error(`Task ID: ${this.taskId} の実績日更新中にエラーが発生しました。`, dateUpdateError);
+      }
+      // ▲▲▲ 実績開始日・終了日の更新ロジックここまで ▲▲▲
+
+      // ダイアログを閉じる処理
+      if(this.isEditMode) {
+        this.dialogRef.close('saved');
+      } else {
         this.dialogRef.close('created');
       }
 
     } catch (error: unknown) {
-      console.error('日次ログ保存失敗: ', error);
-      let errorMessage = '日次ログの保存/更新に失敗しました。時間をおいて再度お試しください。';
+      console.error('日次ログ保存またはTask更新全体でエラー: ', error);
+      let errorMessage = '処理中にエラーが発生しました。';
       if (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string') {
         errorMessage = error.message;
       }
       this.formError = errorMessage;
-    }finally {
+    } finally {
       this.isLoading = false;
     }
   }
 
-    private timeStringToTimestamp(workDate: Date, timeString: string): Timestamp | null {
-      if(!timeString || !timeString.includes(':')) {
-        console.error('不正確な時刻フォーマットです:', timeString);
+  private timeStringToTimestamp(workDate: Date, timeString: string): Timestamp | null {
+    if(!timeString || !timeString.includes(':')) {
+      console.error('不正確な時刻フォーマットです:', timeString);
+      return null;
+    }
+    try {
+      const [hours, minutes] = timeString.split(':').map(Number);
+      if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59 ){
+        console.error('時刻の数値が無効です:', hours, minutes);
         return null;
       }
-      try {
-        const [hours, minutes] = timeString.split(':').map(Number);
-        if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59 ){
-          console.error('時刻の数値が無効です:', hours, minutes);
-          return null;
-        }
-        const dateWithTime = new Date(workDate);
-        dateWithTime.setHours(hours, minutes, 0, 0);
-        return Timestamp.fromDate(dateWithTime);
-      } catch (error) {
-        console.error('時刻からTimestampへの変換中にエラー:', error);
-        return null;
-      }
+      const dateWithTime = new Date(workDate);
+      dateWithTime.setHours(hours, minutes, 0, 0);
+      return Timestamp.fromDate(dateWithTime);
+    } catch (error) {
+      console.error('時刻からTimestampへの変換中にエラー:', error);
+      return null;
     }
-
-    private timestampToTimeString(timestamp: Timestamp | null | undefined): string {
-      if (!timestamp) {
-        return '';
-      }
-      try {
-        const date = timestamp.toDate();
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        return `${hours}:${minutes}`;
-      } catch (error) {
-        console.error('Timestampから時刻文字列へ変換中にエラー:', error);
-        return '';
-      }
-    }
-
-    onFileSelect(event: Event, isFormCamera?: boolean): void {
-      const element = event.currentTarget as HTMLInputElement;
-      const fileList : FileList | null = element.files;
-
-      console.log(`onFileSelect called. isFormCamera: ${!!isFormCamera}`);
-
-      if (fileList && fileList.length > 0) {
-        
-
-        console.log(`${fileList.length}個のファイルが選択されました。`);
-        for (const file of Array.from(fileList)) {
-          console.log('Processing file:', file.name);
-          this.startUpload(file, !!isFormCamera);
-        }
-        element.value = '';
-
-      } else {
-        console.log('ファイル選択がキャンセルされました、またファイルがありません。');
-      }
-    }
-
-    private startUpload(file: File, isFormCamera?: boolean): void {
-      if (!this.taskId) {
-        console.error('Task ID is missing, cannot upload file');
-        // alert('エラー:タスクIDがないためファイルをアップロードできません。');
-        // this.selectedFileName = null;
-        this.progressSubject.next(undefined);
-        return;
-      }
-      const photoId = crypto.randomUUID();
-      const safeFileName = encodeURIComponent(file.name);
-      const filePath = `task_photos/${this.taskId}/${photoId}/${safeFileName}`;
-
-      console.log(`Uploading file to: ${file.name} to: ${filePath}`);
-      this.progressSubject.next(0);
-      const uploadTask = this.storageService.uploadFile(file, filePath);
-
-      uploadTask.on('state_changed',
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          this.progressSubject.next(progress);
-          console.log(`Upload of ${file.name} is ${progress}% done`);
-        },
-        (error) => {
-          console.error(`Upload filed for ${file.name}:`, error);
-          this.progressSubject.next(undefined);
-          // this.selectedFileName = null;
-        }
-      );
-
-      uploadTask.then(
-        async (snapshot) => {
-          console.log(`Upload successful for ${file.name}!`, snapshot);
-          // alert('ファイルアップロード成功');
-          // this.selectedFileName = file.name + '(アップロード完了)';
-          this.progressSubject.next(undefined);
-          
-          try {
-            const downloadUrl = await this.storageService.getDownloadUrl(filePath);
-            console.log(`Download URL for ${file.name}:`, downloadUrl);
-
-            const newPhotoEntry: PhotoEntry = {
-              id: photoId,
-              url: downloadUrl,
-              fileName: file.name,
-              uploadedAt: Timestamp.now(),
-              caption: '',
-              wasTakenByCamera:!!isFormCamera
-            };
-            
-
-            this.uploadedPhotos.push(newPhotoEntry);
-            console.log('Updated uploadedPhotos:', this.uploadedPhotos);
-
-          } catch (urlError) {
-            console.error(`Filed to get download URL for ${file.name}:`, urlError);
-            // alert('アップロードには成功しましたが、URLの取得に失敗しました。');
-            // this.selectedFileName = file.name + '(URL取得失敗)';
-            // this.uploadPhotoUrl = null;
-          }
-        },
-        (error) => {
-          console.error(`Upload failed for ${file.name} (Promise catch):`, error);
-          this.progressSubject.next(undefined);
-          // this.selectedFileName = null;
-          // alert(`ファイルアップロード失敗: ${error.message || '不明なエラー'}`);
-        }
-      );
-    }
-
-    removePhoto(indexToRemove: number): void {
-      if (indexToRemove >= 0 && indexToRemove < this.uploadedPhotos.length) {
-        const removedPhoto = this.uploadedPhotos.splice(indexToRemove, 1);
-        console.log('Removed photo:', removedPhoto[0]?.fileName, 'New list:', this.uploadedPhotos);
-      }
-    }
-
-    onCancelClick(): void{
-      console.log('キャンセル処理を開始します。');
-
-      if (this.uploadedPhotos.length > 0) {
-        console.log('添付済み(未保存)の写真情報があります。リストをクリアします。現在のリスト:', this.uploadedPhotos);
-        this.uploadedPhotos = [];
-
-      }
-      this.dialogRef.close();
-      console.log('日次作業ログ入力ダイアログがキャンセル操作により閉じられました。');
-    }
-
-    // console.log('Daily Log Form Submitted!', this.dailyLogForm.value);
   }
 
+  private timestampToTimeString(timestamp: Timestamp | null | undefined): string {
+    if (!timestamp) {
+      return '';
+    }
+    try {
+      const date = timestamp.toDate();
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `${hours}:${minutes}`;
+    } catch (error) {
+      console.error('Timestampから時刻文字列へ変換中にエラー:', error);
+      return '';
+    }
+  }
 
+  onFileSelect(event: Event, isFormCamera?: boolean): void {
+    const element = event.currentTarget as HTMLInputElement;
+    const fileList : FileList | null = element.files;
+    console.log(`onFileSelect called. isFormCamera: ${!!isFormCamera}`);
+    if (fileList && fileList.length > 0) {
+      console.log(`${fileList.length}個のファイルが選択されました。`);
+      for (const file of Array.from(fileList)) {
+        console.log('Processing file:', file.name);
+        this.startUpload(file, !!isFormCamera);
+      }
+      element.value = '';
+    } else {
+      console.log('ファイル選択がキャンセルされました、またファイルがありません。');
+    }
+  }
+
+  private startUpload(file: File, isFormCamera?: boolean): void {
+    if (!this.taskId) {
+      console.error('Task ID is missing, cannot upload file');
+      this.progressSubject.next(undefined);
+      return;
+    }
+    const photoId = crypto.randomUUID();
+    const safeFileName = encodeURIComponent(file.name);
+    const filePath = `task_photos/${this.taskId}/${photoId}/${safeFileName}`;
+    console.log(`Uploading file to: ${file.name} to: ${filePath}`);
+    this.progressSubject.next(0);
+    const uploadTask = this.storageService.uploadFile(file, filePath);
+
+    uploadTask.on('state_changed',
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        this.progressSubject.next(progress);
+        console.log(`Upload of ${file.name} is ${progress}% done`);
+      },
+      (error) => {
+        console.error(`Upload filed for ${file.name}:`, error);
+        this.progressSubject.next(undefined);
+      }
+    );
+
+    uploadTask.then(
+      async (snapshot) => {
+        console.log(`Upload successful for ${file.name}!`, snapshot);
+        this.progressSubject.next(undefined);
+        try {
+          const downloadUrl = await this.storageService.getDownloadUrl(filePath);
+          console.log(`Download URL for ${file.name}:`, downloadUrl);
+          const newPhotoEntry: PhotoEntry = {
+            id: photoId,
+            url: downloadUrl,
+            fileName: file.name,
+            uploadedAt: Timestamp.now(),
+            caption: '',
+            wasTakenByCamera:!!isFormCamera
+          };
+          this.uploadedPhotos.push(newPhotoEntry);
+          console.log('Updated uploadedPhotos:', this.uploadedPhotos);
+        } catch (urlError) {
+          console.error(`Filed to get download URL for ${file.name}:`, urlError);
+        }
+      },
+      (error) => {
+        console.error(`Upload failed for ${file.name} (Promise catch):`, error);
+        this.progressSubject.next(undefined);
+      }
+    );
+  }
+
+  removePhoto(indexToRemove: number): void {
+    if (indexToRemove >= 0 && indexToRemove < this.uploadedPhotos.length) {
+      const removedPhoto = this.uploadedPhotos.splice(indexToRemove, 1);
+      console.log('Removed photo:', removedPhoto[0]?.fileName, 'New list:', this.uploadedPhotos);
+    }
+  }
+
+  async onCancelClick(): Promise<void> {
+    console.log('キャンセル処理を開始します。');
+    if (this.uploadedPhotos.length > 0) {
+      console.log('添付済み(未保存)の写真情報があります。リストをクリアします。現在のリスト:', this.uploadedPhotos);
+      this.uploadedPhotos = [];
+    }
+    // ★★★ onCancelClick から実績日更新ロジックを削除 ★★★
+    // 実績日の更新は onSubmit で日次ログが実際に保存されたときのみ行うのが自然
+    this.dialogRef.close();
+    console.log('日次作業ログ入力ダイアログがキャンセル操作により閉じられました。');
+  }
+
+  private getMillis(dt: Timestamp | Date | null | undefined): number | undefined {
+    if (dt instanceof Timestamp) return dt.toMillis();
+    if (dt instanceof Date) return dt.getTime();
+    return undefined;
+  }
+}

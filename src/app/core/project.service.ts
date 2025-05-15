@@ -90,6 +90,7 @@ export type GanttTaskUpdatePayload = Partial<Omit<GanttTaskItem, 'id' | 'created
   progress?: number | null;
   level?: number | null;
   parentId?: string | null;
+  updatedAt?: Date | Timestamp | import('@angular/fire/firestore').FieldValue;
 };
 
 

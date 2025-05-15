@@ -1,13 +1,17 @@
-import { Component, OnInit, inject, ChangeDetectorRef, ElementRef } from '@angular/core'; // 重複を削除し、OnInit と inject を確実に追加
+import { Component, OnInit, inject, ChangeDetectorRef, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Project, ProjectService, GanttTaskDisplayItem, NewGanttTaskData } from '../../../core/project.service'; 
-import { TaskService, NewDailyLogData } from '../../../core/task.service'; 
-import { Timestamp } from '@angular/fire/firestore';
+import { Project, ProjectService, GanttTaskDisplayItem, NewGanttTaskData } from '../../../core/project.service'; // GanttTaskUpdatePayload は不要なので削除も検討
+import { TaskService, NewDailyLogData, Task, } from '../../../core/task.service'; // DailyLog をインポート
+import { Timestamp, serverTimestamp } from '@angular/fire/firestore'; // serverTimestamp をインポート
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AddTaskDialogComponent } from './components/add-task-dialog/add-task-dialog.component';
 import { MatButtonModule } from '@angular/material/button';
-import { ConfirmDialogComponent, ConfirmDialogData } from './components/confirm-dialog/confirm-dialog.component'; 
+import { ConfirmDialogComponent, ConfirmDialogData } from './components/confirm-dialog/confirm-dialog.component';
 import { Router } from '@angular/router';
+import { MatSelectModule } from '@angular/material/select';
+import { firstValueFrom, of } from 'rxjs';
+import { catchError } from 'rxjs/operators'; // catchError を追加
+
 
 interface TimelineDay {
   dayNumber: number; // 日 (1, 2, ..., 31)
@@ -38,6 +42,7 @@ interface TimelineYear {
     CommonModule,
     MatDialogModule,
     MatButtonModule,
+    MatSelectModule,
   ],
   templateUrl: './gantt-chart.component.html',
   styleUrl: './gantt-chart.component.scss'
@@ -56,7 +61,8 @@ export class GanttChartComponent implements OnInit {
   constructor(
     public dialog: MatDialog,
     private cdr: ChangeDetectorRef,
-    el: ElementRef
+    el: ElementRef,
+    // private taskService: TaskService,
   ){
     this.el = el;
   }
@@ -617,7 +623,127 @@ get dueDateForDisplay(): Date | null {
   }
   return dueDate as Date;
 }
-} // GanttChartComponent クラスの閉じ括弧
+
+
+async onStatusChange(newStatusSelected: 'todo' | 'doing' | 'done', taskId: string, taskItem: GanttTaskDisplayItem): Promise<void> {
+  if (!taskId || !newStatusSelected) {
+    console.error('Task IDまたは新しいステータスが不正です。');
+    return;
+  }
+
+  const originalStatus = taskItem.status;
+  const originalProgress = taskItem.progress;
+
+  if (originalStatus === newStatusSelected) {
+    // もし進捗率も変更するロジックがここにあるなら、ステータスが同じでも進捗だけ変わるケースを考慮
+    // 今回はステータス変更がトリガーなので、ステータスが変わらなければ何もしないで良いでしょう。
+    console.log('ステータスに変更はありません。');
+    return;
+  }
+
+  console.log(`Task ID: ${taskId} のステータスを「${newStatusSelected}」に変更しようとしています。`);
+
+  let newProgressForUpdate: number | null = originalProgress ?? null; // 更新用進捗。現在の進捗を維持が基本
+  let statusToUpdate: 'todo' | 'doing' | 'done' = newStatusSelected;
+
+  if (newStatusSelected === 'done') {
+    newProgressForUpdate = 100;
+  } else if (newStatusSelected === 'todo') {
+    newProgressForUpdate = 0;
+  } else if (newStatusSelected === 'doing') {
+    // 「作業中」に手動で切り替えたときのロジック
+    try {
+      const dailyLogsObservable = this.taskService.getDailyLogs(taskId);
+      const dailyLogs = await firstValueFrom(dailyLogsObservable.pipe(catchError(err => {
+        console.error('日次ログの取得中にエラーが発生しました (onStatusChange):', err);
+        return of([]); // エラー時は空のログとして扱う
+      })));
+
+      if (dailyLogs && dailyLogs.length > 0) {
+        const latestLog = dailyLogs[dailyLogs.length - 1]; // getDailyLogsがworkDate昇順ソート済みと仮定
+        if (latestLog.progressRate !== null && latestLog.progressRate !== undefined) {
+          if (latestLog.progressRate === 100) {
+            // 最新ログが100%の場合、ユーザーが手動で'doing'にしようとしても'done'のままにする
+            alert('最新の日次ログの進捗が100%のため、ステータスは「完了」のままとなります。');
+            statusToUpdate = 'done'; // Firestoreに保存するステータスを'done'に強制
+            newProgressForUpdate = 100; // 進捗も100%に強制
+          } else {
+            newProgressForUpdate = latestLog.progressRate; // 最新ログの進捗率を採用
+          }
+        } else {
+          newProgressForUpdate = 1; // 日次ログはあるが、進捗率が記録されていなければ1%
+        }
+      } else {
+        newProgressForUpdate = 1; // 日次ログがなければ1%
+      }
+    } catch (error) {
+      // このcatchはfirstValueFrom内のエラーハンドリングでカバーされるので、通常ここには来ないはず
+      console.error(`Task ID: ${taskId} の日次ログ取得に予期せぬ失敗。進捗は1%として処理します。`, error);
+      newProgressForUpdate = 1;
+    }
+  }
+
+  const updateData: Partial<Task> = {
+    status: statusToUpdate,
+    updatedAt: serverTimestamp()
+  };
+
+  // newProgressForUpdateが数値として有効な場合のみprogressを更新データに含める
+  if (typeof newProgressForUpdate === 'number') {
+    updateData.progress = newProgressForUpdate;
+  }
+
+
+  // Firestore 更新前の最終確認 (もしステータスも進捗も変わっていなければ更新しない)
+  if (originalStatus === statusToUpdate && originalProgress === updateData.progress) {
+      console.log('ステータスおよび計算後の進捗に変更がないため、更新をスキップします。');
+      // UIのmat-selectの値が意図せず変わってしまっている場合、ここで元の値に戻す必要がある
+      if(taskItem.status !== originalStatus) {
+          taskItem.status = originalStatus;
+          this.cdr.detectChanges();
+      }
+      return;
+  }
+
+  
+
+
+  try {
+    await this.taskService.updateTask(taskId, updateData);
+    console.log(`Task ID: ${taskId} のステータスが「${statusToUpdate}」に、進捗が ${updateData.progress !== undefined ? updateData.progress + '%' : '変更なし'} に正常に更新されました。`);
+
+    // ローカルデータの更新
+    const taskInList = this.ganttTasks.find(t => t.id === taskId);
+    if (taskInList) {
+      taskInList.status = statusToUpdate;
+      if (updateData.progress !== undefined && typeof updateData.progress === 'number') {
+        taskInList.progress = updateData.progress;
+      }
+      // this.ganttTasks = [...this.ganttTasks]; // 要素のプロパティ変更の場合、これは不要なことが多い
+      this.cdr.detectChanges();
+    }
+  } catch (error) {
+    console.error(`Task ID: ${taskId} のステータスまたは進捗更新に失敗しました。`, error);
+    alert('タスクのステータス更新に失敗しました。');
+    // エラー時はUIを元の状態に戻す
+    const taskInList = this.ganttTasks.find(t => t.id === taskId);
+    if (taskInList) {
+      taskInList.status = originalStatus;
+      if (typeof originalProgress === 'number') {
+        taskInList.progress = originalProgress;
+      }
+      this.cdr.detectChanges();
+    }
+  }
+}
+
+getToday(): Date {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
+}
+
+}// GanttChartComponent クラスの閉じ括弧
 
 
 

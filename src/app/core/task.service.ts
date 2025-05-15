@@ -192,4 +192,24 @@ export class TaskService {
     });
   }
 
+
+  updateTaskProgressAndStatus(taskId: string, progress: number, status: 'todo' | 'doing' | 'done'): Promise<void> {
+    if (progress < 0 || progress > 100) {
+      console.error('不正な進捗率が指定されました:', progress);
+      return Promise.reject(new Error('進捗率は0から100の間で指定してください。'));
+    }
+    const validStatuses: ('todo' | 'doing' | 'done')[] = ['todo', 'doing', 'done'];
+    if (!validStatuses.includes(status)) {
+      console.error('不正なステータスが指定されました:', status);
+      return Promise.reject(new Error('ステータスは "todo", "doing", "done" のいずれかである必要があります。'));
+    }
+
+    const taskDocRef = doc(this.firestore, `Tasks/${taskId}`);
+    return updateDoc(taskDocRef, {
+      progress: progress,
+      status: status,
+      updatedAt: serverTimestamp()
+    });
+  }
+
 }
