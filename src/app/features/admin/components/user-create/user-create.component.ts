@@ -33,7 +33,7 @@ export class UserCreateComponent implements OnInit {
   private adminUserService = inject(AdminUserService);
   private snackBar = inject(MatSnackBar);
 
-  constructor() { }
+  // constructor() { }
 
   ngOnInit(): void {
     this.userCreateForm = new FormGroup({
