@@ -6,6 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { AuthService } from '../../core/auth.service';
 import { Router } from '@angular/router';
+import { RouterModule } from '@angular/router'; 
 
 @Component({
   selector: 'app-login',
@@ -18,6 +19,7 @@ import { Router } from '@angular/router';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    RouterModule,
   ],
  
 })
@@ -64,24 +66,28 @@ export class LoginComponent implements OnInit {
       this.router.navigate(['/app/dashboard']);
 
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('ログイン失敗:', error);
 
-      switch (error.code) {
-        case 'auth/invalid-credential':
-        case 'auth/user-not-found':
-        case 'auth/wrong-password':
-          this.loginError = 'メールアドレスまたはパスワードが正しくありません。';
-          break;
-        case 'auth/invalid-email':
-          this.loginError = 'メールアドレスの形式が正しくありません。';
-          break;
-        case 'auth/too-many-requests':
-          this.loginError = '試行回数が上限を超えました。しばらくしてから再度お試しください。';
-          break;
-        default:
-          this.loginError = 'ログイン中にエラーが発生しました。時間をおいて再度お試しください。';
-          break;
+      if (typeof error === 'object' && error !== null && 'code' in error) {
+        switch ((error as { code: string }).code) {
+          case 'auth/invalid-credential':
+          case 'auth/user-not-found':
+          case 'auth/wrong-password':
+            this.loginError = 'メールアドレスまたはパスワードが正しくありません。';
+            break;
+          case 'auth/invalid-email':
+            this.loginError = 'メールアドレスの形式が正しくありません。';
+            break;
+          case 'auth/too-many-requests':
+            this.loginError = '試行回数が上限を超えました。しばらくしてから再度お試しください。';
+            break;
+          default:
+            this.loginError = 'ログイン中にエラーが発生しました。時間をおいて再度お試しください。';
+            break;
+        }
+      } else {
+        this.loginError = 'ログイン中にエラーが発生しました。時間をおいて再度お試しください。';
       }
       
     } finally {

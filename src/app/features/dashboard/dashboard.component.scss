@@ -1,0 +1,25 @@
+// dashboard.component.scss
+.project-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+  .project-card {
+    // cursor: pointer; // カード全体ではなく、ヘッダーとコンテンツに設定
+    transition: box-shadow 0.3s ease-in-out;
+    &:hover {
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    mat-card-header { // ヘッダー内の要素を横並びにする
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .project-card-actions { // ボタンを右寄せにするためのコンテナ
+      margin-left: auto; // 左側の要素との間にスペースを空ける
+    }
+  }
+  .empty-message-card {
+    text-align: center;
+    color: grey;
+  }

@@ -37,7 +37,7 @@ export interface Project {
   createdAt: Date | Timestamp;
 }
 
-type NewProjectData = Omit<Project, 'id' | 'createdAt'>;
+export type NewProjectData = Omit<Project, 'id' | 'createdAt'>;
 
 
 

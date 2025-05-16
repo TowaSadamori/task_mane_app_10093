@@ -1,0 +1,66 @@
+<div style="padding: 20px; max-width: 600px; margin: auto;">
+    <h1>新しいプロジェクトを作成</h1>
+  
+    <form [formGroup]="projectForm" (ngSubmit)="onSubmit()">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>プロジェクト名</mat-label>
+        <input matInput formControlName="name" placeholder="プロジェクト名を入力" required>
+        <mat-error *ngIf="projectForm.get('name')?.hasError('required')">プロジェクト名は必須です。</mat-error>
+        <mat-error *ngIf="projectForm.get('name')?.hasError('minlength')">3文字以上で入力してください。</mat-error>
+      </mat-form-field>
+  
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>説明</mat-label>
+        <textarea matInput formControlName="description" placeholder="プロジェクトの説明 (任意)"></textarea>
+      </mat-form-field>
+  
+      <div style="display: flex; gap: 16px;">
+        <mat-form-field appearance="outline" style="flex: 1;">
+          <mat-label>予定開始日</mat-label>
+          <input matInput [matDatepicker]="pickerStart" formControlName="startDate" placeholder="開始日を選択 (任意)">
+          <mat-datepicker-toggle matSuffix [for]="pickerStart"></mat-datepicker-toggle>
+          <mat-datepicker #pickerStart></mat-datepicker>
+        </mat-form-field>
+  
+        <mat-form-field appearance="outline" style="flex: 1;">
+          <mat-label>予定終了日</mat-label>
+          <input matInput [matDatepicker]="pickerEnd" formControlName="endDate" placeholder="終了日を選択 (任意)">
+          <mat-datepicker-toggle matSuffix [for]="pickerEnd"></mat-datepicker-toggle>
+          <mat-datepicker #pickerEnd></mat-datepicker>
+        </mat-form-field>
+      </div>
+  
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>管理者</mat-label>
+        <mat-select formControlName="managerId" required>
+          <mat-option *ngFor="let user of users" [value]="user.id">{{ user.displayName }}</mat-option>
+        </mat-select>
+        <mat-error *ngIf="projectForm.get('managerId')?.hasError('required')">管理者は必須です。</mat-error>
+      </mat-form-field>
+  
+      <h3>プロジェクトメンバー (任意)</h3>
+      <div formArrayName="members">
+        <div *ngFor="let memberCtrl of membersFormArray.controls; let i = index" style="display: flex; align-items: center; margin-bottom: 8px;">
+          <mat-form-field appearance="outline" style="flex-grow: 1; margin-right: 8px;">
+            <mat-label>メンバー {{ i + 1 }}</mat-label>
+            <mat-select [formControlName]="i"> <mat-option value="">選択解除</mat-option>
+              <mat-option *ngFor="let user of users" [value]="user.id">{{ user.displayName }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <button mat-icon-button color="warn" type="button" (click)="removeMemberControl(i)" aria-label="メンバーを削除">
+            <mat-icon>remove_circle</mat-icon>
+          </button>
+        </div>
+      </div>
+      <button mat-stroked-button type="button" (click)="addMemberControl()" style="margin-bottom: 16px;">
+        <mat-icon>add</mat-icon>メンバーを追加
+      </button>
+  
+      <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 8px;">
+        <button mat-button type="button" (click)="navigateToDashboard()" [disabled]="isLoading">キャンセル</button>
+        <button mat-raised-button color="primary" type="submit" [disabled]="projectForm.invalid || isLoading">
+          {{ isLoading ? '作成中...' : 'プロジェクトを作成' }}
+        </button>
+      </div>
+    </form>
+  </div>

@@ -7,6 +7,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { AdminUserService, CreateUserResponse } from '../../services/admin-user.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { Router } from '@angular/router'; // ★ Router をインポート
 
 
 @Component({
@@ -32,6 +33,7 @@ export class UserCreateComponent implements OnInit {
   isLoading = false;
   private adminUserService = inject(AdminUserService);
   private snackBar = inject(MatSnackBar);
+  private router = inject(Router);
 
   // constructor() { }
 
@@ -40,7 +42,7 @@ export class UserCreateComponent implements OnInit {
       'email': new FormControl('', [Validators.required, Validators.email]),
       'password': new FormControl('', [Validators.required, Validators.minLength(8)]),
       'displayName': new FormControl(''),
-      'role': new FormControl('', [Validators.required]),
+      // 'role': new FormControl('', [Validators.required]),
     })
   }
 
@@ -54,14 +56,20 @@ export class UserCreateComponent implements OnInit {
     this.isLoading = true;
     this.registrationError = null;
 
-    const userData = this.userCreateForm.value;
+    const formValue = this.userCreateForm.value; // ★ 修正: userDataではなくformValueとして一度受ける
+    const userDataToCreate = { // ★ 修正: 新しいオブジェクトを作成し、roleを含めない
+      email: formValue.email,
+      password: formValue.password,
+      displayName: formValue.displayName || ''
+    };
 
-    this.adminUserService.createUser(userData).subscribe({
+    this.adminUserService.createUser(userDataToCreate).subscribe({
       next: (response: CreateUserResponse) => {
         this.isLoading = false;
         console.log('ユーザー登録成功', response);
-        alert(`ユーザー ${userData.email}を登録しました。(UID: ${response.uid})`);
+        alert(`ユーザー ${userDataToCreate.email}を登録しました。(UID: ${response.uid})`);
         this.userCreateForm.reset();
+        this.router.navigate(['/login']);
       },
       error: (error: unknown) => {
         this.isLoading = false;
@@ -74,6 +82,10 @@ export class UserCreateComponent implements OnInit {
         
       }
     })
+  }
+
+  navigateToLogin(): void {
+    this.router.navigate(['/login']);
   }
 
   // async onSubmit(): Promise<void> {

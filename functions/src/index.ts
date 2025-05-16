@@ -13,7 +13,7 @@ interface CreateUserData {
     email: string;
     password: string;
     displayName: string;
-    role: string;
+    // role: string;
 }
 
 interface PhotoEntry {
@@ -277,7 +277,7 @@ export const createUser = onCall<CreateUserData>(async (request) => {
     }
 
 
-    const { email, password, displayName, role } = request.data;
+    const { email, password, displayName,  } = request.data;
 
     if (!password) {
         logger.error("パスワードが指定されていません:", {email: email});
@@ -291,13 +291,13 @@ export const createUser = onCall<CreateUserData>(async (request) => {
             displayName: displayName,
         });
 
-        logger.info(`ユーザー作成成功: ${userRecord.uid}`, { email: email, role: role});
+        logger.info(`ユーザー作成成功: ${userRecord.uid}`, { email: email,});
 
         const userDocRef = admin.firestore().collection('Users').doc(userRecord.uid);
         await userDocRef.set({
             email: email,
             displayName: displayName || '',
-            role: role,
+            // role: role,
             createdAt: FieldValue.serverTimestamp(),
         });
         

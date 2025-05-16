@@ -32,18 +32,18 @@
         </mat-error>
     </mat-form-field>
 
-    <mat-form-field appearance="outline">
+    <!-- <mat-form-field appearance="outline">
         <mat-label>役割</mat-label>
         <mat-select formControlName="role" required>
             <mat-option value="admin">管理者</mat-option>
             <mat-option value="general">一般ユーザー</mat-option>
-            <mat-option value="partner">協力会社</mat-option>
+            <mat-option value="partner">協力会社</mat-option> -->
 
-        </mat-select>
+        <!-- </mat-select>
         <mat-error *ngIf="userCreateForm.get('role')?.hasError('required') && userCreateForm.get('role')?.touched">
             役割を選択してください
         </mat-error>
-        </mat-form-field>
+        </mat-form-field> -->
 
         <button mat-raised-button color="primary" type="submit" [disabled]="userCreateForm.invalid || isLoading">
             {{ isLoading ? '登録中...' : 'ユーザー登録' }}
@@ -51,5 +51,12 @@
 
         <div *ngIf="registrationError" class="error-message">
             {{ registrationError }}
+            </div>
+
+            <button mat-stroked-button type="button" (click)="navigateToLogin()" [disabled]="isLoading" style="margin-left: 8px;">
+                ログイン画面へ戻る
+            </button>
+            <div *ngIf="registrationError" class="error-message">
+                {{ registrationError }}
             </div>
 </form>

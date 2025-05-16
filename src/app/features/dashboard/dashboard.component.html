@@ -1,1 +1,43 @@
-<p>dashboard works!</p>
+<div class="dashboard-container mat-app-background" style="padding: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1>プロジェクトダッシュボード</h1>
+        <button mat-raised-button color="primary" (click)="navigateToCreateProject()">
+            <mat-icon>add</mat-icon>
+            新しいプロジェクトを作成
+        </button>
+    </div>
+
+    <h2>参加プロジェクト一覧</h2>
+    <div *ngIf="projects$ | async as projects; else loadingProjects" class="project-list">
+        <mat-card *ngIf="projects.length === 0" class="empty-message-card">
+            <mat-card-content>
+                <p>参加しているプロジェクトはありません。新しいプロジェクトを作成してください。</p>
+            </mat-card-content>
+        </mat-card>
+
+        <mat-card *ngFor="let project of projects" class="project-card">
+            <mat-card-header (click)="navigateToGantt(project.id)" style="cursor: pointer;"> <mat-card-title>{{ project.name }}</mat-card-title>
+                <mat-card-subtitle *ngIf="project.managerId">管理者ID: {{ project.managerId }}</mat-card-subtitle>
+                <span class="project-card-actions">
+                    <button mat-icon-button (click)="editProject(project.id, $event)" aria-label="プロジェクトを編集">
+                        <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button color="warn" (click)="deleteProject(project.id, project.name, $event)" aria-label="プロジェクトを削除">
+                        <mat-icon>delete</mat-icon>
+                    </button>
+                </span>
+                </mat-card-header>
+            <mat-card-content (click)="navigateToGantt(project.id)" style="cursor: pointer;"> <p>{{ project.description || '説明なし' }}</p>
+                <p *ngIf="project.startDate">
+                    期間: {{ toDate(project.startDate) | date:'yyyy/MM/dd' }} - {{ project.endDate ? (toDate(project.endDate) | date:'yyyy/MM/dd') : '未定' }}
+                </p>
+            </mat-card-content>
+            </mat-card>
+    </div>
+
+    <ng-template #loadingProjects>
+        <div style="display: flex; justify-content: center; align-items: center; padding: 20px;">
+            <p>プロジェクトを読み込み中...</p>
+        </div>
+    </ng-template>
+</div>

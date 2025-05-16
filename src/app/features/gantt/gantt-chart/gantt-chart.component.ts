@@ -7,7 +7,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AddTaskDialogComponent } from './components/add-task-dialog/add-task-dialog.component';
 import { MatButtonModule } from '@angular/material/button';
 import { ConfirmDialogComponent, ConfirmDialogData } from './components/confirm-dialog/confirm-dialog.component';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatSelectModule } from '@angular/material/select';
 import { firstValueFrom, of } from 'rxjs';
 import { catchError } from 'rxjs/operators'; // catchError を追加
@@ -54,9 +54,9 @@ export class GanttChartComponent implements OnInit {
   public selectedTask: GanttTaskDisplayItem | null = null;
   public el: ElementRef;
   private taskService = inject(TaskService);
-  private currentProjectId = 'test-project-00'; 
+  private currentProjectId: string | null = null;    // ★ string | null 型に
+  private route = inject(ActivatedRoute);
   private router = inject(Router);
-
 
   constructor(
     public dialog: MatDialog,
@@ -138,17 +138,16 @@ export class GanttChartComponent implements OnInit {
   ngOnInit(): void {
     this.generateTimelineHeaders(); // タイムラインヘッダーは先に生成
 
-    // Firestoreからガントタスクを取得して表示する
-    this.projectService.getGanttTasks().subscribe({ // ★ subscribe にオブジェクトを渡す形式に変更 (next, error)
-      next: (tasks) => {
-        this.ganttTasks = tasks;
-        console.log('Firestoreからガントタスクを読み込みました:', this.ganttTasks);
-        this.cdr.detectChanges(); 
-        // 必要であれば、ここでタイムラインの再計算やUIの更新処理をトリガー
-      },
-      error: (err) => {
-        console.error('Firestoreからのガントタスク読み込みに失敗しました:', err);
-        // ユーザーへのエラー通知などをここで行う
+    this.route.paramMap.subscribe(params => {
+      const projectIdFromRoute = params.get('projectId');
+      if (projectIdFromRoute) {
+        this.currentProjectId = projectIdFromRoute;
+        console.log('GanttChartComponent: Project ID from route:', this.currentProjectId);
+        this.loadGanttTasksForCurrentProject(); // ★ 新しいメソッドを呼び出す
+      } else {
+        console.error('GanttChartComponent: Project ID not found in route parameters!');
+        this.ganttTasks = []; // プロジェクトIDがなければタスクは空
+        this.cdr.detectChanges();
       }
     });
     console.log('Current Project ID for Gantt Chart (in ngOnInit):', this.currentProjectId);
@@ -302,7 +301,7 @@ navigateToTaskDetail(taskId: string): void {
     data: { // ▼▼▼ data オブジェクトを修正 ▼▼▼
       isEditMode: false,
       task: null, // 新規作成なので task は null
-      projectId: this.currentProjectId // ★ 現在のプロジェクトIDを渡す
+      projectId: this.currentProjectId || '' // ★ 現在のプロジェクトIDを渡す
     }
   });
 
@@ -325,7 +324,7 @@ navigateToTaskDetail(taskId: string): void {
             : null,
         category: result.category || null,
         decisionMakerId: result.decisionMakerId || null,
-        projectId: this.currentProjectId,
+        projectId: this.currentProjectId || '',
         status: 'todo',
         level: 0,
         parentId: null,
@@ -735,7 +734,48 @@ async onStatusChange(newStatusSelected: 'todo' | 'doing' | 'done', taskId: strin
       this.cdr.detectChanges();
     }
   }
+
+
+  this.route.paramMap.subscribe(params => {
+    const projectIdFromRoute = params.get('projectId');
+    if (projectIdFromRoute) {
+      this.currentProjectId = projectIdFromRoute;
+      console.log('GanttChartComponent: Displaying tasks for Project ID:', this.currentProjectId);
+      this.loadGanttTasksForCurrentProject(); // ★ プロジェクトIDに基づいてタスクを読み込むメソッド
+    } else {
+      console.error('GanttChartComponent: Project ID not found in route!');
+      this.ganttTasks = [];
+      this.cdr.detectChanges();
+    }
+  });
 }
+
+
+
+
+loadGanttTasksForCurrentProject(): void {
+  if (!this.currentProjectId) {
+    console.warn('loadGanttTasksForCurrentProject called without a currentProjectId.');
+    this.ganttTasks = [];
+    this.cdr.detectChanges();
+    return;
+  }
+  console.log(`Loading tasks for project: ${this.currentProjectId}`);
+  this.projectService.getGanttTasks().subscribe({ // getGanttTasksは現時点では全タスクを返す
+    next: (allTasks) => {
+      // クライアント側で projectId に基づいてタスクをフィルタリング
+      this.ganttTasks = allTasks.filter(task => task.projectId === this.currentProjectId);
+      console.log(`Loaded ${this.ganttTasks.length} tasks for project ${this.currentProjectId}.`);
+      this.cdr.detectChanges();
+    },
+    error: (err) => {
+      console.error(`Error loading tasks for project ${this.currentProjectId}:`, err);
+      this.ganttTasks = [];
+      this.cdr.detectChanges();
+    }
+  });
+}
+
 
 getToday(): Date {
   const today = new Date();

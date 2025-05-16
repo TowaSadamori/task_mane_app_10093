@@ -6,7 +6,7 @@ interface CreateUserData {
   email: string;
   password: string;
   displayName: string;
-  role: string;
+  // role: string;
 }
 
 export interface CreateUserResponse {
