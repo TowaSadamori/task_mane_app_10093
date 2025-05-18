@@ -1,13 +1,29 @@
 import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router'; // Router をインポート
+import { AuthService } from '../../auth.service'; // AuthService のパスを確認・修正してください
+import { CommonModule } from '@angular/common'; // CommonModule を追加 (ngFor, ngIf などを使う場合)
 
 @Component({
   selector: 'app-navigation',
-  standalone: true,
-  imports: [RouterLink],
-  templateUrl: './navigation.component.html',
-  styleUrl: './navigation.component.scss'
+standalone: true,
+ imports: [CommonModule, RouterLink], // CommonModule を追加, RouterLink を修正
+ templateUrl: './navigation.component.html',
+ styleUrl: './navigation.component.scss'
 })
 export class NavigationComponent {
 
+  constructor(
+  private authService: AuthService,
+ private router: Router
+) {}
+
+onLogout(): void {
+  this.authService.logout().then(() => {
+   console.log('ログアウトしました');
+ this.router.navigate(['/login']);
+ })
+ .catch(error => {
+  console.error('ログアウト失敗', error);
+});
+ }
 }
