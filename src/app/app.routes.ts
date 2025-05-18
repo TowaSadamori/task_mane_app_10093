@@ -35,6 +35,12 @@ export const routes: Routes = [
         path: 'gantt-chart/:projectId', // :projectId パラメータを受け取る
         loadComponent: () => import('./features/gantt/gantt-chart/gantt-chart.component').then(m => m.GanttChartComponent)
       },
+      // {
+      //   path: 'projects/create', // 新規作成画面のパス
+      //   loadComponent: () => import('./features/project/create-project/create-project.component').then(m => m.CreateProjectComponent)
+      //   // ↑ ProjectCreateComponent の実際のパスに合わせてください
+      // },
+
     ]
   },
   // {

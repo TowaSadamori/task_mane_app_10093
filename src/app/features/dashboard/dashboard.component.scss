@@ -56,3 +56,52 @@
     text-align: center; // 中央揃えにする場合
     padding: 20px 0;
   }
+
+  /* src/app/features/dashboard/dashboard.component.scss */
+
+// ... (既存のスタイル) ...
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between; // タイトルとボタンを両端に配置
+    align-items: center;
+    margin-bottom: 20px; // ヘッダーとリストの間のマージン
+  
+    h2 {
+      margin-bottom: 0; // h2のデフォルトマージンを調整
+      border-bottom: none; // 下線をヘッダー全体に引く場合は不要
+      padding-bottom: 0;
+    }
+  }
+  
+  .create-project-button {
+    background-color: #28a745; // ボタンの背景色 (緑系)
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    display: flex; // アイコンとテキストを横並びにする場合
+    align-items: center; // アイコンとテキストを垂直中央揃え
+  
+    .material-icons-outlined { // Material Icons を使う場合のスタイル
+      margin-right: 8px;
+      font-size: 1.2em; // アイコンサイズ調整
+    }
+  
+    &:hover {
+      background-color: #218838; // ホバー時の色
+    }
+  }
+  
+  // .create-project-button-prominent { /* プロジェクトがない場合の目立つボタンのスタイル (任意) */
+  //   display: block;
+  //   width: fit-content;
+  //   margin: 20px auto;
+  //   padding: 12px 25px;
+  //   font-size: 1.1rem;
+  //   background-color: #007bff;
+  //   &:hover {
+  //     background-color: #0056b3;
+  //   }
+  // }

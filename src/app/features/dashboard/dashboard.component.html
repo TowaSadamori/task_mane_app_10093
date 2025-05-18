@@ -1,5 +1,10 @@
 <div class="dashboard-container">
-    <h2>プロジェクト一覧</h2>
+    <div class="dashboard-header">
+      <h2>プロジェクト一覧</h2>
+      <button class="create-project-button" routerLink="/app/projects/create">
+        <span class="material-icons-outlined">add_circle_outline</span> 新しいプロジェクトを作成
+      </button>
+    </div>
     <div *ngIf="projects$ | async as projects; else loadingOrError">
       <ul class="project-list" *ngIf="projects.length > 0; else noProjects">
         <li *ngFor="let project of projects" class="project-item">
@@ -7,7 +12,7 @@
             {{ project.name }}
           </a>
           <p class="project-description">{{ project.description }}</p>
-          </li>
+        </li>
       </ul>
       <ng-template #noProjects>
         <p>現在進行中のプロジェクトはありません。</p>
@@ -15,5 +20,5 @@
     </div>
     <ng-template #loadingOrError>
       <p>プロジェクトを読み込んでいます...</p>
-      </ng-template>
+    </ng-template>
   </div>
