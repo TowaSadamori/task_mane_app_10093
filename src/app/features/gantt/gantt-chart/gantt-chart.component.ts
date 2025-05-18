@@ -1,17 +1,22 @@
 import { Component, OnInit, inject, ChangeDetectorRef, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Project, ProjectService, GanttTaskDisplayItem, NewGanttTaskData } from '../../../core/project.service'; // GanttTaskUpdatePayload は不要なので削除も検討
-import { TaskService, NewDailyLogData, Task, } from '../../../core/task.service'; // DailyLog をインポート
+import { Project, ProjectService, GanttTaskDisplayItem, 
+  // NewGanttTaskData
+
+ } from '../../../core/project.service'; // GanttTaskUpdatePayload は不要なので削除も検討
+import { TaskService, 
+  // NewDailyLogData,
+   Task, } from '../../../core/task.service'; // DailyLog をインポート
 import { Timestamp, serverTimestamp } from '@angular/fire/firestore'; // serverTimestamp をインポート
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AddTaskDialogComponent } from './components/add-task-dialog/add-task-dialog.component';
 import { MatButtonModule } from '@angular/material/button';
-import { ConfirmDialogComponent, ConfirmDialogData } from './components/confirm-dialog/confirm-dialog.component';
+// import { ConfirmDialogComponent, ConfirmDialogData } from './components/confirm-dialog/confirm-dialog.component';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatSelectModule } from '@angular/material/select';
 import { firstValueFrom, of, Observable,  } from 'rxjs';
 import { catchError, switchMap, tap } from 'rxjs/operators'; // catchError を追加
-
+import { GanttChartTask } from '../../../core/models/gantt-chart-task.model'; 
 
 
 interface TimelineDay {
@@ -299,204 +304,279 @@ navigateToTaskDetail(taskId: string): void {
   }
 }
 
+// gantt-chart.component.ts
 
+// ... (import文や他の部分はそのまま) ...
 
 openAddTaskDialog(): void {
-  // ↓ this.currentProjectId を this.projectId に変更
   if (!this.projectId) {
     console.error('プロジェクトIDが設定されていません。タスク追加ダイアログを開けません。');
     alert('エラー: プロジェクトが選択されていません。先にプロジェクトを選択するか、管理者に問い合わせてください。');
-    return; // projectId がないので処理を中断
+    return;
   }
   const dialogRef = this.dialog.open(AddTaskDialogComponent, {
     width: '400px',
     data: {
       isEditMode: false,
       task: null,
-      // ↓ this.currentProjectId を this.projectId に変更
-      projectId: this.projectId // ★ 現在のプロジェクトID (this.projectId) を渡す
+      projectId: this.projectId
     }
   });
 
-  
-
   dialogRef.afterClosed().subscribe(result => {
-    console.log('ダイアログが閉じられました。結果:', result);
-    // ▼▼▼ ステップAの修正 ▼▼▼
+    console.log('タスク追加ダイアログが閉じられました。結果:', result);
+
+    // ▼▼▼ 一旦、既存の処理をコメントアウト ▼▼▼
+    /*
     if (result && result.taskName && result.plannedStartDate && result.plannedEndDate && result.assigneeId) {
-      // ▼▼▼ ステップBの修正 ▼▼▼
+      // ... (ここから元の長い処理が続く) ...
+      // ... this.projectService.addGanttTask(newTaskToSave) ...
+      // ... this.taskService.addDailyLog(...) ...
+      // ... this.ganttTasks = [...this.ganttTasks, newTaskForDisplay]; ...
+    } else {
+      console.log('ダイアログがキャンセルされたか、必須データ(taskName, dates, assigneeId)が不足しています。');
+    }
+    */
+
+    // ▼▼▼ 新しいシンプルな保存処理をここに記述 ▼▼▼
+    if (result && result.taskName && result.plannedStartDate && result.plannedEndDate) {
+      // result.taskName, result.plannedStartDate, result.plannedEndDate は
+      // AddTaskDialogComponent の taskForm のコントロール名に合わせてください。
 
       if (!this.projectId) {
-        console.error('プロジェクトIDが予期せずnullになりました。タスクを作成できません。');
+        console.error('プロジェクトIDが予期せずnullになりました。新しいタスクを作成できません。');
         alert('エラー: プロジェクト情報が失われました。再度操作をお試しください。');
         return;
       }
 
-      const newTaskToSave: NewGanttTaskData = {
-        title: result.taskName,
-        plannedStartDate: result.plannedStartDate,
-        plannedEndDate: result.plannedEndDate,
-        assigneeId: result.assigneeId,
-        dueDate: result.dueDate instanceof Date
-          ? result.dueDate
-          : (result.dueDate && typeof (result.dueDate as Timestamp).toDate === 'function')
-            ? (result.dueDate as Timestamp).toDate()
-            : null,
-        category: result.category || null,
-        decisionMakerId: result.decisionMakerId || null,
+      const newSimpleGanttTask: Omit<GanttChartTask, 'id' | 'createdAt'> = {
         projectId: this.projectId,
-        status: 'todo',
-        level: 0,
-        parentId: null,
-        wbsNumber: (this.ganttTasks.length + 1).toString(),
-        otherAssigneeIds: [],
-        blockerStatus: null,
-        actualStartDate: null,
-        actualEndDate: null,
-        progress: 0,
+        title: result.taskName,
+        plannedStartDate: Timestamp.fromDate(new Date(result.plannedStartDate)),
+        plannedEndDate: Timestamp.fromDate(new Date(result.plannedEndDate)),
       };
 
-      console.log('作成するnewTaskToSaveオブジェクト (gantt-chart.component):', newTaskToSave);
+      console.log('Firestore ("GanttChartTasks") に保存するシンプルなデータ:', newSimpleGanttTask);
 
-      this.projectService.addGanttTask(newTaskToSave)
-        .then(ganttTaskDocRef => {
-          console.log('新しいガントタスク(Task)がFirestoreに保存されました。ID:', ganttTaskDocRef.id);
+      this.taskService.addGanttChartTask(newSimpleGanttTask) // TaskServiceの新しいメソッド
+        .then(docRef => {
+          console.log('新しいシンプルなGanttChartTaskが "GanttChartTasks" コレクションに保存されました。ID:', docRef.id);
+          alert(`タスク「${newSimpleGanttTask.title}」が新しいコレクションに追加されました。(表示は次のステップ)`);
 
-          const newDailyLogEntry: NewDailyLogData = {
-            workDate: Timestamp.fromDate(new Date()),
-            reporterId: 'SYSTEM_AUTO_GENERATED',
-            progressRate: 0,
-            comment: `ガントチャートタスク「${newTaskToSave.title}」から自動生成されたToDoエントリ`,
-            ganttTaskId: ganttTaskDocRef.id,
-            plannedStartTime: newTaskToSave.plannedStartDate instanceof Date
-                              ? Timestamp.fromDate(newTaskToSave.plannedStartDate)
-                              : newTaskToSave.plannedStartDate, // Timestampの可能性も考慮
-            plannedEndTime: newTaskToSave.plannedEndDate instanceof Date
-                            ? Timestamp.fromDate(newTaskToSave.plannedEndDate)
-                            : newTaskToSave.plannedEndDate, // Timestampの可能性も考慮
-          };
-
-          if (ganttTaskDocRef.id) {
-            this.taskService.addDailyLog(ganttTaskDocRef.id, newDailyLogEntry)
-              .then(dailyLogDocRef => {
-                console.log(`自動生成されたDailyLogがFirestoreに保存されました。DailyLog ID: ${dailyLogDocRef.id}, 関連付けられたTask ID: ${ganttTaskDocRef.id}`);
-              })
-              .catch(dailyLogError => {
-                console.error('自動生成されたDailyLogのFirestoreへの保存に失敗しました:', dailyLogError);
-                alert('自動生成されたToDoの保存に失敗しました。詳細はコンソールを確認してください。');
-              });
-          } else {
-            console.error('Task ID (ganttTaskDocRef.id) が見つかりません。DailyLogを紐付けることができませんでした。');
-            alert('ガントタスクのIDが見つからないため、自動生成されたToDoを紐付けることができませんでした。');
-          }
-
-          // 画面表示用のnewTaskForDisplay作成は次の提案で調整します
-          // ... (現在のnewTaskForDisplay作成と画面更新ロジック) ...
-          const newTaskForDisplay: GanttTaskDisplayItem = {
-            id: ganttTaskDocRef.id,
-            name: newTaskToSave.title,
-            title: newTaskToSave.title,
-            projectId: newTaskToSave.projectId,
-            assigneeId: newTaskToSave.assigneeId,
-            status: newTaskToSave.status as 'todo' | 'doing' | 'done',
-            dueDate: newTaskToSave.dueDate instanceof Date
-              ? newTaskToSave.dueDate
-              : (newTaskToSave.dueDate && typeof (newTaskToSave.dueDate as Timestamp).toDate === 'function')
-                ? (newTaskToSave.dueDate as Timestamp).toDate()
-                : null,
-            createdAt: new Date(),
-            plannedStartDate: newTaskToSave.plannedStartDate instanceof Date
-              ? newTaskToSave.plannedStartDate
-              : (newTaskToSave.plannedStartDate && typeof (newTaskToSave.plannedStartDate as Timestamp).toDate === 'function')
-                ? (newTaskToSave.plannedStartDate as Timestamp).toDate()
-                : null,
-            plannedEndDate: newTaskToSave.plannedEndDate instanceof Date
-              ? newTaskToSave.plannedEndDate
-              : (newTaskToSave.plannedEndDate && typeof (newTaskToSave.plannedEndDate as Timestamp).toDate === 'function')
-                ? (newTaskToSave.plannedEndDate as Timestamp).toDate()
-                : null,
-            level: newTaskToSave.level,
-            parentId: newTaskToSave.parentId,
-            wbsNumber: newTaskToSave.wbsNumber,
-            category: newTaskToSave.category,
-            otherAssigneeIds: newTaskToSave.otherAssigneeIds || [],
-            decisionMakerId: newTaskToSave.decisionMakerId,
-            blockerStatus: newTaskToSave.blockerStatus,
-            actualStartDate: null,
-            actualEndDate: null,
-            progress: newTaskToSave.progress,
-            // ganttItemId や updatedAt は GanttTaskDisplayItem の型定義に含まれていれば、
-            // 必要に応じて newTaskToSave から、または固定値で設定します。
-            // ganttItemId: ganttTaskDocRef.id, // 例
-            // updatedAt: new Date(), // 例
-          };
-          this.ganttTasks = [...this.ganttTasks, newTaskForDisplay];
-          this.cdr.detectChanges();
-
+          // ここで画面を更新する処理は、まず保存が成功することを確認してから追加しましょう。
+          // (例: this.loadNewGanttChartTasks(); のようなメソッドを後で作成)
         })
         .catch(error => {
-          console.error('Firestoreへのガントタスク(Task)保存に失敗しました:', error);
+          console.error('シンプルなGanttChartTaskの保存中にエラーが発生しました:', error);
+          alert('タスクの追加（シンプル版）に失敗しました。詳細はコンソールを確認してください。');
         });
+
     } else {
-      console.log('ダイアログがキャンセルされたか、必須データ(taskName, dates, assigneeId)が不足しています。');
+      console.log('タスク追加（シンプル版）がキャンセルされたか、必須データ(taskName, plannedStartDate, plannedEndDate)が不足しています。');
     }
   });
 }
 
-  // ★ 新しいタスクのための一意なIDを生成するヘルパーメソッドの例
-  private generateUniqueId(): string {
-    // 簡単な例: 現在時刻のミリ秒とランダムな数値を組み合わせる
-    // より堅牢なUUID生成ライブラリ (例: uuid) の使用も検討できます。
-    return `task_${new Date().getTime()}_${Math.floor(Math.random() * 1000)}`;
-  }
+public trackByTaskId(index: number, taskItem: GanttTaskDisplayItem): string { // taskItemの型は適切に設定してください
+  return taskItem && taskItem.id ? taskItem.id : index.toString();
+}
 
-  openEditTaskDialog(taskToEdit: GanttTaskDisplayItem): void {
-    console.log('編集対象のタスク:', taskToEdit);
-    // AddTaskDialogComponent を再利用し、編集するタスク情報を data として渡す
-    const dialogRef = this.dialog.open(AddTaskDialogComponent, {
-      width: '400px',
-      data: {
-        task: { ...taskToEdit }, // ★ スプレッド構文でオブジェクトのコピーを渡す (元のオブジェクトを直接変更しないため)
-        isEditMode: true // ★ 編集モードであることをダイアログに伝えるフラグ (オプション)
-      }
-    });
+// openAddTaskDialog(): void {
+//   // ↓ this.currentProjectId を this.projectId に変更
+//   if (!this.projectId) {
+//     console.error('プロジェクトIDが設定されていません。タスク追加ダイアログを開けません。');
+//     alert('エラー: プロジェクトが選択されていません。先にプロジェクトを選択するか、管理者に問い合わせてください。');
+//     return; // projectId がないので処理を中断
+//   }
+//   const dialogRef = this.dialog.open(AddTaskDialogComponent, {
+//     width: '400px',
+//     data: {
+//       isEditMode: false,
+//       task: null,
+//       // ↓ this.currentProjectId を this.projectId に変更
+//       projectId: this.projectId // ★ 現在のプロジェクトID (this.projectId) を渡す
+//     }
+//   });
+
+  
+
+//   dialogRef.afterClosed().subscribe(result => {
+//     console.log('ダイアログが閉じられました。結果:', result);
+//     // ▼▼▼ ステップAの修正 ▼▼▼
+//     if (result && result.taskName && result.plannedStartDate && result.plannedEndDate && result.assigneeId) {
+//       // ▼▼▼ ステップBの修正 ▼▼▼
+
+//       if (!this.projectId) {
+//         console.error('プロジェクトIDが予期せずnullになりました。タスクを作成できません。');
+//         alert('エラー: プロジェクト情報が失われました。再度操作をお試しください。');
+//         return;
+//       }
+
+//       const newTaskToSave: NewGanttTaskData = {
+//         title: result.taskName,
+//         plannedStartDate: result.plannedStartDate,
+//         plannedEndDate: result.plannedEndDate,
+//         assigneeId: result.assigneeId,
+//         dueDate: result.dueDate instanceof Date
+//           ? result.dueDate
+//           : (result.dueDate && typeof (result.dueDate as Timestamp).toDate === 'function')
+//             ? (result.dueDate as Timestamp).toDate()
+//             : null,
+//         category: result.category || null,
+//         decisionMakerId: result.decisionMakerId || null,
+//         projectId: this.projectId,
+//         status: 'todo',
+//         level: 0,
+//         parentId: null,
+//         wbsNumber: (this.ganttTasks.length + 1).toString(),
+//         otherAssigneeIds: [],
+//         blockerStatus: null,
+//         actualStartDate: null,
+//         actualEndDate: null,
+//         progress: 0,
+//       };
+
+//       console.log('作成するnewTaskToSaveオブジェクト (gantt-chart.component):', newTaskToSave);
+
+//       this.projectService.addGanttTask(newTaskToSave)
+//         .then(ganttTaskDocRef => {
+//           console.log('新しいガントタスク(Task)がFirestoreに保存されました。ID:', ganttTaskDocRef.id);
+
+//           const newDailyLogEntry: NewDailyLogData = {
+//             workDate: Timestamp.fromDate(new Date()),
+//             reporterId: 'SYSTEM_AUTO_GENERATED',
+//             progressRate: 0,
+//             comment: `ガントチャートタスク「${newTaskToSave.title}」から自動生成されたToDoエントリ`,
+//             ganttTaskId: ganttTaskDocRef.id,
+//             plannedStartTime: newTaskToSave.plannedStartDate instanceof Date
+//                               ? Timestamp.fromDate(newTaskToSave.plannedStartDate)
+//                               : newTaskToSave.plannedStartDate, // Timestampの可能性も考慮
+//             plannedEndTime: newTaskToSave.plannedEndDate instanceof Date
+//                             ? Timestamp.fromDate(newTaskToSave.plannedEndDate)
+//                             : newTaskToSave.plannedEndDate, // Timestampの可能性も考慮
+//           };
+
+//           if (ganttTaskDocRef.id) {
+//             this.taskService.addDailyLog(ganttTaskDocRef.id, newDailyLogEntry)
+//               .then(dailyLogDocRef => {
+//                 console.log(`自動生成されたDailyLogがFirestoreに保存されました。DailyLog ID: ${dailyLogDocRef.id}, 関連付けられたTask ID: ${ganttTaskDocRef.id}`);
+//               })
+//               .catch(dailyLogError => {
+//                 console.error('自動生成されたDailyLogのFirestoreへの保存に失敗しました:', dailyLogError);
+//                 alert('自動生成されたToDoの保存に失敗しました。詳細はコンソールを確認してください。');
+//               });
+//           } else {
+//             console.error('Task ID (ganttTaskDocRef.id) が見つかりません。DailyLogを紐付けることができませんでした。');
+//             alert('ガントタスクのIDが見つからないため、自動生成されたToDoを紐付けることができませんでした。');
+//           }
+
+//           // 画面表示用のnewTaskForDisplay作成は次の提案で調整します
+//           // ... (現在のnewTaskForDisplay作成と画面更新ロジック) ...
+//           const newTaskForDisplay: GanttTaskDisplayItem = {
+//             id: ganttTaskDocRef.id,
+//             name: newTaskToSave.title,
+//             title: newTaskToSave.title,
+//             projectId: newTaskToSave.projectId,
+//             assigneeId: newTaskToSave.assigneeId,
+//             status: newTaskToSave.status as 'todo' | 'doing' | 'done',
+//             dueDate: newTaskToSave.dueDate instanceof Date
+//               ? newTaskToSave.dueDate
+//               : (newTaskToSave.dueDate && typeof (newTaskToSave.dueDate as Timestamp).toDate === 'function')
+//                 ? (newTaskToSave.dueDate as Timestamp).toDate()
+//                 : null,
+//             createdAt: new Date(),
+//             plannedStartDate: newTaskToSave.plannedStartDate instanceof Date
+//               ? newTaskToSave.plannedStartDate
+//               : (newTaskToSave.plannedStartDate && typeof (newTaskToSave.plannedStartDate as Timestamp).toDate === 'function')
+//                 ? (newTaskToSave.plannedStartDate as Timestamp).toDate()
+//                 : null,
+//             plannedEndDate: newTaskToSave.plannedEndDate instanceof Date
+//               ? newTaskToSave.plannedEndDate
+//               : (newTaskToSave.plannedEndDate && typeof (newTaskToSave.plannedEndDate as Timestamp).toDate === 'function')
+//                 ? (newTaskToSave.plannedEndDate as Timestamp).toDate()
+//                 : null,
+//             level: newTaskToSave.level,
+//             parentId: newTaskToSave.parentId,
+//             wbsNumber: newTaskToSave.wbsNumber,
+//             category: newTaskToSave.category,
+//             otherAssigneeIds: newTaskToSave.otherAssigneeIds || [],
+//             decisionMakerId: newTaskToSave.decisionMakerId,
+//             blockerStatus: newTaskToSave.blockerStatus,
+//             actualStartDate: null,
+//             actualEndDate: null,
+//             progress: newTaskToSave.progress,
+//             // ganttItemId や updatedAt は GanttTaskDisplayItem の型定義に含まれていれば、
+//             // 必要に応じて newTaskToSave から、または固定値で設定します。
+//             // ganttItemId: ganttTaskDocRef.id, // 例
+//             // updatedAt: new Date(), // 例
+//           };
+//           this.ganttTasks = [...this.ganttTasks, newTaskForDisplay];
+//           this.cdr.detectChanges();
+
+//         })
+//         .catch(error => {
+//           console.error('Firestoreへのガントタスク(Task)保存に失敗しました:', error);
+//         });
+//     } else {
+//       console.log('ダイアログがキャンセルされたか、必須データ(taskName, dates, assigneeId)が不足しています。');
+//     }
+//   });
+//  }
+
+//   // ★ 新しいタスクのための一意なIDを生成するヘルパーメソッドの例
+//   private generateUniqueId(): string {
+//     // 簡単な例: 現在時刻のミリ秒とランダムな数値を組み合わせる
+//     // より堅牢なUUID生成ライブラリ (例: uuid) の使用も検討できます。
+//     return `task_${new Date().getTime()}_${Math.floor(Math.random() * 1000)}`;
+//   }
+
+//   openEditTaskDialog(taskToEdit: GanttTaskDisplayItem): void {
+//     console.log('編集対象のタスク:', taskToEdit);
+//     // AddTaskDialogComponent を再利用し、編集するタスク情報を data として渡す
+//     const dialogRef = this.dialog.open(AddTaskDialogComponent, {
+//       width: '400px',
+//       data: {
+//         task: { ...taskToEdit }, // ★ スプレッド構文でオブジェクトのコピーを渡す (元のオブジェクトを直接変更しないため)
+//         isEditMode: true // ★ 編集モードであることをダイアログに伝えるフラグ (オプション)
+//       }
+//     });
 
 
-    dialogRef.afterClosed().subscribe(result => { // ダイアログが閉じた後の処理
-      console.log('編集ダイアログが閉じられました。結果:', result);
-      if (result) { // ダイアログから何らかの結果が返ってきた場合 (キャンセルでなければ)
-        // result には、ダイアログのフォームで編集されたタスク情報が入っていると期待される
-        console.log('更新用データを受け取りました:', result);
+//     dialogRef.afterClosed().subscribe(result => { // ダイアログが閉じた後の処理
+//       console.log('編集ダイアログが閉じられました。結果:', result);
+//       if (result) { // ダイアログから何らかの結果が返ってきた場合 (キャンセルでなければ)
+//         // result には、ダイアログのフォームで編集されたタスク情報が入っていると期待される
+//         console.log('更新用データを受け取りました:', result);
 
-        const taskIdToUpdate = taskToEdit.id; // 更新対象のタスクID (ダイアログに渡した元のタスクのID)
-        this.projectService.updateGanttTask(taskIdToUpdate, result) // result を更新データとして渡す
-          .then(() => {
-            console.log('タスクがFirestoreで更新されました。ID:', taskIdToUpdate);
-            // 画面の this.ganttTasks 配列も更新する
-            const index = this.ganttTasks.findIndex(task => task.id === taskIdToUpdate);
-            if (index !== -1) {
-              // 更新された情報で置き換える (result がそのまま新しいタスク情報か、部分的な更新かによる)
-              // ここでは result が更新後の全情報を持っていると仮定
-              this.ganttTasks[index] = { ...this.ganttTasks[index], ...result, id: taskIdToUpdate };
-              this.ganttTasks = [...this.ganttTasks]; // 変更検知のため新しい参照に
-              this.cdr.detectChanges();
-              console.log('画面のタスクリストを更新しました。');
-            }
-          })
-          .catch(error => {
-            console.error('Firestoreのタスク更新に失敗しました:', error);
-          });
-      } else {
-        console.log('編集ダイアログがキャンセルされたか、データがありませんでした。');
-      }
-    }); // subscribe の閉じ括弧
-  } // openEditTaskDialog メソッドの閉じ括弧
+//         const taskIdToUpdate = taskToEdit.id; // 更新対象のタスクID (ダイアログに渡した元のタスクのID)
+//         this.projectService.updateGanttTask(taskIdToUpdate, result) // result を更新データとして渡す
+//           .then(() => {
+//             console.log('タスクがFirestoreで更新されました。ID:', taskIdToUpdate);
+//             // 画面の this.ganttTasks 配列も更新する
+//             const index = this.ganttTasks.findIndex(task => task.id === taskIdToUpdate);
+//             if (index !== -1) {
+//               // 更新された情報で置き換える (result がそのまま新しいタスク情報か、部分的な更新かによる)
+//               // ここでは result が更新後の全情報を持っていると仮定
+//               this.ganttTasks[index] = { ...this.ganttTasks[index], ...result, id: taskIdToUpdate };
+//               this.ganttTasks = [...this.ganttTasks]; // 変更検知のため新しい参照に
+//               this.cdr.detectChanges();
+//               console.log('画面のタスクリストを更新しました。');
+//             }
+//           })
+//           .catch(error => {
+//             console.error('Firestoreのタスク更新に失敗しました:', error);
+//           });
+//       } else {
+//         console.log('編集ダイアログがキャンセルされたか、データがありませんでした。');
+//       }
+//     }); // subscribe の閉じ括弧
+//   } // openEditTaskDialog メソッドの閉じ括弧
 
-    // ... (openEditTaskDialog メソッドの後など、クラス内の適切な場所) ...
+//     // ... (openEditTaskDialog メソッドの後など、クラス内の適切な場所) ...
 
-    public trackByTaskId(index: number, taskItem: GanttTaskDisplayItem): string {
-      return taskItem.id;
-    }
+//     public trackByTaskId(index: number, taskItem: GanttTaskDisplayItem): string {
+//       return taskItem.id;
+//     }
 
     selectTask(task: GanttTaskDisplayItem): void {
       // console.log(`%cselectTask CALLED with task: ${task.name} (ID: ${task.id})`, 'color: blue; font-weight: bold;');
@@ -537,59 +617,59 @@ openAddTaskDialog(): void {
     }
 
 
-    // gantt-chart.component.ts
+//     // gantt-chart.component.ts
 
-// ... (import文や他のプロパティ・メソッドは変更なし) ...
+//  // ... (import文や他のプロパティ・メソッドは変更なし) ...
 
-confirmDeleteTask(): void {
-  if (!this.selectedTask) {
-    // console.warn('削除対象のタスクが選択されていません。');
-    // 必要であればユーザーへの通知（Snackbarなど）
-    return;
-  }
+//  confirmDeleteTask(): void {
+//   if (!this.selectedTask) {
+//     // console.warn('削除対象のタスクが選択されていません。');
+//     // 必要であればユーザーへの通知（Snackbarなど）
+//     return;
+//   }
 
-  const taskToDelete = this.selectedTask;
-  const taskName = taskToDelete.name;
+//   const taskToDelete = this.selectedTask;
+//   const taskName = taskToDelete.name;
 
-  const dialogRef = this.dialog.open<ConfirmDialogComponent, ConfirmDialogData, boolean>(ConfirmDialogComponent, {
-    width: '450px',
-    data: { message: `タスク「${taskName}」を削除してもよろしいですか？\nこの操作は取り消せません。\n子タスクがある場合、それらも全て削除されます。` }
-  });
+//   const dialogRef = this.dialog.open<ConfirmDialogComponent, ConfirmDialogData, boolean>(ConfirmDialogComponent, {
+//     width: '450px',
+//     data: { message: `タスク「${taskName}」を削除してもよろしいですか？\nこの操作は取り消せません。\n子タスクがある場合、それらも全て削除されます。` }
+//   });
 
-  dialogRef.afterClosed().subscribe(result => {
-    // console.log('確認ダイアログが閉じられました。結果:', result);
-    if (result === true) { // ダイアログで「削除」が選択された場合
-      // console.log('削除を実行します:', taskToDelete);
+//   dialogRef.afterClosed().subscribe(result => {
+//     // console.log('確認ダイアログが閉じられました。結果:', result);
+//     if (result === true) { // ダイアログで「削除」が選択された場合
+//       // console.log('削除を実行します:', taskToDelete);
       
-      this.projectService.deleteGanttTaskRecursive(taskToDelete.id) // ★ ProjectServiceのメソッド呼び出し
-        .then(() => {
-          // console.log(`タスク「${taskName}」(ID: ${taskToDelete.id}) およびその子タスクがFirestoreから正常に削除されました。`);
+//       this.projectService.deleteGanttTaskRecursive(taskToDelete.id) // ★ ProjectServiceのメソッド呼び出し
+//         .then(() => {
+//           // console.log(`タスク「${taskName}」(ID: ${taskToDelete.id}) およびその子タスクがFirestoreから正常に削除されました。`);
           
-          // UI（ローカルのganttTasks配列）を更新
-          this.removeTaskAndChildrenFromLocalList(taskToDelete.id);
+//           // UI（ローカルのganttTasks配列）を更新
+//           this.removeTaskAndChildrenFromLocalList(taskToDelete.id);
 
-          this.selectedTask = null; // 選択状態をリセット
-          this.cdr.detectChanges();   // UIを更新
+//           this.selectedTask = null; // 選択状態をリセット
+//           this.cdr.detectChanges();   // UIを更新
 
-          // ユーザーに成功を通知 (例: Snackbar)
-          // this.snackbar.open(`タスク「${taskName}」を削除しました。`, '閉じる', { duration: 3000 });
-          alert(`タスク「${taskName}」を削除しました。`); // 現状はalert
+//           // ユーザーに成功を通知 (例: Snackbar)
+//           // this.snackbar.open(`タスク「${taskName}」を削除しました。`, '閉じる', { duration: 3000 });
+//           alert(`タスク「${taskName}」を削除しました。`); // 現状はalert
 
-        })
-        .catch(error => {
-          // console.error(`タスク「${taskName}」の削除中にエラーが発生しました:`, error);
-          // ユーザーにエラーを通知 (例: Snackbar)
-          // this.snackbar.open(`タスク「${taskName}」の削除に失敗しました。`, '閉じる', { duration: 5000 });
-          alert(`タスク「${taskName}」の削除に失敗しました。エラー: ${error.message || error}`);
-        });
-    } else {
-      // console.log('削除がキャンセルされました。');
-    }
-  });
-}
+//         })
+//         .catch(error => {
+//           // console.error(`タスク「${taskName}」の削除中にエラーが発生しました:`, error);
+//           // ユーザーにエラーを通知 (例: Snackbar)
+//           // this.snackbar.open(`タスク「${taskName}」の削除に失敗しました。`, '閉じる', { duration: 5000 });
+//           alert(`タスク「${taskName}」の削除に失敗しました。エラー: ${error.message || error}`);
+//         });
+//     } else {
+//       // console.log('削除がキャンセルされました。');
+//     }
+//   });
+//  }
 
-// UI（ローカルのganttTasks配列）からタスクとその子タスクを削除するヘルパーメソッド
-private removeTaskAndChildrenFromLocalList(parentIdToDelete: string): void {
+ // UI（ローカルのganttTasks配列）からタスクとその子タスクを削除するヘルパーメソッド
+ private removeTaskAndChildrenFromLocalList(parentIdToDelete: string): void {
   const tasksToRemove = new Set<string>(); // 削除対象のIDを格納するSet
   
   // 再帰的に削除対象のIDを収集する内部関数
@@ -606,7 +686,7 @@ private removeTaskAndChildrenFromLocalList(parentIdToDelete: string): void {
   // 収集したIDに基づいてローカルリストからタスクを削除
   this.ganttTasks = this.ganttTasks.filter(task => !tasksToRemove.has(task.id));
   console.log('ローカルのタスクリストから削除対象をフィルタリングしました。残りのタスク数:', this.ganttTasks.length);
-}
+ }
   
 
   public logTestClick(task: GanttTaskDisplayItem | null): void {
@@ -625,26 +705,26 @@ private removeTaskAndChildrenFromLocalList(parentIdToDelete: string): void {
 
   // gantt-chart.component.ts の GanttChartComponent クラス内
 
-// ... (他のメソッドの近くなど) ...
+ // ... (他のメソッドの近くなど) ...
 
 
-// ... (クラスの残りの部分)
+ // ... (クラスの残りの部分)
 
-isTimestamp(obj: unknown): obj is { toDate: () => Date } {
+ isTimestamp(obj: unknown): obj is { toDate: () => Date } {
   return !!obj && typeof (obj as { toDate?: unknown }).toDate === 'function';
-}
+ }
 
-get dueDateForDisplay(): Date | null {
+ get dueDateForDisplay(): Date | null {
   const dueDate = this.selectedTask?.dueDate;
   if (!dueDate) return null;
   if (typeof (dueDate as unknown as { toDate?: unknown }).toDate === 'function') {
     return (dueDate as unknown as { toDate: () => Date }).toDate();
   }
   return dueDate as Date;
-}
+ }
 
 
-async onStatusChange(newStatusSelected: 'todo' | 'doing' | 'done', taskId: string, taskItem: GanttTaskDisplayItem): Promise<void> {
+ async onStatusChange(newStatusSelected: 'todo' | 'doing' | 'done', taskId: string, taskItem: GanttTaskDisplayItem): Promise<void> {
   if (!taskId || !newStatusSelected) {
     console.error('Task IDまたは新しいステータスが不正です。');
     return;
@@ -754,13 +834,13 @@ async onStatusChange(newStatusSelected: 'todo' | 'doing' | 'done', taskId: strin
       this.cdr.detectChanges();
     }
   }
-}
+  }
 
-getToday(): Date {
+ getToday(): Date {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return today;
-}
+ }
 
 }// GanttChartComponent クラスの閉じ括弧
 

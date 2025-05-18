@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, from, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 // import { AdminUserService } from '../features/admin/services/admin-user.service';
 import { 
   Firestore, 
@@ -9,8 +9,12 @@ import {
   DocumentData, 
   CollectionReference, doc, addDoc, 
   docData, serverTimestamp, updateDoc, 
-  deleteDoc, DocumentReference, Timestamp, 
-  query, orderBy, FieldValue, where } from '@angular/fire/firestore'; // FieldValue をインポート
+  deleteDoc, DocumentReference, Timestamp,
+  getDocs, query, orderBy, FieldValue, where } from '@angular/fire/firestore'; // FieldValue をインポート
+  // task.service.ts の先頭の方
+import { GanttChartTask } from './models/gantt-chart-task.model';
+
+
 
 
 
@@ -138,6 +142,61 @@ export class TaskService {
       map(task => task ? this.convertTaskTimestampsToDate(task) : undefined)
     );
   }
+
+  // TaskService クラス内に追加
+async addGanttChartTask(taskData: Omit<GanttChartTask, 'id' | 'createdAt'>): Promise<DocumentReference> {
+  console.log('[TaskService] addGanttChartTask called with data:', taskData);
+  try {
+    const newTasksCollectionRef = collection(this.firestore, 'GanttChartTasks'); // ★新しいコレクション名
+    const docRef = await addDoc(newTasksCollectionRef, {
+      ...taskData,
+      createdAt: serverTimestamp() // 作成日時を自動設定
+    });
+    console.log('[TaskService] GanttChartTask added with ID:', docRef.id);
+    return docRef;
+  } catch (error) {
+    console.error('[TaskService] Error adding GanttChartTask:', error);
+    // ▼▼▼ エラーオブジェクト全体と、主要なプロパティを出力 ▼▼▼
+    console.error('[TaskService-Simple] Error adding GanttChartTask (raw error object):', error); // ★ これでエラーオブジェクト全体を見る
+    if (error instanceof Error) {
+      console.error('[TaskService-Simple] Error name:', error.name);
+      console.error('[TaskService-Simple] Error message:', error.message);
+      if ('code' in error) {
+        console.error('[TaskService-Simple] Firebase Error Code:', (error as Record<string, unknown>)['code']);
+      }
+    }
+    // ▲▲▲ ここまで追加・変更 ▲▲▲
+    throw error; // エラーを呼び出し元に再スロー
+  }
+}
+
+// TaskService クラス内に追加 (addGanttChartTask メソッドの近くなど)
+getGanttChartTasksByProjectId(projectId: string): Observable<GanttChartTask[]> {
+  console.log(`[TaskService] getGanttChartTasksByProjectId - STEP 1: Called for projectId: ${projectId}`);
+  const newTasksCollectionRef = collection(this.firestore, 'GanttChartTasks'); // ★新しいコレクション名
+  const q = query(
+    newTasksCollectionRef,
+    where('projectId', '==', projectId),
+    orderBy('createdAt', 'asc') // createdAtで並び替え（もしcreatedAtを保存する場合）
+                                  // もしcreatedAtを保存しないなら、orderByなしでもOK
+  );
+  console.log(`[TaskService] getGanttChartTasksByProjectId - STEP 2: Query created for projectId: ${projectId}`);
+
+  return from(getDocs(q)).pipe( // from() で Promise を Observable に変換
+    map(querySnapshot => {
+      const tasks: GanttChartTask[] = [];
+      querySnapshot.forEach(doc => {
+        tasks.push({ id: doc.id, ...doc.data() } as GanttChartTask);
+      });
+      console.log(`[TaskService] getGanttChartTasksByProjectId - STEP 3 (map): Fetched ${tasks.length} tasks for projectId ${projectId}. Tasks:`, tasks);
+      return tasks;
+    }),
+    catchError(error => {
+      console.error(`[TaskService] getGanttChartTasksByProjectId - ERROR fetching tasks for projectId ${projectId}:`, error);
+      return of([]); // エラー時は空の配列を返す Observable を返す
+    })
+  );
+}
 
   // 共通変換関数を追加
   private convertTaskTimestampsToDate(task: Task): TaskDisplay {
