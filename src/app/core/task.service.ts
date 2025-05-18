@@ -144,31 +144,28 @@ export class TaskService {
   }
 
   // TaskService クラス内に追加
-async addGanttChartTask(taskData: Omit<GanttChartTask, 'id' | 'createdAt'>): Promise<DocumentReference> {
-  console.log('[TaskService] addGanttChartTask called with data:', taskData);
-  try {
-    const newTasksCollectionRef = collection(this.firestore, 'GanttChartTasks'); // ★新しいコレクション名
-    const docRef = await addDoc(newTasksCollectionRef, {
-      ...taskData,
-      createdAt: serverTimestamp() // 作成日時を自動設定
-    });
-    console.log('[TaskService] GanttChartTask added with ID:', docRef.id);
-    return docRef;
-  } catch (error) {
-    console.error('[TaskService] Error adding GanttChartTask:', error);
-    // ▼▼▼ エラーオブジェクト全体と、主要なプロパティを出力 ▼▼▼
-    console.error('[TaskService-Simple] Error adding GanttChartTask (raw error object):', error); // ★ これでエラーオブジェクト全体を見る
-    if (error instanceof Error) {
-      console.error('[TaskService-Simple] Error name:', error.name);
-      console.error('[TaskService-Simple] Error message:', error.message);
-      if ('code' in error) {
-        console.error('[TaskService-Simple] Firebase Error Code:', (error as Record<string, unknown>)['code']);
+  async addGanttChartTask(taskData: Omit<GanttChartTask, 'id' | 'createdAt'>): Promise<DocumentReference> {
+    console.log('[TaskService] addGanttChartTask 実行。データ:', taskData);
+    try {
+      const ganttTasksCollectionRef = collection(this.firestore, 'GanttChartTasks'); // ★コレクション名を確認！
+      const docRef = await addDoc(ganttTasksCollectionRef, {
+        ...taskData,
+        createdAt: serverTimestamp()
+      });
+      console.log('[TaskService] Firestore保存成功。ID:', docRef.id);
+      return docRef;
+    } catch (error) {
+      console.error('[TaskService] Firestore保存エラー(詳細):', error);
+      if (error instanceof Error) {
+        console.error('[TaskService] エラー名:', error.name);
+        console.error('[TaskService] エラーメッセージ:', error.message);
+        if ('code' in error) {
+          console.error('[TaskService] Firebaseエラーコード:', (error as Record<string, unknown>)['code']);
+        }
       }
+      throw error;
     }
-    // ▲▲▲ ここまで追加・変更 ▲▲▲
-    throw error; // エラーを呼び出し元に再スロー
   }
-}
 
 // TaskService クラス内に追加 (addGanttChartTask メソッドの近くなど)
 getGanttChartTasksByProjectId(projectId: string): Observable<GanttChartTask[]> {

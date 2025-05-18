@@ -62,54 +62,30 @@
                  (keydown.enter)="selectTask(taskItem)"
                  (keydown.space)="selectTask(taskItem)"
                  [ngClass]="{'selected-task': taskItem.id === selectedTask?.id}">
-                 <div class="task-list-cell" style="width: 50px;">{{ taskItem.wbsNumber || (i + 1) }}
-                 </div>
+                 <div class="task-list-cell" style="width: 50px;">{{ i + 1 }}</div>
                  <div class="task-list-cell"
                      style="width: 150px; cursor: pointer; text-decoration: underline; color: blue;"
                      [style.paddingLeft.px]="taskItem.level ? taskItem.level * 20 : 0"
-                     (click)="navigateToTaskDetail(taskItem.id); $event.stopPropagation()"
-                     (keydown.enter)="navigateToTaskDetail(taskItem.id); $event.stopPropagation()"
-                     (keydown.space)="navigateToTaskDetail(taskItem.id); $event.stopPropagation()"
+                     (click)="navigateToTaskDetail(taskItem.id ? taskItem.id : ''); $event.stopPropagation()"
+                     (keydown.enter)="navigateToTaskDetail(taskItem.id ? taskItem.id : ''); $event.stopPropagation()"
+                     (keydown.space)="navigateToTaskDetail(taskItem.id ? taskItem.id : ''); $event.stopPropagation()"
                      tabindex="0"
                      role="link"
-                     [attr.aria-label]="'タスク「' + taskItem.name + '」の詳細を開く'">
-                     {{ taskItem.name }}
+                     [attr.aria-label]="'タスク「' + taskItem.title + '」の詳細を開く'">
+                     {{ taskItem.title }}
                 </div>
-                <div class="task-list-cell" style="width: 100px;">{{ taskItem.assigneeId || '-' }}</div>
-
-                <div class="task-list-cell" style="width: 80px;">
-                    <mat-select [value]="taskItem.status"
-                                (selectionChange)="onStatusChange($event.value, taskItem.id, taskItem)" (click)="$event.stopPropagation()"
-                                placeholder="状況を選択"
-                                aria-label="タスクの状況"
-                                style="width: 100%; font-size: inherit;">
-                      <mat-option value="todo">未着手</mat-option>
-                      <mat-option value="doing">作業中</mat-option>
-                      <mat-option value="done">完了</mat-option>
-                    </mat-select>
-                  </div>
-
-                 <div class="task-list-cell" style="width: 70px;">
-                     {{ taskItem.progress === null || taskItem.progress === undefined ? '-' : (taskItem.progress + '%') }}
-                     </div>
-                      <div class="task-list-cell" style="width: 100px;">
-                         {{ isTimestamp(taskItem.plannedStartDate) ? taskItem.plannedStartDate.toDate() : taskItem.plannedStartDate | date:'yyyy/MM/dd' }}
-                         </div>
+                <div class="task-list-cell" style="width: 100px;">-</div>
+                <div class="task-list-cell" style="width: 80px;">-</div>
+                <div class="task-list-cell" style="width: 70px;">-</div>
                 <div class="task-list-cell" style="width: 100px;">
-                    {{ isTimestamp(taskItem.plannedEndDate) ? taskItem.plannedEndDate.toDate() : taskItem.plannedEndDate | date:'yyyy/MM/dd' }}
+                   {{ taskItem.plannedStartDate.toDate() | date:'yyyy/MM/dd' }}
                 </div>
                 <div class="task-list-cell" style="width: 100px;">
-                    {{ taskItem.actualStartDate ? (isTimestamp(taskItem.actualStartDate) ? taskItem.actualStartDate.toDate() : taskItem.actualStartDate | date:'yyyy/MM/dd') : '-' }}
+                    {{ taskItem.plannedEndDate.toDate() | date:'yyyy/MM/dd' }}
                 </div>
-                <div class="task-list-cell" style="width: 100px;">
-                    {{ taskItem.actualEndDate ? (isTimestamp(taskItem.actualEndDate) ? taskItem.actualEndDate.toDate() : taskItem.actualEndDate | date:'yyyy/MM/dd') : '-' }}
-                </div>
-                <div class="task-list-cell" style="width: 70px;">
-                    編集ボタン(一時無効)
-                  </div>
-                <!-- <div class="task-list-cell" style="width: 70px;">
-                    <button (click)="openEditTaskDialog(taskItem); $event.stopPropagation()">編集</button>
-                </div> -->
+                <div class="task-list-cell" style="width: 100px;">-</div>
+                <div class="task-list-cell" style="width: 100px;">-</div>
+                <div class="task-list-cell" style="width: 70px;">編集ボタン(一時無効)</div>
             </div>
         </div>
 
@@ -122,16 +98,18 @@
                  [ngClass]="{'selected-task-bar-indicator': taskItem.id === selectedTask?.id}">
 
                 <div class="gantt-bar"
-                     [style.left.px]="getBarLeftPosition(taskItem.plannedStartDate || timelineStartDate)"
-                     [style.width.px]="getBarWidth(taskItem.plannedStartDate || timelineStartDate, taskItem.plannedEndDate || timelineStartDate)"
-                     [title]="taskItem.name + ' (予定: ' + (taskItem.plannedStartDate | date:'MM/dd') + '-' + (taskItem.plannedEndDate | date:'MM/dd') + ')'">
-                     {{ taskItem.name }}
+                     [style.left.px]="getBarLeftPosition(taskItem.plannedStartDate.toDate())"
+                     [style.width.px]="getBarWidth(taskItem.plannedStartDate.toDate(), taskItem.plannedEndDate.toDate())"
+                     [title]="taskItem.title + ' (予定: ' + (taskItem.plannedStartDate.toDate() | date:'MM/dd') + '-' + (taskItem.plannedEndDate.toDate() | date:'MM/dd') + ')'">
+                     {{ taskItem.title }}
                 </div>
 
                 <div *ngIf="taskItem.actualStartDate"
-                     class="gantt-bar actual-bar" [style.left.px]="getBarLeftPosition(taskItem.actualStartDate)"
-                     [style.width.px]="getBarWidth(taskItem.actualStartDate, taskItem.actualEndDate || getToday())" [title]="taskItem.name + ' (実績: ' + (taskItem.actualStartDate | date:'MM/dd') + '-' + (taskItem.actualEndDate ? (taskItem.actualEndDate | date:'MM/dd') : '継続中') + ')'">
-                     </div>
+                     class="gantt-bar actual-bar" [style.left.px]="getBarLeftPosition(taskItem.actualStartDate.toDate())"
+                     [style.width.px]="getBarWidth(taskItem.actualStartDate.toDate(), (taskItem.actualEndDate ? taskItem.actualEndDate.toDate() : getToday()))"
+                     [title]="taskItem.title + ' (実績: ' + (taskItem.actualStartDate.toDate() | date:'MM/dd') + '-' + (taskItem.actualEndDate ? (taskItem.actualEndDate.toDate() | date:'MM/dd') : '継続中') + ')'">
+                     <!-- 実績バーは内容表示なし -->
+                </div>
                 </div>
         </div>
 
@@ -158,12 +136,12 @@
                     <p>ガントチャート表示エリア (タスク数: {{ tasks.length }})</p>
                     <ul class="task-list">
                       <li *ngFor="let task of tasks" class="task-item">
-                        <strong>{{ task.name }}</strong>
+                        <strong>{{ task.title }}</strong>
                         <span *ngIf="task.plannedStartDate && task.plannedEndDate">
-                          ({{ task.plannedStartDate | date:'yyyy/MM/dd' }} - {{ task.plannedEndDate | date:'yyyy/MM/dd' }})
+                          ({{ task.plannedStartDate.toDate() | date:'yyyy/MM/dd' }} - {{ task.plannedEndDate.toDate() | date:'yyyy/MM/dd' }})
                         </span>
-                        <p *ngIf="task.description">{{ task.description }}</p>
-                        <p>ステータス: {{ task.status }} | 進捗: {{ task.progress ?? 0 }}%</p>
+                        <!-- <p *ngIf="task.description">{{ task.description }}</p> -->
+                        <p>ステータス: - | 進捗: -</p>
                       </li>
                     </ul>
                   </div>
