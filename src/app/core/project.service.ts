@@ -50,7 +50,8 @@ export interface GanttTaskDisplayItem extends Omit<Task,
   'actualEndDate' | 
   'createdAt' | 
   'updatedAt' |
-  'dueDate' 
+  'dueDate' |
+  'description'
 
 > {
  
@@ -61,8 +62,8 @@ export interface GanttTaskDisplayItem extends Omit<Task,
   createdAt?: Date;             
   updatedAt?: Date;
   dueDate?: Date | null;       
-
   name: string; 
+  description?: string;
 }
 
 
@@ -91,6 +92,7 @@ export type GanttTaskUpdatePayload = Partial<Omit<GanttTaskItem, 'id' | 'created
   level?: number | null;
   parentId?: string | null;
   updatedAt?: Date | Timestamp | import('@angular/fire/firestore').FieldValue;
+
 };
 
 
@@ -210,29 +212,49 @@ updateGanttTask(
 
 
 
-  getGanttTasks(): Observable<GanttTaskDisplayItem[]> {
-    return this.taskService.getTasks().pipe(
+  getGanttTasksForProject(projectId: string): Observable<GanttTaskDisplayItem[]> {
+    return this.taskService.getTasksByProjectId(projectId).pipe(
       map(tasks => tasks.map(task => {
-        // すべてのTimestampをDateに変換
+        // Task を GanttTaskDisplayItem にマッピングする処理
+        // (このマッピングロジックは task.service.ts の convertTaskTimestampsToDate と同様のことができますが、
+        //  GanttTaskDisplayItem の定義に合わせて調整が必要かもしれません)
+
         const plannedStartDate = task.plannedStartDate instanceof Timestamp ? task.plannedStartDate.toDate() : (task.plannedStartDate ?? null);
         const plannedEndDate = task.plannedEndDate instanceof Timestamp ? task.plannedEndDate.toDate() : (task.plannedEndDate ?? null);
         const actualStartDate = task.actualStartDate instanceof Timestamp ? task.actualStartDate.toDate() : (task.actualStartDate ?? null);
         const actualEndDate = task.actualEndDate instanceof Timestamp ? task.actualEndDate.toDate() : (task.actualEndDate ?? null);
-        const createdAt = task.createdAt instanceof Timestamp ? task.createdAt.toDate() : undefined;
-        const updatedAt = task.updatedAt instanceof Timestamp ? task.updatedAt.toDate() : undefined;
+        const createdAt = task.createdAt instanceof Timestamp ? task.createdAt.toDate() : undefined; // TaskDisplayに合わせるなら (task.createdAt as Date)
+        const updatedAt = task.updatedAt instanceof Timestamp
+          ? task.updatedAt.toDate()
+          : (task.updatedAt instanceof Date ? task.updatedAt : undefined); // TaskDisplayに合わせる
         const dueDate = task.dueDate instanceof Timestamp ? task.dueDate.toDate() : (task.dueDate ?? null);
 
         return {
-          ...task,
-          name: task.title,
+          // GanttTaskDisplayItem に必要なプロパティを task からマッピング
+          id: task.id,
+          title: task.title, // name プロパティとして GanttTaskDisplayItem には定義
+          name: task.title,  // GanttTaskDisplayItem の 'name' プロパティに合わせる
+          projectId: task.projectId,
+          assigneeId: task.assigneeId,
+          status: task.status, // 'todo' | 'doing' | 'done'
+          blockerStatus: task.blockerStatus,
+          progress: task.progress,
+          level: task.level,
+          parentId: task.parentId,
+          wbsNumber: task.wbsNumber,
+          category: task.category,
+          otherAssigneeIds: task.otherAssigneeIds,
+          decisionMakerId: task.decisionMakerId,
+
+          // 日付フィールド (Date | null へ変換)
           plannedStartDate,
           plannedEndDate,
           actualStartDate,
           actualEndDate,
-          createdAt,
-          updatedAt,
+          createdAt, // createdAt は GanttTaskDisplayItem では Date 型
+          updatedAt, // updatedAt は GanttTaskDisplayItem では Date | null 型
           dueDate,
-        };
+        } as GanttTaskDisplayItem; // 型アサーション
       }))
     );
   }
@@ -279,5 +301,18 @@ async deleteGanttTaskRecursive(taskIdToDelete: string): Promise<void> {
   //   }
   // }
 
-  
+  getGanttTasks(): Observable<GanttTaskDisplayItem[]> {
+    return this.taskService.getTasks().pipe( // TaskServiceのgetTasksはTaskDisplay[]を返す
+      map(taskDisplays => taskDisplays.map(td => {
+        // TaskDisplay を GanttTaskDisplayItem に変換する必要があるか確認
+        // GanttTaskDisplayItem と TaskDisplay のプロパティがほぼ同じであれば、
+        // 単純なマッピングで済むか、あるいはTaskService.getTasks()の戻り値を直接使えるか検討
+        return {
+          ...td, // TaskDisplay のプロパティを展開
+          name: td.title, // GanttTaskDisplayItem の name に合わせる
+          // GanttTaskDisplayItem にあって TaskDisplay にないプロパティがあれば追加
+          // (例: projectId, assigneeId など、TaskDisplay の Omit で除外されていなければtdに含まれる)
+        } as GanttTaskDisplayItem;
+      })));
+  }
 }
