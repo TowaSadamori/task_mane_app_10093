@@ -6,7 +6,7 @@ import { Project, ProjectService, GanttTaskDisplayItem,
  } from '../../../core/project.service'; // GanttTaskUpdatePayload は不要なので削除も検討
 import { TaskService, 
   // NewDailyLogData,
-   Task, } from '../../../core/task.service'; // DailyLog をインポート
+ } from '../../../core/task.service'; // DailyLog をインポート
 import { Timestamp, serverTimestamp } from '@angular/fire/firestore'; // serverTimestamp をインポート
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AddTaskDialogComponent } from './components/add-task-dialog/add-task-dialog.component';
@@ -14,10 +14,8 @@ import { MatButtonModule } from '@angular/material/button';
 // import { ConfirmDialogComponent, ConfirmDialogData } from './components/confirm-dialog/confirm-dialog.component';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatSelectModule } from '@angular/material/select';
-import { firstValueFrom, of, Observable,  } from 'rxjs';
-import { catchError, switchMap, 
-  //tap
- } from 'rxjs/operators';
+import { of, Observable } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { GanttChartTask } from '../../../core/models/gantt-chart-task.model'; 
 
 
@@ -369,11 +367,20 @@ openEditTaskDialog(taskToEdit: GanttChartTask): void {
 
   console.log('編集ダイアログを開きます。対象タスク:', taskToEdit);
 
+  // Timestamp型の日付をDateに変換してダイアログに渡す
+  const dialogTaskData = {
+    ...taskToEdit,
+    plannedStartDate: taskToEdit.plannedStartDate ? (typeof taskToEdit.plannedStartDate["toDate"] === 'function' ? taskToEdit.plannedStartDate.toDate() : taskToEdit.plannedStartDate) : null,
+    plannedEndDate: taskToEdit.plannedEndDate ? (typeof taskToEdit.plannedEndDate["toDate"] === 'function' ? taskToEdit.plannedEndDate.toDate() : taskToEdit.plannedEndDate) : null,
+    actualStartDate: taskToEdit.actualStartDate ? (typeof taskToEdit.actualStartDate["toDate"] === 'function' ? taskToEdit.actualStartDate.toDate() : taskToEdit.actualStartDate) : null,
+    actualEndDate: taskToEdit.actualEndDate ? (typeof taskToEdit.actualEndDate["toDate"] === 'function' ? taskToEdit.actualEndDate.toDate() : taskToEdit.actualEndDate) : null,
+  };
+
   const dialogRef = this.dialog.open(AddTaskDialogComponent, {
     width: '400px',
     data: {
       isEditMode: true,
-      task: { ...taskToEdit },
+      task: dialogTaskData,
       projectId: this.projectId
     }
   });
@@ -381,15 +388,20 @@ openEditTaskDialog(taskToEdit: GanttChartTask): void {
   dialogRef.afterClosed().subscribe(result => {
     console.log('編集ダイアログが閉じられました。結果:', result);
     if (result) {
+      const taskIdToUpdate = taskToEdit.id!;
       const updatedTaskData: Partial<GanttChartTask> = {
         title: result.taskName,
-        plannedStartDate: result.plannedStartDate ? Timestamp.fromDate(new Date(result.plannedStartDate)) : undefined,
-        plannedEndDate: result.plannedEndDate ? Timestamp.fromDate(new Date(result.plannedEndDate)) : undefined,
+        plannedStartDate: result.plannedStartDate ? Timestamp.fromDate(new Date(result.plannedStartDate)) : null,
+        plannedEndDate: result.plannedEndDate ? Timestamp.fromDate(new Date(result.plannedEndDate)) : null,
+        actualStartDate: result.actualStartDate ? Timestamp.fromDate(new Date(result.actualStartDate)) : null,
+        actualEndDate: result.actualEndDate ? Timestamp.fromDate(new Date(result.actualEndDate)) : null,
+        status: result.status || null,
+        // 必要に応じて他のフィールドも追加
       };
-      console.log('Firestoreに更新するデータ:', updatedTaskData);
-      this.taskService.updateGanttChartTask(taskToEdit.id!, updatedTaskData)
+      console.log('Firestoreに更新するデータ (ID:', taskIdToUpdate, '):', updatedTaskData);
+      this.taskService.updateGanttChartTask(taskIdToUpdate, updatedTaskData)
         .then(() => {
-          console.log(`タスク (ID: ${taskToEdit.id}) が正常に更新されました。`);
+          console.log(`タスク (ID: ${taskIdToUpdate}) が正常に更新されました。`);
           alert('タスクを更新しました。');
           if (this.projectId) {
             this.loadTasksForProject(this.projectId);
@@ -397,7 +409,7 @@ openEditTaskDialog(taskToEdit: GanttChartTask): void {
           }
         })
         .catch(error => {
-          console.error(`タスク (ID: ${taskToEdit.id}) の更新中にエラーが発生しました:`, error);
+          console.error(`タスク (ID: ${taskIdToUpdate}) の更新中にエラーが発生しました:`, error);
           alert('タスクの更新に失敗しました。コンソールを確認してください。');
         });
     } else {
@@ -528,117 +540,82 @@ selectTask(task: GanttChartTask | null): void {
 // }
 
 
- async onStatusChange(newStatusSelected: 'todo' | 'doing' | 'done', taskId: string, taskItem: GanttChartTask): Promise<void> {
+ async onStatusChange(newStatusSelected: 'todo' | 'doing' | 'done' | null, taskId: string, taskItem: GanttChartTask): Promise<void> {
   if (!taskId || !newStatusSelected) {
     console.error('Task IDまたは新しいステータスが不正です。');
     return;
   }
 
   const originalStatus = taskItem.status;
-  const originalProgress = taskItem.progress;
+  // const originalProgress = taskItem.progress; // ← GanttChartTaskにprogressがないのでコメントアウト
 
   if (originalStatus === newStatusSelected) {
-    // もし進捗率も変更するロジックがここにあるなら、ステータスが同じでも進捗だけ変わるケースを考慮
-    // 今回はステータス変更がトリガーなので、ステータスが変わらなければ何もしないで良いでしょう。
     console.log('ステータスに変更はありません。');
     return;
   }
 
   console.log(`Task ID: ${taskId} のステータスを「${newStatusSelected}」に変更しようとしています。`);
 
-  let newProgressForUpdate: number | null = originalProgress ?? null; // 更新用進捗。現在の進捗を維持が基本
-  let statusToUpdate: 'todo' | 'doing' | 'done' = newStatusSelected;
+  // let newProgressForUpdate: number | null = originalProgress ?? null; // ← progressを使わないのでコメントアウト
+  const statusToUpdate: 'todo' | 'doing' | 'done' = newStatusSelected;
 
+  // ▼▼▼ progressに関連するロジックをコメントアウトまたは削除 ▼▼▼
+  /*
   if (newStatusSelected === 'done') {
     newProgressForUpdate = 100;
   } else if (newStatusSelected === 'todo') {
     newProgressForUpdate = 0;
   } else if (newStatusSelected === 'doing') {
-    // 「作業中」に手動で切り替えたときのロジック
-    try {
-      const dailyLogsObservable = this.taskService.getDailyLogs(taskId);
-      const dailyLogs = await firstValueFrom(dailyLogsObservable.pipe(catchError(err => {
-        console.error('日次ログの取得中にエラーが発生しました (onStatusChange):', err);
-        return of([]); // エラー時は空のログとして扱う
-      })));
-
-      if (dailyLogs && dailyLogs.length > 0) {
-        const latestLog = dailyLogs[dailyLogs.length - 1]; // getDailyLogsがworkDate昇順ソート済みと仮定
-        if (latestLog.progressRate !== null && latestLog.progressRate !== undefined) {
-          if (latestLog.progressRate === 100) {
-            // 最新ログが100%の場合、ユーザーが手動で'doing'にしようとしても'done'のままにする
-            alert('最新の日次ログの進捗が100%のため、ステータスは「完了」のままとなります。');
-            statusToUpdate = 'done'; // Firestoreに保存するステータスを'done'に強制
-            newProgressForUpdate = 100; // 進捗も100%に強制
-          } else {
-            newProgressForUpdate = latestLog.progressRate; // 最新ログの進捗率を採用
-          }
-        } else {
-          newProgressForUpdate = 1; // 日次ログはあるが、進捗率が記録されていなければ1%
-        }
-      } else {
-        newProgressForUpdate = 1; // 日次ログがなければ1%
-      }
-    } catch (error) {
-      // このcatchはfirstValueFrom内のエラーハンドリングでカバーされるので、通常ここには来ないはず
-      console.error(`Task ID: ${taskId} の日次ログ取得に予期せぬ失敗。進捗は1%として処理します。`, error);
-      newProgressForUpdate = 1;
-    }
+    // ... (日次ログからprogressを取得するロジックも一旦コメントアウト) ...
   }
+  */
+  // ▲▲▲ ここまで ▲▲▲
 
-  const updateData: Partial<Task> = {
+  const updateData: Partial<GanttChartTask> = {
     status: statusToUpdate,
     updatedAt: serverTimestamp()
   };
 
-  // newProgressForUpdateが数値として有効な場合のみprogressを更新データに含める
+  // ▼▼▼ progressに関連するロジックをコメントアウトまたは削除 ▼▼▼
+  /*
   if (typeof newProgressForUpdate === 'number') {
     updateData.progress = newProgressForUpdate;
   }
+  */
+  // ▲▲▲ ここまで ▲▲▲
 
-
-  // Firestore 更新前の最終確認 (もしステータスも進捗も変わっていなければ更新しない)
-  if (originalStatus === statusToUpdate && originalProgress === updateData.progress) {
-      console.log('ステータスおよび計算後の進捗に変更がないため、更新をスキップします。');
-      // UIのmat-selectの値が意図せず変わってしまっている場合、ここで元の値に戻す必要がある
-      if(taskItem.status !== originalStatus) {
-          taskItem.status = originalStatus;
-          this.cdr.detectChanges();
-      }
+  // ↓ シンプルな変更チェック（statusのみ）
+  if (originalStatus === statusToUpdate) {
+      console.log('ステータスに変更がないため、更新をスキップします。');
       return;
   }
 
-  
-
-
   try {
-    await this.taskService.updateTask(taskId, updateData);
-    console.log(`Task ID: ${taskId} のステータスが「${statusToUpdate}」に、進捗が ${updateData.progress !== undefined ? updateData.progress + '%' : '変更なし'} に正常に更新されました。`);
+    // updateTask を updateGanttChartTask に変更
+    await this.taskService.updateGanttChartTask(taskId, updateData);
+    console.log(`Task ID: ${taskId} のステータスが「${statusToUpdate}」に正常に更新されました。`);
 
-    // ローカルデータの更新
     const taskInList = this.ganttTasks.find(t => t.id === taskId);
     if (taskInList) {
       taskInList.status = statusToUpdate;
-      if (updateData.progress !== undefined && typeof updateData.progress === 'number') {
-        taskInList.progress = updateData.progress;
-      }
-      // this.ganttTasks = [...this.ganttTasks]; // 要素のプロパティ変更の場合、これは不要なことが多い
+      // if (updateData.progress !== undefined && typeof updateData.progress === 'number') { // ← progressを使わないのでコメントアウト
+      //   taskInList.progress = updateData.progress;
+      // }
       this.cdr.detectChanges();
     }
   } catch (error) {
-    console.error(`Task ID: ${taskId} のステータスまたは進捗更新に失敗しました。`, error);
+    console.error(`Task ID: ${taskId} のステータス更新に失敗しました。`, error);
     alert('タスクのステータス更新に失敗しました。');
-    // エラー時はUIを元の状態に戻す
     const taskInList = this.ganttTasks.find(t => t.id === taskId);
     if (taskInList) {
       taskInList.status = originalStatus;
-      if (typeof originalProgress === 'number') {
-        taskInList.progress = originalProgress;
-      }
+      // if (typeof originalProgress === 'number') { // ← progressを使わないのでコメントアウト
+      //   taskInList.progress = originalProgress;
+      // }
       this.cdr.detectChanges();
     }
   }
-  }
+}
 
  getToday(): Date {
   const today = new Date();
@@ -656,6 +633,12 @@ selectTask(task: GanttChartTask | null): void {
   const taskToDelete = this.selectedTask;
   const taskTitle = taskToDelete.title;
   const taskIdToDelete = taskToDelete.id;
+
+  if (typeof taskIdToDelete !== 'string') {
+    console.error('[GanttComponent] Invalid Task ID for deletion (undefined). Selected task:', taskToDelete);
+    alert('タスクIDが無効なため、削除処理を中止しました。');
+    return;
+  }
 
   if (confirm(`タスク「${taskTitle}」を削除してもよろしいですか？\nこの操作は取り消せません。`)) {
     console.log('削除を実行します。対象タスクID:', taskIdToDelete);
@@ -708,10 +691,9 @@ confirmAndDeleteNewSimpleTask(): void {
   const taskTitle = taskToDelete.title;
   const taskIdToDelete = taskToDelete.id;
 
-  // taskIdToDelete が string であることを保証
   if (typeof taskIdToDelete !== 'string') {
-    console.error('[GanttComponent] Invalid Task ID for deletion:', taskIdToDelete);
-    alert('タスクIDが無効なため、削除できませんでした。');
+    console.error('[GanttComponent] Invalid Task ID for deletion (undefined). Selected task:', taskToDelete);
+    alert('タスクIDが無効なため、削除処理を中止しました。');
     return;
   }
 

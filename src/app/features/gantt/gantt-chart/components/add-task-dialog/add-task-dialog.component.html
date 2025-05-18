@@ -1,4 +1,4 @@
-<h1 mat-dialog-title>タスク追加</h1>
+<h2 mat-dialog-title>{{ dialogTitle }}</h2>
 
 <form [formGroup]="taskForm" (ngSubmit)="onSubmit()">
 
@@ -22,44 +22,59 @@
     <p *ngIf="!decisionMakers || decisionMakers.length === 0">No decision makers to display.</p>
   </div> -->
   <div mat-dialog-content>
-    <mat-form-field appearance="fill" class="full-width">
-      <mat-label>タスク名</mat-label>
-      <input matInput formControlName="taskName" placeholder="タスクの名称を入力" required>
+    <mat-form-field appearance="fill" style="width: 100%;">
+      <mat-label>タイトル</mat-label>
+      <input matInput formControlName="taskName" required>
       <mat-error *ngIf="taskForm.get('taskName')?.hasError('required')">
-        タスク名は必須です。
+        タイトルは必須です
       </mat-error>
     </mat-form-field>
 
-    <mat-form-field appearance="fill" class="full-width">
+    <mat-form-field appearance="fill" style="width: 100%;">
       <mat-label>予定開始日</mat-label>
-      <input matInput [matDatepicker]="pickerStart" formControlName="plannedStartDate" placeholder="開始日を選択" required>
-      <mat-datepicker-toggle matSuffix [for]="pickerStart"></mat-datepicker-toggle>
-      <mat-datepicker #pickerStart></mat-datepicker>
-      <mat-error *ngIf="taskForm.get('plannedStartDate')?.hasError('required')">
-        予定開始日は必須です。
-      </mat-error>
+      <input matInput [matDatepicker]="psd" formControlName="plannedStartDate">
+      <mat-datepicker-toggle matSuffix [for]="psd"></mat-datepicker-toggle>
+      <mat-datepicker #psd></mat-datepicker>
     </mat-form-field>
 
-    <mat-form-field appearance="fill" class="full-width">
+    <mat-form-field appearance="fill" style="width: 100%;">
       <mat-label>予定終了日</mat-label>
-      <input matInput [matDatepicker]="pickerEnd" formControlName="plannedEndDate" placeholder="終了日を選択" required>
-      <mat-datepicker-toggle matSuffix [for]="pickerEnd"></mat-datepicker-toggle>
-      <mat-datepicker #pickerEnd></mat-datepicker>
-      <mat-error *ngIf="taskForm.get('plannedEndDate')?.hasError('required')">
-        予定終了日は必須です。
-      </mat-error>
+      <input matInput [matDatepicker]="ped" formControlName="plannedEndDate">
+      <mat-datepicker-toggle matSuffix [for]="ped"></mat-datepicker-toggle>
+      <mat-datepicker #ped></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" style="width: 100%;">
+      <mat-label>実績開始日</mat-label>
+      <input matInput [matDatepicker]="asd" formControlName="actualStartDate">
+      <mat-datepicker-toggle matSuffix [for]="asd"></mat-datepicker-toggle>
+      <mat-datepicker #asd></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" style="width: 100%;">
+      <mat-label>実績終了日</mat-label>
+      <input matInput [matDatepicker]="aed" formControlName="actualEndDate">
+      <mat-datepicker-toggle matSuffix [for]="aed"></mat-datepicker-toggle>
+      <mat-datepicker #aed></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" style="width: 100%;">
+      <mat-label>状況</mat-label>
+      <mat-select formControlName="status">
+        <mat-option [value]="null">未設定</mat-option>
+        <mat-option value="todo">未着手</mat-option>
+        <mat-option value="doing">進行中</mat-option>
+        <mat-option value="done">完了</mat-option>
+      </mat-select>
     </mat-form-field>
 
     <mat-form-field appearance="fill" class="full-width">
       <mat-label>担当者</mat-label>
-      <mat-select formControlName="assigneeId" required>
+      <mat-select formControlName="assigneeId">
         <mat-option *ngFor="let member of projectMembers" [value]="member.id">
           {{ member.displayName }}
         </mat-option>
       </mat-select>
-      <mat-error *ngIf="taskForm.get('assigneeId')?.hasError('required') && taskForm.get('assigneeId')?.touched">
-        担当者は必須です。
-      </mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="fill" class="full-width">
@@ -87,6 +102,6 @@
 
   <div mat-dialog-actions align="end">
     <button mat-button type="button" (click)="onNoClick()">キャンセル</button>
-    <button mat-raised-button color="primary" type="submit" [disabled]="taskForm.invalid">追加</button>
+    <button mat-raised-button color="primary" type="submit" [disabled]="taskForm.invalid">{{ submitButtonText }}</button>
   </div>
 </form>

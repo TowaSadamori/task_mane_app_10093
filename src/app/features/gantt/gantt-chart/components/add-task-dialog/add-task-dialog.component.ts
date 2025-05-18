@@ -63,41 +63,35 @@ private userService = inject(UserService); // ★ UserService をインジェク
 
     this.taskForm = this.fb.group({
       taskName: ['', Validators.required],
-      plannedStartDate: [null, Validators.required],
-      plannedEndDate: [null, Validators.required],
-      assigneeId: ['', Validators.required], // ★ 追加: 担当者ID (必須入力)
-      dueDate: [null],                       // ★ 追加: ToDo期限 (任意入力)
-      category: [''],                       // ★ 追加: カテゴリ (任意入力、初期値は空文字)
-      decisionMakerId: ['']                  // ★ 追加: 意思決定者ID (任意入力、初期値は空文字)
+      plannedStartDate: [null],
+      plannedEndDate: [null],
+      actualStartDate: [null],
+      actualEndDate: [null],
+      status: [null]
     });
 
     if (this.data) {
       this.isEditMode = this.data.isEditMode;
-      // ここで projectId を this.projectId に代入するロジックが必要
-      if (this.data.projectId) { // このようなチェックと代入が期待されます
-          this.projectId = this.data.projectId;
+      if (this.data.projectId) {
+        this.projectId = this.data.projectId;
       } else if (!this.isEditMode) {
           console.error('プロジェクトIDがダイアログに渡されていません。');
-          // エラー処理
       }
     }
 
-    
-
-    if (this.data) { // ★ data が存在する場合の初期設定
+    if (this.data) {
       this.isEditMode = this.data.isEditMode;
       if (this.isEditMode && this.data.task) {
         this.dialogTitle = 'タスク編集';
         this.submitButtonText = '更新';
-        // フォームに初期値を設定
+        const taskToEdit = this.data.task as unknown as import('../../../../../core/models/gantt-chart-task.model').GanttChartTask;
         this.taskForm.patchValue({
-          taskName: this.data.task.name, // `GanttTaskDisplayItem` の `name` は `Task` の `title` に対応
-          plannedStartDate: this.data.task.plannedStartDate,
-          plannedEndDate: this.data.task.plannedEndDate,
-          assigneeId: this.data.task.assigneeId,         // ★ 追加
-          dueDate: this.data.task.dueDate,               // ★ 追加
-          category: this.data.task.category,             // ★ 追加
-          decisionMakerId: this.data.task.decisionMakerId  // ★ 追加
+          taskName: taskToEdit.title,
+          plannedStartDate: taskToEdit.plannedStartDate ? (typeof taskToEdit.plannedStartDate["toDate"] === 'function' ? taskToEdit.plannedStartDate.toDate() : taskToEdit.plannedStartDate) : null,
+          plannedEndDate: taskToEdit.plannedEndDate ? (typeof taskToEdit.plannedEndDate["toDate"] === 'function' ? taskToEdit.plannedEndDate.toDate() : taskToEdit.plannedEndDate) : null,
+          actualStartDate: taskToEdit.actualStartDate ? (typeof taskToEdit.actualStartDate["toDate"] === 'function' ? taskToEdit.actualStartDate.toDate() : taskToEdit.actualStartDate) : null,
+          actualEndDate: taskToEdit.actualEndDate ? (typeof taskToEdit.actualEndDate["toDate"] === 'function' ? taskToEdit.actualEndDate.toDate() : taskToEdit.actualEndDate) : null,
+          status: taskToEdit.status ?? null
         });
       }
     }

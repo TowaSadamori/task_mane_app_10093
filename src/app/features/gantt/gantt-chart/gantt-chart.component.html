@@ -76,14 +76,20 @@
                 <div class="task-list-cell" style="width: 80px;">-</div>
                 <div class="task-list-cell" style="width: 70px;">-</div>
                 <div class="task-list-cell" style="width: 100px;">
-                   {{ taskItem.plannedStartDate.toDate() | date:'yyyy/MM/dd' }}
+                   {{ taskItem.plannedStartDate?.toDate() | date:'yyyy/MM/dd' }}
                 </div>
                 <div class="task-list-cell" style="width: 100px;">
-                    {{ taskItem.plannedEndDate.toDate() | date:'yyyy/MM/dd' }}
+                    {{ taskItem.plannedEndDate?.toDate() | date:'yyyy/MM/dd' }}
                 </div>
-                <div class="task-list-cell" style="width: 100px;">-</div>
-                <div class="task-list-cell" style="width: 100px;">-</div>
-                <div class="task-list-cell" style="width: 70px;">編集ボタン(一時無効)</div>
+                <div class="task-list-cell" style="width: 100px;">
+                    {{ taskItem.actualStartDate?.toDate() | date:'yyyy/MM/dd' }}<span *ngIf="!taskItem.actualStartDate">-</span>
+                </div>
+                <div class="task-list-cell" style="width: 100px;">
+                    {{ taskItem.actualEndDate?.toDate() | date:'yyyy/MM/dd' }}<span *ngIf="!taskItem.actualEndDate">-</span>
+                </div>
+                <div class="task-list-cell" style="width: 70px;">
+                    <button mat-button (click)="openEditTaskDialog(taskItem); $event.stopPropagation()">編集</button>
+                </div>
             </div>
         </div>
 
@@ -95,15 +101,15 @@
                  class="gantt-row"
                  [ngClass]="{'selected-task-bar-indicator': taskItem.id === selectedTask?.id}">
 
-                <div class="gantt-bar"
+                <div *ngIf="taskItem.plannedStartDate && taskItem.plannedEndDate" class="gantt-bar"
                      [style.left.px]="getBarLeftPosition(taskItem.plannedStartDate.toDate())"
                      [style.width.px]="getBarWidth(taskItem.plannedStartDate.toDate(), taskItem.plannedEndDate.toDate())"
                      [title]="taskItem.title + ' (予定: ' + (taskItem.plannedStartDate.toDate() | date:'MM/dd') + '-' + (taskItem.plannedEndDate.toDate() | date:'MM/dd') + ')'">
                      {{ taskItem.title }}
                 </div>
 
-                <div *ngIf="taskItem.actualStartDate"
-                     class="gantt-bar actual-bar" [style.left.px]="getBarLeftPosition(taskItem.actualStartDate.toDate())"
+                <div *ngIf="taskItem.actualStartDate" class="gantt-bar actual-bar"
+                     [style.left.px]="getBarLeftPosition(taskItem.actualStartDate.toDate())"
                      [style.width.px]="getBarWidth(taskItem.actualStartDate.toDate(), (taskItem.actualEndDate ? taskItem.actualEndDate.toDate() : getToday()))"
                      [title]="taskItem.title + ' (実績: ' + (taskItem.actualStartDate.toDate() | date:'MM/dd') + '-' + (taskItem.actualEndDate ? (taskItem.actualEndDate.toDate() | date:'MM/dd') : '継続中') + ')'">
                      <!-- 実績バーは内容表示なし -->
