@@ -1,62 +1,56 @@
-<h2>新規ユーザー登録</h2>
+<h2>{{ formTitle }}</h2>
 
 <form [formGroup]="userCreateForm" (ngSubmit)="onSubmit()">
 
-    <mat-form-field appearance="outline">
-        <mat-label>メールアドレス</mat-label>
-        <input matInput type="email" placeholder="例: new.user@example.com" formControlName="email" required>
-        <mat-error *ngIf="userCreateForm.get('email')?.hasError('required') && userCreateForm.get('email')?.touched">
-            メールアドレスを入力してください
-        </mat-error>
-        <mat-error *ngIf="userCreateForm.get('email')?.hasError('email') && userCreateForm.get('email')?.touched">
-            有効なメールアドレスを入力してください
-            </mat-error>
-    </mat-form-field>
+  <mat-form-field appearance="outline">
+    <mat-label>メールアドレス</mat-label>
+    <input matInput type="email" placeholder="例: new.user@example.com" formControlName="email" required>
+    <mat-error *ngIf="userCreateForm.get('email')?.hasError('required') && userCreateForm.get('email')?.touched">
+      メールアドレスを入力してください
+    </mat-error>
+    <mat-error *ngIf="userCreateForm.get('email')?.hasError('email') && userCreateForm.get('email')?.touched">
+      有効なメールアドレスを入力してください
+    </mat-error>
+  </mat-form-field>
 
-    <mat-form-field appearance="outline">
-        <mat-label>初期パスワード</mat-label>
-        <input matInput type="password" placeholder="初期パスワードを入力" formControlName="password" required>
-        <mat-error *ngIf="userCreateForm.get('password')?.hasError('required') && userCreateForm.get('password')?.touched">
-            パスワードを入力してください
-        </mat-error>
-        <mat-error *ngIf="userCreateForm.get('password')?.hasError('minlength') && userCreateForm.get('password')?.touched">
-            パスワードは {{ userCreateForm.get('password')?.errors?.['minlength']?.requiredLength }} 文字以上で入力してください
-        </mat-error>
-    </mat-form-field>
+  <mat-form-field appearance="outline">
+    <mat-label>{{ isEditMode ? '新しいパスワード (変更する場合のみ)' : 'パスワード' }}</mat-label>
+    <input matInput type="password" placeholder="{{ isEditMode ? '変更する場合のみ入力' : 'パスワードを入力' }}" formControlName="password">
+    <mat-error *ngIf="!isEditMode && userCreateForm.get('password')?.hasError('required') && userCreateForm.get('password')?.touched">
+      パスワードを入力してください
+    </mat-error>
+    <mat-error *ngIf="userCreateForm.get('password')?.hasError('minlength') && userCreateForm.get('password')?.touched">
+      パスワードは {{ userCreateForm.get('password')?.errors?.['minlength']?.requiredLength }} 文字以上で入力してください
+    </mat-error>
+  </mat-form-field>
 
-    <mat-form-field appearance="outline">
-        <mat-label>表示名</mat-label>
-        <input matInput type="text" placeholder="例: 鈴木 一郎" formControlName="displayName">
-        <mat-error>
+  <mat-form-field appearance="outline" *ngIf="!isEditMode || userCreateForm.get('password')?.value">
+    <mat-label>{{ isEditMode ? '新しいパスワード (確認)' : 'パスワード (確認)' }}</mat-label>
+    <input matInput type="password" placeholder="{{ isEditMode ? '新しいパスワードを再入力' : 'パスワードを再入力' }}" formControlName="confirmPassword">
+    <mat-error *ngIf="!isEditMode && userCreateForm.get('confirmPassword')?.hasError('required') && userCreateForm.get('confirmPassword')?.touched">
+      確認用パスワードを入力してください
+    </mat-error>
+    <mat-error *ngIf="userCreateForm.hasError('passwordMismatch') && userCreateForm.get('confirmPassword')?.touched">
+      パスワードが一致しません
+    </mat-error>
+  </mat-form-field>
 
-        </mat-error>
-    </mat-form-field>
+  <mat-form-field appearance="outline">
+    <mat-label>表示名</mat-label>
+    <input matInput type="text" placeholder="例: 鈴木 一郎" formControlName="displayName" required>
+    <mat-error *ngIf="userCreateForm.get('displayName')?.hasError('required') && userCreateForm.get('displayName')?.touched">
+      表示名を入力してください
+    </mat-error>
+  </mat-form-field>
 
-    <!-- <mat-form-field appearance="outline">
-        <mat-label>役割</mat-label>
-        <mat-select formControlName="role" required>
-            <mat-option value="admin">管理者</mat-option>
-            <mat-option value="general">一般ユーザー</mat-option>
-            <mat-option value="partner">協力会社</mat-option> -->
+  <button mat-raised-button color="primary" type="submit" [disabled]="userCreateForm.invalid || isLoading">
+    {{ isLoading ? (isEditMode ? '更新中...' : '登録中...') : submitButtonText }}
+  </button>
 
-        <!-- </mat-select>
-        <mat-error *ngIf="userCreateForm.get('role')?.hasError('required') && userCreateForm.get('role')?.touched">
-            役割を選択してください
-        </mat-error>
-        </mat-form-field> -->
+  <div *ngIf="feedbackMessage" class="error-message" style="margin-top: 10px; color: red;"> {{ feedbackMessage }}
+  </div>
 
-        <button mat-raised-button color="primary" type="submit" [disabled]="userCreateForm.invalid || isLoading">
-            {{ isLoading ? '登録中...' : 'ユーザー登録' }}
-        </button>
-
-        <div *ngIf="registrationError" class="error-message">
-            {{ registrationError }}
-            </div>
-
-            <button mat-stroked-button type="button" (click)="navigateToLogin()" [disabled]="isLoading" style="margin-left: 8px;">
-                ログイン画面へ戻る
-            </button>
-            <div *ngIf="registrationError" class="error-message">
-                {{ registrationError }}
-            </div>
+  <button *ngIf="!isEditMode" mat-stroked-button type="button" (click)="navigateToLogin()" [disabled]="isLoading" style="margin-left: 8px; margin-top: 10px;">
+    ログイン画面へ戻る
+  </button>
 </form>

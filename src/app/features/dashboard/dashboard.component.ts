@@ -31,10 +31,6 @@ export class DashboardComponent implements OnInit {
   private router = inject(Router);
   projects$!: Observable<Project[]>;
 
-  constructor(private router: Router) {}
-
-  
-
   ngOnInit(): void {
     this.projects$ = this.projectService.getProjects().pipe(
       map(projects => projects.map(project => ({

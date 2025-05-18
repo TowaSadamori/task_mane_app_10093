@@ -1,11 +1,22 @@
 <nav class="app-navigation">
     <ul>
-        <li><a routerLink="/dashboard">ダッシュボード</a></li>
-        <li><a routerLink="/tasks">タスク一覧</a></li>
-        <li><a routerLink="/gantt-chart">ガントチャート</a></li>
-        <li><a routerLink="/reports/daily">日報</a></li>
-        <li><a routerLink="/reports/weekly">週報</a></li>
-        <li><a routerLink="/reports/monthly">月報</a></li>
+      <li>
+        <a routerLink="/app/dashboard">
+          <mat-icon>home</mat-icon>
+          <span>Home</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/app/user-settings">
+          <mat-icon>settings</mat-icon>
+          <span>ユーザー設定</span>
+        </a>
+      </li>
+      <li>
+        <button mat-button (click)="logout()">
+          <mat-icon>exit_to_app</mat-icon>
+          <span>ログアウト</span>
+        </button>
+      </li>
     </ul>
-
-</nav>
+  </nav>

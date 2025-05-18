@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Functions, httpsCallableData } from '@angular/fire/functions';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
 interface CreateUserData {
   email: string;
@@ -15,6 +15,13 @@ export interface CreateUserResponse {
   message?: string;
 }
 
+export interface User {
+  email: string;
+  displayName: string;
+  password?: string;
+  // 必要に応じて他のプロパティも追加
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -27,5 +34,9 @@ export class AdminUserService {
     const createUserFn = httpsCallableData<CreateUserData,CreateUserResponse>(this.functions, 'createUser');
 
     return createUserFn(userData);
+  }
+
+  updateUser(): Observable<{ success: boolean }> {
+    return of({ success: true });
   }
 }

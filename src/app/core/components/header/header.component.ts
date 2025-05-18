@@ -3,7 +3,7 @@ import { AuthService } from '../../auth.service';
 import { Observable } from 'rxjs';
 import { User } from '@angular/fire/auth';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+// import { Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
 
 @Component({
@@ -19,19 +19,19 @@ export class HeaderComponent {
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    // private router: Router
   ) {
     this.user$ = this.authService.authState$;
   }
 
-  onLogout(): void {
-    this.authService.logout().then(()=> {
-      console.log('ログアウトしました');
-      this.router.navigate(['/login']);
-    })
-    .catch(error => {
-      console.error('ログアウト失敗', error);
-    });
-  }
+  // onLogout(): void {
+  //   this.authService.logout().then(()=> {
+  //     console.log('ログアウトしました');
+  //     this.router.navigate(['/login']);
+  //   })
+  //   .catch(error => {
+  //     console.error('ログアウト失敗', error);
+  //   });
+  // }
 
 }

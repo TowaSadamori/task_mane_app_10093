@@ -4,6 +4,8 @@ import { AuthGuard } from './core/auth.guard';
 import { AppLayoutComponent } from './layout/app-layout/app-layout.component'; 
 import { UserCreateComponent } from './features/admin/components/user-create/user-create.component';
 import { ProjectFormComponent } from './features/project/components/project-form/project-form.component';
+import { UserSettingsComponent } from './features/user/user-settings/user-settings.component'; // ★ 追加
+import { DashboardComponent } from './features/dashboard/dashboard.component';
 
 export const routes: Routes = [
   {
@@ -23,6 +25,11 @@ export const routes: Routes = [
     canActivate: [AuthGuard],  
     children: [
 
+      { path: 'dashboard', component: DashboardComponent }, // "Home" からのリンク先
+      {
+        path: 'user-settings', // ★ 追加: ユーザー設定画面へのルート
+        component: UserSettingsComponent
+      },
 
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }, 
       {

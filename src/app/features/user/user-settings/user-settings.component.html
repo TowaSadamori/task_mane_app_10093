@@ -1,0 +1,7 @@
+<div class="user-settings-container">
+    <h2>ユーザー設定</h2>
+    <app-user-create
+      [isEditMode]="true"
+      [userIdToEdit]="((authService.authState$ | async)?.uid) || null">
+    </app-user-create>
+  </div>
