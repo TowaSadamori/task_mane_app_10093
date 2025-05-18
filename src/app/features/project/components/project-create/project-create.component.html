@@ -1,0 +1,30 @@
+<div class="project-create-container">
+    <h2>新しいプロジェクトを作成</h2>
+    <form [formGroup]="projectForm" (ngSubmit)="onSubmit()">
+      <div class="form-field">
+        <label for="name">プロジェクト名:</label>
+        <input type="text" id="name" formControlName="name" placeholder="例：〇〇システム開発プロジェクト">
+        <div *ngIf="name?.invalid && (name?.dirty || name?.touched)" class="error-message">
+          <small *ngIf="name?.errors?.['required']">プロジェクト名は必須です。</small>
+          <small *ngIf="name?.errors?.['minlength']">プロジェクト名は3文字以上で入力してください。</small>
+        </div>
+      </div>
+  
+      <div class="form-field">
+        <label for="description">説明:</label>
+        <textarea id="description" formControlName="description" rows="4" placeholder="プロジェクトの目的や概要を入力"></textarea>
+        <div *ngIf="description?.invalid && (description?.dirty || description?.touched)" class="error-message">
+          <small *ngIf="description?.errors?.['required']">説明は必須です。</small>
+        </div>
+      </div>
+  
+      <div class="form-actions">
+        <button type="submit" [disabled]="isLoading || projectForm.invalid || !currentUser">
+          {{ isLoading ? '作成中...' : '作成する' }}
+        </button>
+        <button type="button" (click)="onCancel()" [disabled]="isLoading" class="cancel-button">
+          キャンセル
+        </button>
+      </div>
+    </form>
+  </div>

@@ -37,7 +37,7 @@ export interface Project {
   createdAt: Date | Timestamp;
 }
 
-type NewProjectData = Omit<Project, 'id' | 'createdAt'>;
+export type NewProjectData = Omit<Project, 'id' | 'createdAt'>;
 
 
 
@@ -92,6 +92,7 @@ export type GanttTaskUpdatePayload = Partial<Omit<GanttTaskItem, 'id' | 'created
   parentId?: string | null;
   updatedAt?: Date | Timestamp | import('@angular/fire/firestore').FieldValue;
 };
+
 
 
 @Injectable({
