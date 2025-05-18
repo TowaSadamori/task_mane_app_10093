@@ -347,4 +347,28 @@ createTask(taskData: NewTaskData): Promise<DocumentReference<Task>> {
     }
   }
 
+  // ▼▼▼ ガントチャート専用のタスク削除メソッド ▼▼▼
+  async deleteGanttChartTask(taskId: string): Promise<void> {
+    console.log(`[TaskService-Simple] deleteGanttChartTask called for ID: ${taskId}`);
+    if (!taskId) {
+      console.error('[TaskService-Simple] Task ID is required for deletion.');
+      throw new Error('Task ID is required for deletion.');
+    }
+    try {
+      const taskDocRef = doc(this.firestore, 'GanttChartTasks', taskId);
+      await deleteDoc(taskDocRef);
+      console.log(`[TaskService-Simple] GanttChartTask with ID: ${taskId} deleted successfully.`);
+    } catch (error) {
+      console.error(`[TaskService-Simple] Error deleting GanttChartTask with ID: ${taskId}:`, error);
+      if (error instanceof Error) {
+        console.error('[TaskService-Simple] Error name:', error.name);
+        console.error('[TaskService-Simple] Error message:', error.message);
+        if ('code' in error) {
+          console.error('[TaskService-Simple] Firebase Error Code:', (error as Record<string, unknown>)['code']);
+        }
+      }
+      throw error;
+    }
+  }
+
 }

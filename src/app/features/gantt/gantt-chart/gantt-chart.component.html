@@ -30,15 +30,13 @@
     <div class="main-gantt-area">
         <div class="task-list-area">
             <div class="action-buttons-container" style="margin-bottom: 10px; text-align: right; display: flex; justify-content: flex-end; gap: 10px;">
-                <!-- <button mat-raised-button color="warn" (click)="confirmDeleteTask()" [disabled]="!selectedTask">
-                    選択したタスクを削除
-                </button> -->
-
-                <button mat-raised-button color="warn" [disabled]="true"> 選択したタスクを削除 (一時無効)
+                <button mat-raised-button color="warn" [disabled]="true">
+                    選択したタスクを削除 (既存・一時無効)
                 </button>
 
-
-
+                <button mat-raised-button color="accent" (click)="confirmAndDeleteNewSimpleTask()" [disabled]="!selectedTask">
+                    シンプル削除 (選択タスク)
+                </button>
                 <button mat-raised-button color="primary" (click)="openAddTaskDialog()">タスク追加</button> 
             </div>
             <div class="task-list-header">

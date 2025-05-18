@@ -360,46 +360,72 @@ openAddTaskDialog(): void {
   });
 }
 
+openEditTaskDialog(taskToEdit: GanttChartTask): void {
+  if (!taskToEdit || !taskToEdit.id) {
+    console.error('編集対象のタスクまたはタスクIDが無効です。');
+    alert('エラー: 編集対象のタスク情報が正しくありません。');
+    return;
+  }
+
+  console.log('編集ダイアログを開きます。対象タスク:', taskToEdit);
+
+  const dialogRef = this.dialog.open(AddTaskDialogComponent, {
+    width: '400px',
+    data: {
+      isEditMode: true,
+      task: { ...taskToEdit },
+      projectId: this.projectId
+    }
+  });
+
+  dialogRef.afterClosed().subscribe(result => {
+    console.log('編集ダイアログが閉じられました。結果:', result);
+    if (result) {
+      const updatedTaskData: Partial<GanttChartTask> = {
+        title: result.taskName,
+        plannedStartDate: result.plannedStartDate ? Timestamp.fromDate(new Date(result.plannedStartDate)) : undefined,
+        plannedEndDate: result.plannedEndDate ? Timestamp.fromDate(new Date(result.plannedEndDate)) : undefined,
+      };
+      console.log('Firestoreに更新するデータ:', updatedTaskData);
+      this.taskService.updateGanttChartTask(taskToEdit.id!, updatedTaskData)
+        .then(() => {
+          console.log(`タスク (ID: ${taskToEdit.id}) が正常に更新されました。`);
+          alert('タスクを更新しました。');
+          if (this.projectId) {
+            this.loadTasksForProject(this.projectId);
+            console.log('タスクリストを再読み込みしました。');
+          }
+        })
+        .catch(error => {
+          console.error(`タスク (ID: ${taskToEdit.id}) の更新中にエラーが発生しました:`, error);
+          alert('タスクの更新に失敗しました。コンソールを確認してください。');
+        });
+    } else {
+      console.log('タスク編集がキャンセルされたか、データが返されませんでした。');
+    }
+  });
+}
+
 public trackByTaskId(index: number, item: GanttChartTask): string {
   return item && item.id ? item.id : index.toString();
 }
 
-selectTask(task: GanttChartTask): void {
-  // console.log(`%cselectTask CALLED with task: ${task.name} (ID: ${task.id})`, 'color: blue; font-weight: bold;');
+selectTask(task: GanttChartTask | null): void {
+  console.log('selectTask CALLED. Clicked task:', task);
 
-  const isCurrentlySelected = this.selectedTask && this.selectedTask.id === task.id;
-  // console.log(`  - Currently selected task ID: ${this.selectedTask ? this.selectedTask.id : 'null'}`);
-  // console.log(`  - Clicked task ID: ${task.id}`);
-  // console.log(`  - Is this task currently selected (this.selectedTask.id === task.id)?: ${isCurrentlySelected}`);
-
-  if (isCurrentlySelected) {
-    // console.log('  - DESELECTING task...');
+  if (this.selectedTask && task && this.selectedTask.id === task.id) {
     this.selectedTask = null;
-    // console.log('  - AFTER DESELECT: this.selectedTask is now:', this.selectedTask);
-    this.cdr.detectChanges(); // ★★★ 選択解除直後に変更検知 ★★★
-    // console.log('  - detectChanges called immediately after setting selectedTask to null');
-    
-    const clickedRowElement = this.el.nativeElement.querySelector('#task-row-' + task.id) as HTMLElement | null; // HTMLElementにキャスト
-    if (clickedRowElement && typeof clickedRowElement.blur === 'function') {
-      clickedRowElement.blur();
-      // console.log(`Blurred element: #task-row-${task.id}`);
-    }
-
+    console.log('Task DESELECTED. this.selectedTask is now:', this.selectedTask);
   } else {
-    // console.log('  - SELECTING task...');
     this.selectedTask = task;
-    // console.log('  - AFTER SELECT: this.selectedTask is now:', this.selectedTask);
-    this.cdr.detectChanges(); 
+    console.log('Task SELECTED. this.selectedTask is now:', this.selectedTask);
+    if (this.selectedTask) {
+      console.log('Selected Task ID:', this.selectedTask.id);
+    }
   }
-
-  if (this.selectedTask) {
-    console.log(`  - For [ngClass] evaluation (after update): current this.selectedTask.id = '${this.selectedTask.id}' (type: ${typeof this.selectedTask.id})`);
-  } else {
-    console.log('  - For [ngClass] evaluation (after update): this.selectedTask is null. All rows should be unselected.');
-  }
-
-  this.cdr.detectChanges(); // ★★★ メソッドの最後に再度変更検知 ★★★
-  console.log('%cselectTask FINISHED and final detectChanges called', 'color: blue; font-weight: bold;');
+  // ここで変更検知を明示的にトリガー
+  this.cdr.detectChanges();
+  console.log('Change detection triggered after selectTask.');
 }
 
 
@@ -619,6 +645,97 @@ selectTask(task: GanttChartTask): void {
   today.setHours(0, 0, 0, 0);
   return today;
  }
+
+ confirmDeleteTask(): void {
+  if (!this.selectedTask || !this.selectedTask.id) {
+    console.warn('削除対象のタスクが選択されていないか、タスクIDが無効です。');
+    alert('削除するタスクを選択してください。');
+    return;
+  }
+
+  const taskToDelete = this.selectedTask;
+  const taskTitle = taskToDelete.title;
+  const taskIdToDelete = taskToDelete.id;
+
+  if (confirm(`タスク「${taskTitle}」を削除してもよろしいですか？\nこの操作は取り消せません。`)) {
+    console.log('削除を実行します。対象タスクID:', taskIdToDelete);
+    this.taskService.deleteGanttChartTask(taskIdToDelete!)
+      .then(() => {
+        console.log(`タスク (ID: ${taskIdToDelete}) がFirestoreから正常に削除されました。`);
+        alert(`タスク「${taskTitle}」を削除しました。`);
+        this.ganttTasks = this.ganttTasks.filter(task => task.id !== taskIdToDelete);
+        this.selectedTask = null;
+        this.cdr.detectChanges();
+      })
+      .catch(error => {
+        console.error(`タスク (ID: ${taskIdToDelete}) の削除中にエラーが発生しました:`, error);
+        alert(`タスク「${taskTitle}」の削除に失敗しました。`);
+      });
+  } else {
+    console.log('タスク削除がキャンセルされました。');
+  }
+}
+
+confirmAndDeleteSimpleTask(): void {
+  if (!this.selectedTask || !this.selectedTask.id) {
+    alert('削除するタスクを選択してください。');
+    return;
+  }
+  const taskId = this.selectedTask.id;
+  const taskTitle = this.selectedTask.title;
+  if (confirm(`タスク「${taskTitle}」を削除してもよろしいですか？`)) {
+    this.taskService.deleteGanttChartTask(taskId)
+      .then(() => {
+        alert(`タスク「${taskTitle}」を削除しました。`);
+        this.ganttTasks = this.ganttTasks.filter(task => task.id !== taskId);
+        this.selectedTask = null;
+        this.cdr.detectChanges();
+      })
+      .catch(error => {
+        alert('削除に失敗しました。');
+        console.error(error);
+      });
+  }
+}
+
+confirmAndDeleteNewSimpleTask(): void {
+  if (!this.selectedTask || !this.selectedTask.id) {
+    alert('削除するタスクを選択してください。');
+    return;
+  }
+
+  const taskToDelete = this.selectedTask;
+  const taskTitle = taskToDelete.title;
+  const taskIdToDelete = taskToDelete.id;
+
+  // taskIdToDelete が string であることを保証
+  if (typeof taskIdToDelete !== 'string') {
+    console.error('[GanttComponent] Invalid Task ID for deletion:', taskIdToDelete);
+    alert('タスクIDが無効なため、削除できませんでした。');
+    return;
+  }
+
+  if (confirm(`新しいタスク「${taskTitle}」を削除してもよろしいですか？`)) {
+    console.log('[GanttComponent] Deleting new simple task. ID:', taskIdToDelete);
+
+    this.taskService.deleteGanttChartTask(taskIdToDelete)
+      .then(() => {
+        console.log(`[GanttComponent] Task (ID: ${taskIdToDelete}) deleted successfully from Firestore.`);
+        alert(`タスク「${taskTitle}」を削除しました。`);
+
+        // ローカルのタスクリストから削除
+        this.ganttTasks = this.ganttTasks.filter(task => task.id !== taskIdToDelete);
+        this.selectedTask = null; // 選択を解除
+        this.cdr.detectChanges(); // 画面を更新
+      })
+      .catch((error: unknown) => {
+        console.error(`[GanttComponent] Error deleting task (ID: ${taskIdToDelete}):`, error);
+        alert(`タスク「${taskTitle}」の削除に失敗しました。`);
+      });
+  } else {
+    console.log('[GanttComponent] Task deletion cancelled.');
+  }
+}
 
 }// GanttChartComponent クラスの閉じ括弧
 
