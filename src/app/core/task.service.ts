@@ -319,4 +319,32 @@ createTask(taskData: NewTaskData): Promise<DocumentReference<Task>> {
     return collectionData<Task>(tasksQuery, { idField: 'id' });
   }
 
+  // TaskService クラス内の適切な場所に追加
+  // ▼▼▼ ガントチャート専用のタスク更新メソッド ▼▼▼
+  async updateGanttChartTask(taskId: string, taskData: Partial<GanttChartTask>): Promise<void> {
+    console.log(`[TaskService-Simple] updateGanttChartTask called for ID: ${taskId} with data:`, taskData);
+    if (!taskId) {
+      console.error('[TaskService-Simple] Task ID is required for update.');
+      throw new Error('Task ID is required for update.');
+    }
+    try {
+      const taskDocRef = doc(this.firestore, 'GanttChartTasks', taskId); // ★コレクション名を確認
+      await updateDoc(taskDocRef, {
+        ...taskData,
+        updatedAt: serverTimestamp() // 更新日時を自動設定
+      });
+      console.log(`[TaskService-Simple] GanttChartTask with ID: ${taskId} updated successfully.`);
+    } catch (error) {
+      console.error(`[TaskService-Simple] Error updating GanttChartTask with ID: ${taskId}:`, error);
+      if (error instanceof Error) {
+        console.error('[TaskService-Simple] Error name:', error.name);
+        console.error('[TaskService-Simple] Error message:', error.message);
+        if ('code' in error) {
+          console.error('[TaskService-Simple] Firebase Error Code:', (error as Record<string, unknown>)['code']);
+        }
+      }
+      throw error;
+    }
+  }
+
 }

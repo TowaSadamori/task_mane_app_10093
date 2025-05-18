@@ -345,8 +345,10 @@ openAddTaskDialog(): void {
         .then(docRef => {
           console.log('Firestoreに保存成功！ ID:', docRef.id);
           alert('タスク「' + newTaskData.title + '」を保存しました！');
-          // ここでリストを再読み込みする処理を後で追加します
-          // this.loadAndDisplayTasks(this.projectId!);
+          if (this.projectId) {
+            this.loadTasksForProject(this.projectId);
+            console.log('タスクリストを再読み込みしました。');
+          }
         })
         .catch(error => {
           console.error('Firestoreへの保存中にエラー:', error);
