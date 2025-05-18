@@ -125,4 +125,42 @@
                      </div>
                 </div>
         </div>
+
+        <div *ngIf="isLoadingProject; else projectContentLoaded">
+            <p>プロジェクト情報を読み込んでいます...</p>
+          </div>
+          <ng-template #projectContentLoaded>
+            <div *ngIf="projectError" class="error-message">
+              <p>{{ projectError }}</p>
+            </div>
+          
+            <div *ngIf="project$ | async as project"> <h2 *ngIf="project">{{ project.name }} - ガントチャート</h2>
+              <h2 *ngIf="!project && projectId">プロジェクト (ID: {{ projectId }}) - ガントチャート</h2>
+          
+              <div *ngIf="isLoadingTasks; else tasksContentLoaded">
+                <p>タスクを読み込んでいます...</p>
+              </div>
+              <ng-template #tasksContentLoaded>
+                <div *ngIf="tasksError" class="error-message">
+                  <p>{{ tasksError }}</p>
+                </div>
+          
+                <div *ngIf="tasks$ | async as tasks"> <div *ngIf="tasks.length > 0; else noTasks">
+                    <p>ガントチャート表示エリア (タスク数: {{ tasks.length }})</p>
+                    <ul class="task-list">
+                      <li *ngFor="let task of tasks" class="task-item">
+                        <strong>{{ task.name }}</strong>
+                        <span *ngIf="task.plannedStartDate && task.plannedEndDate">
+                          ({{ task.plannedStartDate | date:'yyyy/MM/dd' }} - {{ task.plannedEndDate | date:'yyyy/MM/dd' }})
+                        </span>
+                        <p *ngIf="task.description">{{ task.description }}</p>
+                        <p>ステータス: {{ task.status }} | 進捗: {{ task.progress ?? 0 }}%</p>
+                      </li>
+                    </ul>
+                  </div>
+                  <ng-template #noTasks><p>このプロジェクトには表示できるタスクがありません。</p></ng-template>
+                </div>
+              </ng-template>
+            </div>
+          </ng-template>
     </div>

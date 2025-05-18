@@ -10,7 +10,8 @@ import {
   CollectionReference, doc, addDoc, 
   docData, serverTimestamp, updateDoc, 
   deleteDoc, DocumentReference, Timestamp, 
-  query, orderBy, FieldValue } from '@angular/fire/firestore'; // FieldValue をインポート
+  query, orderBy, FieldValue, where } from '@angular/fire/firestore'; // FieldValue をインポート
+
 
 
 
@@ -50,6 +51,34 @@ export interface TaskDisplay extends Omit<Task, 'dueDate' | 'createdAt' | 'plann
   updatedAt?: Date | null;
 }
 
+// task.service.ts
+// ... (Task インターフェースの定義はそのまま) ...
+
+export type NewTaskData = Omit<Task,
+  'id' | 'createdAt' | 'updatedAt' | 'plannedStartDate' | 'plannedEndDate' | 'dueDate'
+> & {
+  title: string;
+  description?: string;
+  projectId: string;
+  assigneeId: string;
+  status: 'todo' | 'doing' | 'done';
+  dueDate: Date | Timestamp | null; // ← 型を上書き
+  plannedStartDate: Date | Timestamp;
+  plannedEndDate: Date | Timestamp;
+  blockerStatus?: string | null;
+  actualStartDate?: Date | Timestamp | null;
+  actualEndDate?: Date | Timestamp | null;
+  progress?: number | null;
+  level?: number;
+  parentId?: string | null;
+  wbsNumber?: string;
+  category?: string | null;
+  otherAssigneeIds?: string[];
+  decisionMakerId?: string | null;
+};
+
+
+
 export interface PhotoEntry {
   id: string;
   url: string;
@@ -61,8 +90,7 @@ export interface PhotoEntry {
   processedAt?: Timestamp;
 }
 
-export type NewTaskData = Omit<Task, 'id' | 'createdAt' | 'updatedAt'>; 
-
+ 
 export interface DailyLog {
   id: string;
   workDate: Timestamp;
@@ -127,14 +155,28 @@ export class TaskService {
     };
   }
 
-  createTask(taskData: NewTaskData): Promise<DocumentReference<Task>> {
-    return addDoc(this.tasksCollection, {
-      id: '', // Firestoreが自動で上書きするので空文字でOK
-      ...taskData,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    } as Task);
-  }
+  // TaskService の createTask メソッド内
+createTask(taskData: NewTaskData): Promise<DocumentReference<Task>> {
+  const dataToSave = {
+    ...taskData,
+    // plannedStartDate を Timestamp に変換
+    plannedStartDate: taskData.plannedStartDate instanceof Date
+      ? Timestamp.fromDate(taskData.plannedStartDate)
+      : taskData.plannedStartDate, // Timestamp ならそのまま
+    // plannedEndDate を Timestamp に変換
+    plannedEndDate: taskData.plannedEndDate instanceof Date
+      ? Timestamp.fromDate(taskData.plannedEndDate)
+      : taskData.plannedEndDate, // Timestamp ならそのまま
+    // dueDate も同様の変換が必要な場合
+    dueDate: taskData.dueDate instanceof Date
+      ? Timestamp.fromDate(taskData.dueDate)
+      : taskData.dueDate, // Timestamp または null ならそのまま
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+
+  return addDoc(this.tasksCollection, dataToSave as Task); // Firestoreに保存する際はTask型に合わせる
+}
 
   updateTask(taskId: string, updatedData: Partial<Task>): Promise<void> {
     const taskDocRef = doc(this.firestore, 'Tasks', taskId);
@@ -210,6 +252,15 @@ export class TaskService {
       status: status,
       updatedAt: serverTimestamp()
     });
+  }
+
+  getTasksByProjectId(projectId: string): Observable<Task[]> {
+    const tasksQuery = query(
+      this.tasksCollection,
+      where('projectId', '==', projectId),
+      orderBy('createdAt', 'asc')
+    );
+    return collectionData<Task>(tasksQuery, { idField: 'id' });
   }
 
 }

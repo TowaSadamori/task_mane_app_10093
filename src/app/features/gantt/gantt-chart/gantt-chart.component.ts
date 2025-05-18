@@ -7,10 +7,11 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AddTaskDialogComponent } from './components/add-task-dialog/add-task-dialog.component';
 import { MatButtonModule } from '@angular/material/button';
 import { ConfirmDialogComponent, ConfirmDialogData } from './components/confirm-dialog/confirm-dialog.component';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { MatSelectModule } from '@angular/material/select';
-import { firstValueFrom, of } from 'rxjs';
-import { catchError } from 'rxjs/operators'; // catchError を追加
+import { firstValueFrom, of, Observable,  } from 'rxjs';
+import { catchError, switchMap, tap } from 'rxjs/operators'; // catchError を追加
+
 
 
 interface TimelineDay {
@@ -43,6 +44,7 @@ interface TimelineYear {
     MatDialogModule,
     MatButtonModule,
     MatSelectModule,
+
   ],
   templateUrl: './gantt-chart.component.html',
   styleUrl: './gantt-chart.component.scss'
@@ -50,21 +52,28 @@ interface TimelineYear {
 
 
 export class GanttChartComponent implements OnInit {
-  private projectService = inject(ProjectService);
-  public selectedTask: GanttTaskDisplayItem | null = null;
-  public el: ElementRef;
-  private taskService = inject(TaskService);
-  private currentProjectId = 'test-project-00'; 
-  private router = inject(Router);
+  private route: ActivatedRoute = inject(ActivatedRoute);
+  private projectService: ProjectService = inject(ProjectService);
+  private taskService: TaskService = inject(TaskService); // ★ TaskService がインジェクトされているか確認
+  private cdr: ChangeDetectorRef = inject(ChangeDetectorRef);
+  private router: Router = inject(Router);  
+
+  project$: Observable<Project | undefined> | undefined;
+  tasks$: Observable<GanttTaskDisplayItem[]> | undefined;
+  projectId: string | null = null;
+  isLoadingProject = true;
+  isLoadingTasks = true;
+  projectError: string | null = null;
+  tasksError: string | null = null;
+  selectedTask: GanttTaskDisplayItem | null = null;
+  private el: ElementRef<HTMLElement> = inject(ElementRef);
 
 
   constructor(
-    public dialog: MatDialog,
-    private cdr: ChangeDetectorRef,
-    el: ElementRef,
-    // private taskService: TaskService,
-  ){
-    this.el = el;
+    public dialog: MatDialog
+    // private el: ElementRef, // ElementRef は一旦コメントアウトまたは削除
+  ) {
+    // this.el = el; // ElementRef を使う場合はプロパティ宣言が必要
   }
 
   private generateTimelineHeaders(): void {
@@ -136,70 +145,72 @@ export class GanttChartComponent implements OnInit {
   allDaysInTimeline: TimelineDay[] = []
 
   ngOnInit(): void {
-    this.generateTimelineHeaders(); // タイムラインヘッダーは先に生成
+    this.route.paramMap.pipe(
+      switchMap(params => {
+        this.projectId = params.get('projectId');
+        this.isLoadingProject = true;
+        this.projectError = null;
+        this.tasks$ = undefined; // プロジェクトIDが変わるたびにタスクをリセット
 
-    // Firestoreからガントタスクを取得して表示する
-    this.projectService.getGanttTasks().subscribe({ // ★ subscribe にオブジェクトを渡す形式に変更 (next, error)
-      next: (tasks) => {
-        this.ganttTasks = tasks;
-        console.log('Firestoreからガントタスクを読み込みました:', this.ganttTasks);
-        this.cdr.detectChanges(); 
-        // 必要であれば、ここでタイムラインの再計算やUIの更新処理をトリガー
+        if (this.projectId) {
+          this.loadTasksForProject(this.projectId);
+          return this.projectService.getProject(this.projectId);
+        } else {
+          this.isLoadingProject = false;
+          this.projectError = 'プロジェクトIDが見つかりません。';
+          return of(undefined); // Projectが見つからない場合は undefined を返す Observable
+        }
+      })
+    ).subscribe({
+      next: project => {
+        this.project$ = of(project); // Observable<Project | undefined> に変換
+        this.isLoadingProject = false;
+        if (!project && this.projectId) { // projectIdはあるがプロジェクトが見つからない場合
+          this.projectError = `プロジェクト (ID: ${this.projectId}) が見つかりません。`;
+        }
       },
-      error: (err) => {
-        console.error('Firestoreからのガントタスク読み込みに失敗しました:', err);
-        // ユーザーへのエラー通知などをここで行う
+      error: err => {
+        console.error('プロジェクト情報の取得エラー:', err);
+        this.projectError = 'プロジェクト情報の取得中にエラーが発生しました。';
+        this.isLoadingProject = false;
       }
     });
-    console.log('Current Project ID for Gantt Chart (in ngOnInit):', this.currentProjectId);
   }
+
+  loadTasksForProject(projectId: string): void {
+    console.log('GanttChartComponent: Loading tasks for project ID:', projectId);
+    this.isLoadingTasks = true;
+    this.tasksError = null;
+    this.tasks$ = this.projectService.getGanttTasksForProject(projectId).pipe(
+      tap(tasks => {
+        this.ganttTasks = tasks; // ローカル配列にも保存
+        this.isLoadingTasks = false;
+        console.log(`Tasks for project ${projectId}:`, tasks);
+        if (tasks.length > 0) {
+          // タスクの日付範囲からタイムラインの開始日・終了日を決定する場合など
+          // this.updateTimelineRangeBasedOnTasks(tasks); // ← 将来的に実装
+          this.generateTimelineHeaders(); // ★ タスク取得後にタイムライン生成
+        } else {
+          this.timelineYears = []; // タスクがない場合はタイムラインもクリア
+          this.allDaysInTimeline = [];
+        }
+        this.cdr.detectChanges();
+      }),
+      catchError(err => {
+        console.error(`Error fetching tasks for project ${projectId}:`, err);
+        this.tasksError = `タスクの取得中にエラーが発生しました。`;
+        this.isLoadingTasks = false;
+        this.ganttTasks = [];
+        this.timelineYears = [];
+        this.allDaysInTimeline = [];
+        this.cdr.detectChanges();
+        return of([]);
+      })
+    );
+  }
+
   
-//   private createSampleGanttTasks(): void {
-//   const today = new Date();
-//   const tomorrow = new Date(today);
-//   tomorrow.setDate(today.getDate() + 1);
-//   const fiveDaysLater = new Date(today);
-//   fiveDaysLater.setDate(today.getDate() + 5);
-//   const tenDaysLater = new Date(today);
-//   tenDaysLater.setDate(today.getDate() + 10);
-//   const sevenDaysLater = new Date(today);
-//   sevenDaysLater.setDate(today.getDate() + 7);
 
-
-//   this.ganttTasks = [
-//     { 
-//       id: 'task1', name: '親タスク 1', 
-//       plannedStartDate: today, 
-//       plannedEndDate: tenDaysLater, 
-//       level: 0, parentId: null 
-//     },
-//     { 
-//       id: 'task1.1', name: '子タスク 1.1', 
-//       plannedStartDate: today, 
-//       plannedEndDate: fiveDaysLater, 
-//       level: 1, parentId: 'task1' 
-//     },
-//     { 
-//       id: 'task1.1.1', name: '孫タスク 1.1.1', 
-//       plannedStartDate: today, 
-//       plannedEndDate: tomorrow, 
-//       level: 2, parentId: 'task1.1' 
-//     },
-//     { 
-//       id: 'task1.2', name: '子タスク 1.2', 
-//       plannedStartDate: fiveDaysLater, 
-//       plannedEndDate: tenDaysLater, 
-//       level: 1, parentId: 'task1' 
-//     },
-//     { 
-//       id: 'task2', name: '親タスク 2', 
-//       plannedStartDate: tomorrow, 
-//       plannedEndDate: sevenDaysLater, 
-//       level: 0, parentId: null 
-//     },
-//   ];
-//   console.log('Sample Gantt Tasks:', this.ganttTasks);
-// }
 
 
 private mapProjectsToGanttItems(projects: Project[]): GanttTaskDisplayItem[] { // ★ 返り値の型を変更
@@ -290,19 +301,20 @@ navigateToTaskDetail(taskId: string): void {
 
 
 
- openAddTaskDialog(): void {
-  if (!this.currentProjectId) {
+openAddTaskDialog(): void {
+  // ↓ this.currentProjectId を this.projectId に変更
+  if (!this.projectId) {
     console.error('プロジェクトIDが設定されていません。タスク追加ダイアログを開けません。');
-    // ユーザーへの通知（例: alertやSnackbarなど）
     alert('エラー: プロジェクトが選択されていません。先にプロジェクトを選択するか、管理者に問い合わせてください。');
-    return; // currentProjectId がないので処理を中断
+    return; // projectId がないので処理を中断
   }
   const dialogRef = this.dialog.open(AddTaskDialogComponent, {
     width: '400px',
-    data: { // ▼▼▼ data オブジェクトを修正 ▼▼▼
+    data: {
       isEditMode: false,
-      task: null, // 新規作成なので task は null
-      projectId: this.currentProjectId // ★ 現在のプロジェクトIDを渡す
+      task: null,
+      // ↓ this.currentProjectId を this.projectId に変更
+      projectId: this.projectId // ★ 現在のプロジェクトID (this.projectId) を渡す
     }
   });
 
@@ -313,6 +325,13 @@ navigateToTaskDetail(taskId: string): void {
     // ▼▼▼ ステップAの修正 ▼▼▼
     if (result && result.taskName && result.plannedStartDate && result.plannedEndDate && result.assigneeId) {
       // ▼▼▼ ステップBの修正 ▼▼▼
+
+      if (!this.projectId) {
+        console.error('プロジェクトIDが予期せずnullになりました。タスクを作成できません。');
+        alert('エラー: プロジェクト情報が失われました。再度操作をお試しください。');
+        return;
+      }
+
       const newTaskToSave: NewGanttTaskData = {
         title: result.taskName,
         plannedStartDate: result.plannedStartDate,
@@ -325,7 +344,7 @@ navigateToTaskDetail(taskId: string): void {
             : null,
         category: result.category || null,
         decisionMakerId: result.decisionMakerId || null,
-        projectId: this.currentProjectId,
+        projectId: this.projectId,
         status: 'todo',
         level: 0,
         parentId: null,
@@ -494,11 +513,11 @@ navigateToTaskDetail(taskId: string): void {
         this.cdr.detectChanges(); // ★★★ 選択解除直後に変更検知 ★★★
         // console.log('  - detectChanges called immediately after setting selectedTask to null');
         
-        const clickedRowElement = this.el.nativeElement.querySelector('#task-row-' + task.id);
-        if (clickedRowElement && typeof clickedRowElement.blur === 'function') {
-          clickedRowElement.blur();
-          // console.log(`Blurred element: #task-row-${task.id}`);
-        }
+        const clickedRowElement = this.el.nativeElement.querySelector('#task-row-' + task.id) as HTMLElement | null; // HTMLElementにキャスト
+      if (clickedRowElement && typeof clickedRowElement.blur === 'function') {
+        clickedRowElement.blur();
+        // console.log(`Blurred element: #task-row-${task.id}`);
+      }
 
       } else {
         // console.log('  - SELECTING task...');
