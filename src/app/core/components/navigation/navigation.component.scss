@@ -1,0 +1,36 @@
+
+  
+  nav li a,
+  nav li button {
+    display: block;
+    padding: 10px 20px;
+    color: #495057; /* 通常時の文字色 (グレー) */
+    font-size: 0.95rem;
+    text-align: left;
+    width: 100%;
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+    border-bottom: 1px solid #f1f1f1; /* 各項目の下に薄い区切り線 */
+  }
+  
+  nav li a:hover,
+  nav li button:hover {
+    background-color: #dee2e6; /* マウスオーバー時の背景色 (やや濃いグレー) */
+    color: #007bff; /* マウスオーバー時の文字色 (青) */
+  }
+  
+  nav li a.active-link { // routerLinkActive="active-link" がHTMLにある前提
+    background-color: #007bff; /* アクティブ時の背景色 (青) */
+    color: #ffffff; /* アクティブ時の文字色 (白) */
+    font-weight: 500;
+  }
+  
+  nav li button {
+    margin-top: 15px; /* ログアウトボタンを少し下に */
+    background-color: #6c757d; /* ログアウトボタンの背景色 (グレー) */
+    color: white;
+  }
+  nav li button:hover {
+    background-color: #5a6268;
+  }

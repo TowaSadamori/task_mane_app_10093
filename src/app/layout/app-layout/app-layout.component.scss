@@ -1,0 +1,32 @@
+/* src/app/layout/app-layout/app-layout.component.scss */
+.app-layout-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  
+  .app-layout-header {
+    flex-shrink: 0;
+    /* ヘッダーの具体的なスタイルは header.component.scss で定義 */
+  }
+  
+  .app-layout-body {
+    display: flex;
+    flex-grow: 1;
+    overflow: hidden;
+  }
+  
+  .app-layout-navigation {
+    width: 220px;
+    flex-shrink: 0;
+    background-color: #e9ecef; /* サイドバー背景色 (薄いグレー) */
+    padding-top: 15px;
+    border-right: 1px solid #dee2e6; /* 右側に区切り線 */
+  }
+  
+  .app-layout-content {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background-color: #ffffff; /* メインコンテンツ背景色 (白) */
+  }

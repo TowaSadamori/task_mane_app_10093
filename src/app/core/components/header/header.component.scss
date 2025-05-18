@@ -1,0 +1,28 @@
+/* src/app/layout/header/header.component.scss */
+:host {
+    display: block;
+    background-color: #343a40; /* ヘッダー背景色 (濃いグレー/黒に近い色) */
+    color: #ffffff; /* ヘッダー文字色 (白) */
+    padding: 0 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    height: 56px; /* ヘッダーの高さを少し調整 */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .header-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .app-title {
+    font-size: 1.25rem; /* 少し小さめに */
+    font-weight: 500; /* 少し細めに */
+  }
+  
+  .user-info {
+    font-size: 0.9rem;
+  }

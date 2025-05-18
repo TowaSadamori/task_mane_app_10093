@@ -1,33 +1,37 @@
-@use '@angular/material' as mat;
-// 1. Tailwind CSS Directives (ファイルの先頭にあるはず)
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
-// // 2. Angular Material Theme Setup (ng addで自動生成された部分)
-// @include mat.core();
-
-// // Define the theme object (例: Azure/Blue テーマを選択した場合)
-// $my-app-primary: mat.define-palette(mat.$azure-palette, 700, 100, 800); // これは例です
-// $my-app-accent: mat.define-palette(mat.$blue-palette, A200, A100, A400); // これは例です
-// $my-app-warn: mat.define-palette(mat.$red-palette);
-
-// $my-app-theme: mat.define-light-theme((
-//   color: (
-//     primary: $my-app-primary,
-//     accent: $my-app-accent,
-//     warn: $my-app-warn,
-//   ),
-//   // Typography設定を有効にした場合は、Typographyの設定も含まれる
-//   // typography: mat.define-typography-config(),
-//   // density: 0, // Density設定も含まれる場合がある
-// ));
-
-// // Apply the theme to the entire application
-// @include mat.all-component-themes($my-app-theme);
-
-// 3. Angular CLI が追加する可能性のある基本スタイル
 html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; } // Material導入時に設定された可能性あり
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif; // このフォント指定は残してもOK
+  background-color: #f0f2f5; /* アプリ全体の背景を非常に薄いグレーに */
+  color: #333; /* 基本的な文字色 */
+}
+
+a {
+  text-decoration: none;
+  color: #007bff; /* 標準的なリンク色（青） */
+}
+
+a:hover {
+  text-decoration: underline; /* ホバー時に下線を表示 */
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+button {
+  cursor: pointer;
+  border: 1px solid #ccc; /* ボタンに枠線を追加 */
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: #007bff; /* 基本的なボタンの背景色（青） */
+  color: white; /* 基本的なボタンの文字色（白） */
+}
+
+button:hover {
+  background-color: #0056b3; /* ボタンのホバー色 */
+}
