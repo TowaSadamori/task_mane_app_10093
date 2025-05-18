@@ -30,7 +30,11 @@ export const routes: Routes = [
       {
         path: 'gantt-chart',
         loadComponent: () => import('./features/gantt/gantt-chart/gantt-chart.component').then(m => m.GanttChartComponent)
-      }
+      },
+      {
+        path: 'gantt-chart/:projectId', // :projectId パラメータを受け取る
+        loadComponent: () => import('./features/gantt/gantt-chart/gantt-chart.component').then(m => m.GanttChartComponent)
+      },
     ]
   },
   // {
