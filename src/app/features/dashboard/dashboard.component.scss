@@ -1,0 +1,58 @@
+/* src/app/features/dashboard/dashboard.component.scss */
+
+.dashboard-container {
+    padding: 20px; // コンテナ全体に余白
+  }
+  
+  h2 {
+    font-size: 1.8rem;
+    color: #343a40; // ヘッダーの背景色と合わせるか、少し薄い色
+    margin-bottom: 20px;
+    border-bottom: 2px solid #dee2e6; // 下線
+    padding-bottom: 10px;
+  }
+  
+//   .project-list {
+//     // ul のスタイルは global でリセット済み
+//   }
+  
+  .project-item {
+    background-color: #ffffff; // 各プロジェクト項目の背景を白に
+    border: 1px solid #dee2e6; // 枠線
+    border-radius: 4px; // 角丸
+    padding: 15px;
+    margin-bottom: 15px; // 各項目の下のマージン
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); // 軽い影
+    transition: box-shadow 0.3s ease-in-out; // ホバー時の影の変化を滑らかに
+  
+    &:hover {
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); // ホバー時にもう少し濃い影
+    }
+  
+    a {
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: #007bff; // リンクの色 (global で設定した色)
+      display: block; // リンクエリアを広げる
+      margin-bottom: 8px;
+  
+      &:hover {
+        text-decoration: underline; // ホバー時に下線 (global で設定済みだが明示)
+      }
+    }
+  }
+  
+  .project-description {
+    font-size: 0.9rem;
+    color: #6c757d; // 説明文の文字色 (少し薄いグレー)
+    line-height: 1.5;
+    margin-top: 0; // 上のマージンをリセット（<a>タグのマージンで調整）
+  }
+  
+  // ローディングメッセージや「プロジェクトがありません」のスタイル
+  p {
+    color: #6c757d;
+    font-size: 1rem;
+    text-align: center; // 中央揃えにする場合
+    padding: 20px 0;
+  }
