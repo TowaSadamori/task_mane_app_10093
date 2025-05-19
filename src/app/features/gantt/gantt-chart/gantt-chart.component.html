@@ -22,8 +22,8 @@
             <div class="gantt-task-details-rows-container">
                 <div *ngFor="let taskItem of ganttTasks; let i = index; trackBy: trackByTaskId"
                      class="gantt-task-details-row"
+                     [ngClass]="{'selected-task-row': taskItem.id === selectedTask?.id, 'done': taskItem.status === 'done'}"
                      [id]="'task-details-row-' + taskItem.id!"
-                     [ngClass]="{'selected-task-row': taskItem.id === selectedTask?.id}"
                      [style.minHeight.px]="getTaskRowHeight()"
                      (click)="selectTask(taskItem)"
                      tabindex="0"
