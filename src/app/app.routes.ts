@@ -35,11 +35,11 @@ export const routes: Routes = [
         path: 'gantt-chart/:projectId', // :projectId パラメータを受け取る
         loadComponent: () => import('./features/gantt/gantt-chart/gantt-chart.component').then(m => m.GanttChartComponent)
       },
-      {
-        path: 'projects/create', // 新規作成画面のパス
-        loadComponent: () => import('./features/project/components/project-create/project-create.component').then(m => m.ProjectCreateComponent)
-        // ↑ ProjectCreateComponent の実際のパスに合わせてください
-      },
+      // {
+      //   path: 'projects/create', // 新規作成画面のパス
+      //   loadComponent: () => import('./features/project/components/project-create/project-create.component').then(m => m.ProjectCreateComponent)
+      //   // ↑ ProjectCreateComponent の実際のパスに合わせてください
+      // },
 
     ]
   },

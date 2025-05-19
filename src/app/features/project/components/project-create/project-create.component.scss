@@ -8,15 +8,17 @@
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   
-    h2 {
+    h2[mat-dialog-title] {
       text-align: center;
-      margin-bottom: 25px;
-      color: #343a40;
+      margin-bottom: 20px;
     }
   }
   
   .form-field {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+    &:last-child {
+      margin-bottom: 0;
+    }
   
     label {
       display: block;
@@ -50,8 +52,8 @@
   .error-message {
     margin-top: 5px;
     small {
-      color: #dc3545; // エラーメッセージの色
-      display: block;
+      color: #f44336;
+      font-size: 0.75em;
     }
   }
   
@@ -91,5 +93,23 @@
       &:hover:not(:disabled) {
         background-color: #5a6268;
       }
+    }
+  }
+
+  .full-width {
+    width: 100%;
+  }
+
+  .date-range-fields {
+    display: flex;
+    gap: 16px;
+    .half-width {
+      flex: 1;
+    }
+  }
+
+  div[mat-dialog-actions] {
+    button:not(:last-child) {
+      margin-right: 8px;
     }
   }

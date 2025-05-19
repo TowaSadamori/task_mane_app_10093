@@ -1,54 +1,95 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms'; // ReactiveFormsModule をインポート
+import { Component, OnInit, inject, Inject, Optional } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { ProjectService, NewProjectData } from '../../../../core/project.service';
-import { AuthService } from '../../../../core/auth.service'; // AuthService のパスを確認
-import { User } from '@angular/fire/auth'; // Firebase User型
+import { ProjectService, NewProjectData, Project } from '../../../../core/project.service';
+import { AuthService } from '../../../../core/auth.service';
+import { User } from '@angular/fire/auth';
+import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { Timestamp } from '@angular/fire/firestore';
+
+export interface ProjectDialogData {
+  project?: Project | null;
+}
 
 @Component({
   selector: 'app-project-create',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule], // ReactiveFormsModule を追加
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatDatepickerModule,
+    MatNativeDateModule
+  ],
   templateUrl: './project-create.component.html',
   styleUrls: ['./project-create.component.scss']
 })
 export class ProjectCreateComponent implements OnInit {
   projectForm: FormGroup;
   isLoading = false;
-  currentUser: User | null = null; // ログインユーザー情報
+  currentUser: User | null = null;
+  isEditMode = false;
+  dialogTitle = '新しいプロジェクトを作成';
+  submitButtonText = '作成する';
+  private editingProjectId: string | null = null;
 
   private fb: FormBuilder = inject(FormBuilder);
   private projectService: ProjectService = inject(ProjectService);
+  private authService: AuthService = inject(AuthService);
   private router: Router = inject(Router);
-  private authService: AuthService = inject(AuthService); // AuthServiceをインジェクト
 
-  constructor() {
+  constructor(
+    @Optional() public dialogRef?: MatDialogRef<ProjectCreateComponent>,
+    @Optional() @Inject(MAT_DIALOG_DATA) public data?: ProjectDialogData
+  ) {
     this.projectForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
       description: ['', Validators.required],
-      // startDate: [null], // 日付ピッカーなどを使う場合は別途設定
-      // endDate: [null],
-      // status: ['active', Validators.required] // デフォルト値を設定
+      startDate: [null],
+      endDate: [null]
     });
+
+    if (this.data && this.data.project) {
+      this.isEditMode = true;
+      this.dialogTitle = 'プロジェクト編集';
+      this.submitButtonText = '更新する';
+      this.editingProjectId = this.data.project.id;
+      this.projectForm.patchValue({
+        name: this.data.project.name,
+        description: this.data.project.description,
+        startDate: this.data.project.startDate instanceof Timestamp ? this.data.project.startDate.toDate() : this.data.project.startDate,
+        endDate: this.data.project.endDate instanceof Timestamp ? this.data.project.endDate.toDate() : this.data.project.endDate,
+      });
+    }
   }
 
   ngOnInit(): void {
-    // ログインユーザー情報を取得（managerId として使用するため）
-    this.authService.authState$.subscribe((user: User | null) => {
-      this.currentUser = user;
-    });
+    if (!this.isEditMode) {
+      this.authService.authState$.subscribe((user: User | null) => {
+        this.currentUser = user;
+      });
+    }
   }
 
   get name() { return this.projectForm.get('name'); }
   get description() { return this.projectForm.get('description'); }
+  get startDate() { return this.projectForm.get('startDate'); }
+  get endDate() { return this.projectForm.get('endDate'); }
 
   async onSubmit(): Promise<void> {
-    if (this.projectForm.invalid || !this.currentUser) {
-      this.projectForm.markAllAsTouched(); // 未入力フィールドにエラー表示を促す
-      if (!this.currentUser) {
+    if (this.projectForm.invalid || (!this.isEditMode && !this.currentUser)) {
+      this.projectForm.markAllAsTouched();
+      if (!this.isEditMode && !this.currentUser) {
         console.error('ユーザーがログインしていません。');
-        // ここでユーザーにエラーメッセージを表示する処理を追加できます
       }
       return;
     }
@@ -56,29 +97,55 @@ export class ProjectCreateComponent implements OnInit {
     this.isLoading = true;
     const formValue = this.projectForm.value;
 
-    const newProjectData: NewProjectData = {
-      name: formValue.name,
-      description: formValue.description,
-      managerId: this.currentUser.uid, // ログインユーザーのIDをマネージャーとして設定
-      // startDate: formValue.startDate ? new Date(formValue.startDate) : null,
-      // endDate: formValue.endDate ? new Date(formValue.endDate) : null,
-      status: 'active', // デフォルトステータス
-      // members: [this.currentUser.uid] // 作成者をメンバーに追加する例
-    };
-
-    try {
-      await this.projectService.createProject(newProjectData);
-      console.log('プロジェクトが正常に作成されました。');
-      this.router.navigate(['/app/dashboard']); // ダッシュボードにリダイレクト
-    } catch (error) {
-      console.error('プロジェクト作成エラー:', error);
-      // ここでユーザーにエラーメッセージを表示する処理を追加できます
-    } finally {
-      this.isLoading = false;
+    if (this.isEditMode && this.editingProjectId) {
+      const updatedProjectData: Partial<Project> = {
+        name: formValue.name,
+        description: formValue.description,
+        startDate: formValue.startDate ? Timestamp.fromDate(new Date(formValue.startDate)) : null,
+        endDate: formValue.endDate ? Timestamp.fromDate(new Date(formValue.endDate)) : null,
+      };
+      try {
+        await this.projectService.updateProject(this.editingProjectId, updatedProjectData);
+        console.log(`プロジェクト (ID: ${this.editingProjectId}) が正常に更新されました。`);
+        this.dialogRef?.close(updatedProjectData);
+      } catch (error) {
+        console.error('プロジェクト更新エラー:', error);
+        this.dialogRef?.close();
+      } finally {
+        this.isLoading = false;
+      }
+    } else {
+      if (!this.currentUser) {
+        console.error('新規作成モードでユーザー情報が取得できませんでした。');
+        this.isLoading = false;
+        return;
+      }
+      const newProjectData: NewProjectData = {
+        name: formValue.name,
+        description: formValue.description,
+        managerId: this.currentUser.uid,
+        status: 'active',
+        startDate: formValue.startDate ? Timestamp.fromDate(new Date(formValue.startDate)) : null,
+        endDate: formValue.endDate ? Timestamp.fromDate(new Date(formValue.endDate)) : null,
+      };
+      try {
+        const docRef = await this.projectService.createProject(newProjectData);
+        console.log('プロジェクトが正常に作成されました。ID:', docRef.id);
+        this.dialogRef?.close({ id: docRef.id, ...newProjectData });
+      } catch (error) {
+        console.error('プロジェクト作成エラー:', error);
+        this.dialogRef?.close();
+      } finally {
+        this.isLoading = false;
+      }
     }
   }
 
   onCancel(): void {
-    this.router.navigate(['/app/dashboard']); // ダッシュボードに戻る
+    if (this.dialogRef) {
+      this.dialogRef.close();
+    } else {
+      this.router.navigate(['/app/dashboard']);
+    }
   }
 }

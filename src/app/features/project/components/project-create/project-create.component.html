@@ -1,30 +1,54 @@
 <div class="project-create-container">
-    <h2>新しいプロジェクトを作成</h2>
-    <form [formGroup]="projectForm" (ngSubmit)="onSubmit()">
+  <h2 mat-dialog-title>{{ dialogTitle }}</h2>
+  <form [formGroup]="projectForm" (ngSubmit)="onSubmit()">
+    <div mat-dialog-content>
       <div class="form-field">
-        <label for="name">プロジェクト名:</label>
-        <input type="text" id="name" formControlName="name" placeholder="例：〇〇システム開発プロジェクト">
-        <div *ngIf="name?.invalid && (name?.dirty || name?.touched)" class="error-message">
-          <small *ngIf="name?.errors?.['required']">プロジェクト名は必須です。</small>
-          <small *ngIf="name?.errors?.['minlength']">プロジェクト名は3文字以上で入力してください。</small>
-        </div>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>プロジェクト名</mat-label>
+          <input matInput formControlName="name" placeholder="例：〇〇システム開発プロジェクト" required>
+          <mat-error *ngIf="name?.invalid && (name?.dirty || name?.touched)">
+            <span *ngIf="name?.errors?.['required']">プロジェクト名は必須です。</span>
+            <span *ngIf="name?.errors?.['minlength']">プロジェクト名は3文字以上で入力してください。</span>
+          </mat-error>
+        </mat-form-field>
       </div>
-  
+
       <div class="form-field">
-        <label for="description">説明:</label>
-        <textarea id="description" formControlName="description" rows="4" placeholder="プロジェクトの目的や概要を入力"></textarea>
-        <div *ngIf="description?.invalid && (description?.dirty || description?.touched)" class="error-message">
-          <small *ngIf="description?.errors?.['required']">説明は必須です。</small>
-        </div>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>説明</mat-label>
+          <textarea matInput formControlName="description" rows="4" placeholder="プロジェクトの目的や概要を入力" required></textarea>
+          <mat-error *ngIf="description?.invalid && (description?.dirty || description?.touched)">
+            <span *ngIf="description?.errors?.['required']">説明は必須です。</span>
+          </mat-error>
+        </mat-form-field>
       </div>
-  
-      <div class="form-actions">
-        <button type="submit" [disabled]="isLoading || projectForm.invalid || !currentUser">
-          {{ isLoading ? '作成中...' : '作成する' }}
-        </button>
-        <button type="button" (click)="onCancel()" [disabled]="isLoading" class="cancel-button">
-          キャンセル
-        </button>
+
+      <div class="form-field date-range-fields">
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>予定開始日</mat-label>
+          <input matInput [matDatepicker]="startDatePicker" formControlName="startDate" placeholder="日付を選択">
+          <mat-datepicker-toggle matSuffix [for]="startDatePicker"></mat-datepicker-toggle>
+          <mat-datepicker #startDatePicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>予定終了日</mat-label>
+          <input matInput [matDatepicker]="endDatePicker" formControlName="endDate" placeholder="日付を選択">
+          <mat-datepicker-toggle matSuffix [for]="endDatePicker"></mat-datepicker-toggle>
+          <mat-datepicker #endDatePicker></mat-datepicker>
+          <mat-error *ngIf="projectForm.errors?.['endDateBeforeStartDate'] && (endDate?.dirty || endDate?.touched)">
+            終了日は開始日以降に設定してください。
+          </mat-error>
+        </mat-form-field>
       </div>
-    </form>
-  </div>
+    </div>
+    <div mat-dialog-actions align="end">
+      <button mat-button type="button" (click)="onCancel()" [disabled]="isLoading">
+        キャンセル
+      </button>
+      <button mat-raised-button color="primary" type="submit" [disabled]="isLoading || projectForm.invalid || (!isEditMode && !currentUser)">
+        {{ isLoading ? (isEditMode ? '更新中...' : '作成中...') : submitButtonText }}
+      </button>
+    </div>
+  </form>
+</div>
