@@ -4,6 +4,11 @@
       <button class="create-project-button" (click)="openCreateProjectDialog()">
         <span class="material-icons-outlined">add_circle_outline</span> 新しいプロジェクトを作成
       </button>
+      <a routerLink="/app/user-settings" class="user-settings-link" style="margin-left: 16px;">
+        <button mat-stroked-button color="primary">
+          <mat-icon>settings</mat-icon> ユーザー設定
+        </button>
+      </a>
     </div>
     <div *ngIf="projects$ | async as projects; else loadingOrError">
       <ul class="project-list" *ngIf="projects.length > 0; else noProjects">

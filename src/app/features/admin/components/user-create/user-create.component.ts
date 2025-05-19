@@ -9,6 +9,8 @@ import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../../core/auth.service';
 import { Firestore, doc, setDoc, serverTimestamp, Timestamp } from '@angular/fire/firestore';
 import { Router } from '@angular/router';
+import { FormBuilder } from '@angular/forms';
+// import { getAuth, onAuthStateChanged } from '@angular/fire/auth';
 
 
 @Component({
@@ -37,6 +39,7 @@ export class UserCreateComponent implements OnInit {
   private firestore = inject(Firestore);
   private router = inject(Router);
   private snackBar = inject(MatSnackBar);
+  private fb = inject(FormBuilder);
 
   // constructor() { }
 
@@ -137,4 +140,111 @@ export class UserCreateComponent implements OnInit {
   //   })
   //   console.log('Form submitted!', this.userCreateForm.value);
   // }
+}
+
+@Component({
+  selector: 'app-user-settings',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatSnackBarModule,
+    RouterModule
+  ],
+  template: `
+    <div class="user-settings-container">
+      <h2>ユーザー設定</h2>
+      <form [formGroup]="displayNameForm" (ngSubmit)="onDisplayNameSubmit()">
+        <mat-form-field>
+          <mat-label>表示名</mat-label>
+          <input matInput formControlName="displayName">
+        </mat-form-field>
+        <button mat-raised-button color="primary" type="submit" [disabled]="displayNameForm.invalid || isLoadingDisplayName">
+          表示名を変更
+        </button>
+      </form>
+      <hr>
+      <form [formGroup]="passwordForm" (ngSubmit)="onPasswordSubmit()">
+        <mat-form-field>
+          <mat-label>現在のパスワード</mat-label>
+          <input matInput type="password" formControlName="currentPassword">
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>新しいパスワード</mat-label>
+          <input matInput type="password" formControlName="newPassword">
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>新しいパスワード（確認）</mat-label>
+          <input matInput type="password" formControlName="confirmNewPassword">
+        </mat-form-field>
+        <button mat-raised-button color="primary" type="submit" [disabled]="passwordForm.invalid || isLoadingPassword">
+          パスワードを変更
+        </button>
+      </form>
+    </div>
+  `,
+  styles: [`
+    .user-settings-container { max-width: 400px; margin: 0 auto; padding: 24px; }
+    mat-form-field { display: block; margin-bottom: 16px; }
+    hr { margin: 32px 0; }
+  `]
+})
+export class UserSettingsComponent implements OnInit {
+  displayNameForm!: FormGroup;
+  passwordForm!: FormGroup;
+  isLoadingDisplayName = false;
+  isLoadingPassword = false;
+  private authService = inject(AuthService);
+  private snackBar = inject(MatSnackBar);
+
+  ngOnInit(): void {
+    this.displayNameForm = new FormBuilder().group({
+      displayName: ['', Validators.required]
+    });
+    this.passwordForm = new FormBuilder().group({
+      currentPassword: ['', Validators.required],
+      newPassword: ['', [Validators.required, Validators.minLength(8)]],
+      confirmNewPassword: ['', Validators.required]
+    }, { validators: this.passwordMatchValidator });
+
+    // 現在のユーザー情報を取得してフォームにセット
+    this.authService.getCurrentUser().then(user => {
+      if (user && user.displayName) {
+        this.displayNameForm.patchValue({ displayName: user.displayName });
+      }
+    });
+  }
+
+  async onDisplayNameSubmit() {
+    if (this.displayNameForm.invalid) return;
+    this.isLoadingDisplayName = true;
+    const displayName = this.displayNameForm.value.displayName;
+    const user = await this.authService.getCurrentUser();
+    if (user) {
+      await this.authService.updateUserProfile(user, { displayName });
+      this.snackBar.open('表示名を変更しました', 'OK', { duration: 3000 });
+    }
+    this.isLoadingDisplayName = false;
+  }
+
+  async onPasswordSubmit() {
+    if (this.passwordForm.invalid) return;
+    this.isLoadingPassword = true;
+    const { currentPassword, newPassword } = this.passwordForm.value;
+    const user = await this.authService.getCurrentUser();
+    if (user && user.email) {
+      // 再認証とパスワード変更
+      await this.authService.reauthenticateAndChangePassword(user, currentPassword, newPassword);
+      this.snackBar.open('パスワードを変更しました', 'OK', { duration: 3000 });
+      this.passwordForm.reset();
+    }
+    this.isLoadingPassword = false;
+  }
+
+  passwordMatchValidator(form: FormGroup) {
+    return form.get('newPassword')?.value === form.get('confirmNewPassword')?.value ? null : { mismatch: true };
+  }
 }

@@ -1,0 +1,55 @@
+.user-settings-container {
+    max-width: 600px;
+    margin: 24px auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px; /* カード間のスペース */
+  }
+  .page-title {
+    text-align: center;
+    margin-bottom: 24px;
+    color: #3f51b5; /* Angular MaterialのPrimaryカラーに合わせる */
+    font-size: 1.8em;
+  }
+  .settings-card {
+    width: 100%;
+  }
+  .settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px; /* フォーム要素間のスペース */
+  }
+  .full-width {
+    width: 100%;
+  }
+  .submit-button {
+    align-self: flex-end; /* ボタンを右寄せ */
+    display: inline-flex; /* アイコンとテキストの整列のため */
+    align-items: center; /* アイコンとテキストの垂直中央揃え */
+    justify-content: center; /* ボタン内のコンテンツを中央揃え */
+  }
+  .submit-button mat-icon,
+  .submit-button mat-progress-spinner {
+    margin-right: 8px;
+  }
+  /* スピナーがボタンテキストより大きくならないように調整 */
+  .submit-button mat-progress-spinner {
+    width: 20px !important;
+    height: 20px !important;
+  }
+  mat-card-content p mat-icon {
+    vertical-align: middle;
+    margin-left: 8px;
+    font-size: 18px;
+    color: rgba(0,0,0,.54);
+  }
+  mat-card-content small {
+    display: block;
+    color: rgba(0,0,0,.54);
+    margin-top: 8px;
+  }
+  /* エラーメッセージのスタイル（オプション）*/
+  mat-error {
+    font-size: 0.75em;
+  }

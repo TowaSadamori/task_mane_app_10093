@@ -7,7 +7,12 @@ import {
    User,
    UserCredential,
    createUserWithEmailAndPassword as firebaseCreateUserWithEmailAndPassword,
-   updateProfile
+   updateProfile,
+   onAuthStateChanged,
+   getAuth,
+   updatePassword,
+   EmailAuthProvider,
+   reauthenticateWithCredential
   } from '@angular/fire/auth';
 import { Observable } from 'rxjs';
 
@@ -35,6 +40,23 @@ export class AuthService {
 
   updateUserProfile(user: User, profileData: { displayName?: string | null, photoURL?: string | null }): Promise<void> {
     return updateProfile(user, profileData);
+  }
+
+  getCurrentUser(): Promise<User | null> {
+    const auth = getAuth();
+    return new Promise(resolve => {
+      const unsubscribe = onAuthStateChanged(auth, user => {
+        unsubscribe();
+        resolve(user);
+      });
+    });
+  }
+
+  async reauthenticateAndChangePassword(user: User, currentPassword: string, newPassword: string): Promise<void> {
+    if (!user.email) throw new Error('メールアドレスが取得できません');
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user, credential);
+    await updatePassword(user, newPassword);
   }
 }
 

@@ -1,0 +1,92 @@
+<div class="user-settings-container">
+    <h2 class="page-title">ユーザー設定</h2>
+  
+    <mat-card class="settings-card">
+      <mat-card-header>
+        <mat-card-title>メールアドレス</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p *ngIf="userEmail; else loadingEmail">
+          {{ userEmail }}
+          <mat-icon matSuffix fontIcon="lock" matTooltip="メールアドレスは変更できません"></mat-icon>
+        </p>
+        <ng-template #loadingEmail>
+          <p>メールアドレスを読み込み中...</p>
+        </ng-template>
+        <small>メールアドレスはログインIDとして使用されるため変更できません。</small>
+      </mat-card-content>
+    </mat-card>
+  
+    <mat-card class="settings-card">
+      <mat-card-header>
+        <mat-card-title>表示名の変更</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="displayNameForm" (ngSubmit)="onDisplayNameSubmit()" class="settings-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>新しい表示名</mat-label>
+            <input matInput formControlName="displayName" autocomplete="off">
+            <mat-error *ngIf="displayNameForm.get('displayName')?.hasError('required')">
+              表示名は必須です
+            </mat-error>
+          </mat-form-field>
+          <button mat-raised-button color="primary" type="submit" [disabled]="displayNameForm.invalid || isLoadingDisplayName" class="submit-button">
+            <mat-icon *ngIf="!isLoadingDisplayName">save</mat-icon>
+            <mat-progress-spinner *ngIf="isLoadingDisplayName" mode="indeterminate" diameter="20"></mat-progress-spinner>
+            <span *ngIf="!isLoadingDisplayName">表示名を変更</span>
+            <span *ngIf="isLoadingDisplayName">変更中...</span>
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  
+    <mat-card class="settings-card">
+      <mat-card-header>
+        <mat-card-title>パスワードの変更</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="passwordForm" (ngSubmit)="onPasswordSubmit()" class="settings-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>現在のパスワード</mat-label>
+            <input matInput type="password" formControlName="currentPassword" autocomplete="current-password">
+            <mat-error *ngIf="passwordForm.get('currentPassword')?.hasError('required')">
+              現在のパスワードは必須です
+            </mat-error>
+            <mat-error *ngIf="passwordForm.get('currentPassword')?.hasError('incorrect')">
+              現在のパスワードが正しくありません。
+            </mat-error>
+          </mat-form-field>
+  
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>新しいパスワード</mat-label>
+            <input matInput type="password" formControlName="newPassword" autocomplete="new-password">
+            <mat-hint>8文字以上で入力してください</mat-hint>
+            <mat-error *ngIf="passwordForm.get('newPassword')?.hasError('required')">
+              新しいパスワードは必須です
+            </mat-error>
+            <mat-error *ngIf="passwordForm.get('newPassword')?.hasError('minlength')">
+              8文字以上で入力してください
+            </mat-error>
+          </mat-form-field>
+  
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>新しいパスワード（確認）</mat-label>
+            <input matInput type="password" formControlName="confirmNewPassword" autocomplete="new-password">
+            <mat-error *ngIf="passwordForm.get('confirmNewPassword')?.hasError('required')">
+              新しいパスワード（確認）は必須です
+            </mat-error>
+            <mat-error *ngIf="passwordForm.hasError('mismatch') && passwordForm.get('confirmNewPassword')?.dirty">
+              新しいパスワードが一致しません
+            </mat-error>
+          </mat-form-field>
+          <button mat-raised-button color="primary" type="submit" [disabled]="passwordForm.invalid || isLoadingPassword" class="submit-button">
+            <mat-icon *ngIf="!isLoadingPassword">save</mat-icon>
+            <mat-progress-spinner *ngIf="isLoadingPassword" mode="indeterminate" diameter="20"></mat-progress-spinner>
+            <span *ngIf="!isLoadingPassword">パスワードを変更</span>
+            <span *ngIf="isLoadingPassword">変更中...</span>
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </div>
+  

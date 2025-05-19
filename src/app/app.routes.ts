@@ -3,6 +3,7 @@ import { LoginComponent } from './auth/login/login.component';
 import { AuthGuard } from './core/auth.guard';
 import { AppLayoutComponent } from './layout/app-layout/app-layout.component'; 
 import { UserCreateComponent } from './features/admin/components/user-create/user-create.component';
+import { UserSettingsComponent } from './features/user/user-settings/user-settings.component';
 // import { AdminGuard } from './core/guards/admin.guard';
 // import { UserCreateComponent } from './features/admin/components/user-create/user-create.component';
 
@@ -40,6 +41,10 @@ export const routes: Routes = [
       {
         path: 'gantt-chart/:projectId', // :projectId パラメータを受け取る
         loadComponent: () => import('./features/gantt/gantt-chart/gantt-chart.component').then(m => m.GanttChartComponent)
+      },
+      {
+        path: 'user-settings',
+        component: UserSettingsComponent
       },
       // {
       //   path: 'projects/create', // 新規作成画面のパス
