@@ -14,4 +14,5 @@ export interface GanttChartTask extends Task {
   actualEndDate?: Timestamp;
   parentId?: string | null;
   level?: number;
+  memo?: string | null;
 }

@@ -79,6 +79,7 @@ export class GanttChartComponent implements OnInit {
   private el: ElementRef<HTMLElement> = inject(ElementRef);
   ganttTasks: GanttChartTask[] = []; 
 
+  totalTimelineWidthPx = 0;
 
   constructor(
     public dialog: MatDialog
@@ -173,11 +174,40 @@ export class GanttChartComponent implements OnInit {
       })
     ).subscribe({
       next: project => {
-        this.project$ = of(project); // Observable<Project | undefined> に変換
+        console.log('読み込まれたプロジェクト情報:', project);
+        this.project$ = of(project);
         this.isLoadingProject = false;
-        if (!project && this.projectId) { // projectIdはあるがプロジェクトが見つからない場合
-          this.projectError = `プロジェクト (ID: ${this.projectId}) が見つかりません。`;
+
+        if (project && project.startDate && project.endDate) {
+          // project.startDate と project.endDate が Timestamp インスタンスであることを確認
+          if (this.isTimestamp(project.startDate) && this.isTimestamp(project.endDate)) {
+            this.timelineStartDate = project.startDate.toDate();
+            this.timelineEndDate = project.endDate.toDate();
+          } else {
+            // 万が一 Timestamp 型でなかった場合のフォールバック
+            console.error('Project startDate or endDate is not a Timestamp object.');
+            this.timelineStartDate = new Date();
+            this.timelineEndDate = new Date();
+            this.timelineEndDate.setMonth(this.timelineEndDate.getMonth() + 1);
+          }
+          this.generateTimelineHeaders();
+          this.calculateTotalTimelineWidth();
+        } else if (project) {
+          console.warn('プロジェクトに開始日または終了日が設定されていません。デフォルト期間を使用します。');
+          this.timelineStartDate = new Date();
+          this.timelineEndDate = new Date();
+          this.timelineEndDate.setMonth(this.timelineEndDate.getMonth() + 3);
+          this.generateTimelineHeaders();
+          this.calculateTotalTimelineWidth();
+        } else if (this.projectId) {
+          this.projectError = `プロジェクト (ID: ${this.projectId}) が見つかりません。タイムラインはデフォルトで表示します。`;
+          this.timelineStartDate = new Date();
+          this.timelineEndDate = new Date();
+          this.timelineEndDate.setMonth(this.timelineEndDate.getMonth() + 3);
+          this.generateTimelineHeaders();
+          this.calculateTotalTimelineWidth();
         }
+        this.cdr.detectChanges();
       },
       error: err => {
         console.error('プロジェクト情報の取得エラー:', err);
@@ -526,8 +556,8 @@ selectTask(task: GanttChartTask | null): void {
 
  // ... (クラスの残りの部分)
 
- isTimestamp(obj: unknown): obj is { toDate: () => Date } {
-  return !!obj && typeof (obj as { toDate?: unknown }).toDate === 'function';
+ isTimestamp(value: unknown): value is Timestamp {
+  return !!value && typeof (value as { toDate?: unknown }).toDate === 'function';
  }
 
 // get dueDateForDisplay(): Date | null {
@@ -735,6 +765,10 @@ confirmDeleteNewSimpleTask(taskToDelete: GanttChartTask): void {
         console.error('タスク削除エラー:', error);
       });
   });
+}
+
+private calculateTotalTimelineWidth(): void {
+  this.totalTimelineWidthPx = this.allDaysInTimeline.length * this.DAY_CELL_WIDTH;
 }
 
 }// GanttChartComponent クラスの閉じ括弧

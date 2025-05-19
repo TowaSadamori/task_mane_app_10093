@@ -25,12 +25,13 @@
 }
 
 .timeline-cell {
-    padding: 5px;
+    padding: 0;
     border-right: 1px solid #ddd;
     text-align: center;
     min-width: 50px;
     font-size: 0.9em;
     white-space: nowrap;
+    box-sizing: border-box;
 }
 
 .main-gantt-area {
@@ -42,6 +43,11 @@
   
 
   .task-list-area {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.2rem;
+    padding: 1rem 0.5rem;
+    background: #f7fafd;
     flex-shrink: 0;
     width: 450px; /* ★★★ 例: 固定幅を指定。実際のデザインに合わせて調整してください ★★★ */
     // flex-basis: 450px; /* または flex-basis を使用 */
@@ -83,8 +89,9 @@
 .gantt-day-cell {
     min-width: 50px;
     height: 100%;
-    border-right: 1px dotted #eee;
+    border-right: 1px solid #ddd;
     box-sizing: border-box;
+    padding: 0;
 }
 
 .gantt-day-cell:last-child {
@@ -109,7 +116,7 @@
     position: absolute;
     top: 5px;
     height: 25px;
-    background-color: crimson !important; /* 強制的に赤色 */
+    background-color: crimson !important;
     z-index: 10 !important;
     color: white;
     font-size: 0.8em;
@@ -120,11 +127,8 @@
     text-overflow: ellipsis;
     box-sizing: border-box;
     cursor: pointer;
+    border-radius: 16px;
   }
-
-  // gantt-chart.component.scss
-
-// ... (既存のスタイル) ...
 
 .task-list-row {
     cursor: pointer;
@@ -195,6 +199,91 @@
       }
     }
   }
+}
+
+.gantt-task-card {
+  background: #fff;
+  border-radius: 1.5rem;
+  box-shadow: 0 2px 12px rgba(30, 136, 229, 0.10);
+  padding: 1.2rem 1.5rem 1.2rem 1.5rem;
+  min-width: 320px;
+  min-height: 80px;
+  max-width: 600px;
+  aspect-ratio: unset;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  transition: box-shadow 0.18s, transform 0.18s;
+  cursor: pointer;
+}
+.gantt-task-info {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+.gantt-task-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 0.4rem;
+  color: #1976d2;
+  word-break: break-word;
+}
+.gantt-task-periods {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-bottom: 0.2rem;
+}
+.planned-period, .actual-period {
+  display: flex;
+  align-items: center;
+  font-size: 1rem;
+  color: #555;
+}
+.period-label {
+  font-weight: bold;
+  color: #1976d2;
+  margin-right: 0.3em;
+  min-width: 1.5em;
+  display: inline-block;
+}
+.actual-period {
+  color: #388e3c;
+}
+.task-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.gantt-task-card:hover {
+  box-shadow: 0 4px 20px rgba(30, 136, 229, 0.18);
+  transform: translateY(-4px) scale(1.03);
+}
+.selected-task.gantt-task-card {
+  border: 2px solid #1976d2;
+}
+
+.task-actions-vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.gantt-task-status {
+  font-size: 1.05rem;
+  color: #1976d2;
+  font-weight: 500;
+  margin-top: 0.3rem;
+}
+
+.gantt-bar.completed {
+  background-color: #a3001f !important; /* crimsonより約30%暗い色 */
+  border: 1.5px solid #a3001f;
+  color: #fff;
+  opacity: 0.85;
 }
 
   

@@ -42,6 +42,7 @@ export interface Task {
   otherAssigneeIds?: string[];   
   decisionMakerId?: string | null; 
   updatedAt?: Timestamp | FieldValue;
+  memo?: string | null;
 }
 
 // 表示用
@@ -329,8 +330,10 @@ createTask(taskData: NewTaskData): Promise<DocumentReference<Task>> {
     }
     try {
       const taskDocRef = doc(this.firestore, 'GanttChartTasks', taskId); // ★コレクション名を確認
+      const title = taskData.title ?? null;
       await updateDoc(taskDocRef, {
         ...taskData,
+        title,
         updatedAt: serverTimestamp() // 更新日時を自動設定
       });
       console.log(`[TaskService-Simple] GanttChartTask with ID: ${taskId} updated successfully.`);
