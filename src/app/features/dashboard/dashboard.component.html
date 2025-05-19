@@ -15,6 +15,9 @@
             <p class="project-description">{{ project.description }}</p>
           </div>
           <div class="project-actions">
+            <button mat-icon-button color="primary" aria-label="プロジェクトを編集" (click)="openEditProjectDialog(project)">
+              <mat-icon>edit</mat-icon>
+            </button>
             <button mat-icon-button color="warn" aria-label="プロジェクトを削除" (click)="confirmDeleteProject(project)">
               <mat-icon>delete</mat-icon>
             </button>
