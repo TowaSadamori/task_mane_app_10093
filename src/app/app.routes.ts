@@ -2,12 +2,18 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './auth/login/login.component'; 
 import { AuthGuard } from './core/auth.guard';
 import { AppLayoutComponent } from './layout/app-layout/app-layout.component'; 
+import { UserCreateComponent } from './features/admin/components/user-create/user-create.component';
+// import { AdminGuard } from './core/guards/admin.guard';
 // import { UserCreateComponent } from './features/admin/components/user-create/user-create.component';
 
 export const routes: Routes = [
   {
     path: 'login',
     component: LoginComponent
+  },
+  {
+    path: 'signup',
+    component: UserCreateComponent
   },
   {
     path: 'app',
@@ -40,7 +46,11 @@ export const routes: Routes = [
       //   loadComponent: () => import('./features/project/components/project-create/project-create.component').then(m => m.ProjectCreateComponent)
       //   // ↑ ProjectCreateComponent の実際のパスに合わせてください
       // },
-
+      // {
+      //   path: 'admin/create-user',
+      //   component: UserCreateComponent,
+      //   canActivate: [AdminGuard]
+      // }
     ]
   },
   // {
@@ -49,11 +59,11 @@ export const routes: Routes = [
   // },
   {
     path: '',
-    redirectTo: '/app', 
+    redirectTo: '/login',
     pathMatch: 'full'
   },
   {
     path: '**',
-    redirectTo: '/app' 
+    redirectTo: '/login' 
   }
 ];
