@@ -1,0 +1,184 @@
+:host {
+    display: block; /* コンポーネント自体をブロック要素として扱う */
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    background-color: #f3f4f6; /* 背景色: より明るいグレー */
+    min-height: 100vh; /* ビューポート全体の高さを確保 */
+    display: flex; /* Flexboxコンテナとして設定 */
+    align-items: center; /* 垂直方向中央揃え */
+    justify-content: center; /* 水平方向中央揃え */
+    padding: 1rem; /* 全体にパディングを追加して、小さな画面での端との接触を避ける */
+    box-sizing: border-box;
+  }
+  
+  .login-page-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: inherit;
+  }
+  
+  .login-card {
+    background-color: white; /* カードの背景色 */
+    padding: 2.5rem; /* パディングを少し増やす */
+    border-radius: 0.75rem; /* 角丸を大きくする (12px) */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07); /* 影をより柔らかく、広範囲に */
+    width: 100%; /* 親要素に対して幅100% */
+    max-width: 420px; /* フォームの最大幅を少し広げる */
+    box-sizing: border-box;
+  }
+  
+  .login-title {
+    font-size: 1.875rem; /* 30pxのフォントサイズ */
+    font-weight: 700; /* 太字 */
+    text-align: center; /* 中央揃え */
+    color: #111827; /* テキスト色: より濃いグレー */
+    margin-bottom: 2.5rem; /* 下マージンを増やす */
+  }
+  
+  .form-field {
+    margin-bottom: 1.75rem; /* 28pxの下マージン */
+  }
+  
+  .form-label {
+    display: block; /* ブロック要素として表示 */
+    margin-bottom: 0.625rem; /* 10pxの下マージン */
+    font-size: 0.875rem; /* 14pxのフォントサイズ */
+    font-weight: 500; /* 中太 */
+    color: #374151; /* テキスト色 */
+  }
+  
+  .form-input {
+    width: 100%; /* 幅100% */
+    padding: 0.875rem 1.125rem; /* 14px 18pxのパディング */
+    border: 1px solid #d1d5db; /* ボーダー */
+    border-radius: 0.5rem; /* 角丸を大きくする (8px) */
+    box-sizing: border-box;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    font-size: 1rem;
+    color: #1f2937;
+  }
+  
+  .form-input::placeholder {
+    color: #9ca3af;
+  }
+  
+  .form-input:focus {
+    outline: none;
+    border-color: #4f46e5; /* フォーカス時のボーダー色 */
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15); /* フォーカス時の影を少し変更 */
+  }
+  
+  .form-input.input-error {
+    border-color: #ef4444; /* エラー時のボーダー色 */
+  }
+  .form-input.input-error:focus {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15); /* エラー時のフォーカス影 */
+  }
+  
+  .error-message {
+    margin-top: 0.375rem; /* 6pxの上マージン */
+    font-size: 0.8125rem; /* 13pxのフォントサイズ */
+    color: #ef4444;
+  }
+  .error-message small {
+    display: block;
+  }
+  
+  .server-error-message {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    padding: 0.875rem 1.125rem; /* パディング調整 */
+    border-radius: 0.5rem; /* 角丸を他の要素と合わせる */
+    margin-bottom: 1.75rem;
+    text-align: center;
+    font-size: 0.875rem;
+  }
+  
+  .form-actions {
+    margin-top: 2.5rem; /* 上マージンを増やす */
+    margin-bottom: 1.75rem;
+  }
+  
+  .submit-button {
+    width: 100%;
+    padding: 0.875rem 1.125rem; /* パディング調整 */
+    background-color: #4f46e5;
+    color: white;
+    font-weight: 600; /* 少し太く */
+    font-size: 1rem;
+    border: none;
+    border-radius: 0.5rem; /* 角丸を大きくする (8px) */
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px; /* 高さを少し調整 */
+  }
+  
+  .submit-button:hover:not(:disabled) {
+    background-color: #4338ca;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2); /* ホバー時の影を追加 */
+  }
+  
+  .submit-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.25); /* フォーカス時の影を少し変更 */
+  }
+  
+  .submit-button:disabled {
+    background-color: #a5b4fc;
+    cursor: not-allowed;
+  }
+  
+  .loading-spinner {
+    display: inline-block;
+    width: 22px; /* 少し大きく */
+    height: 22px; /* 少し大きく */
+    border: 3px solid rgba(255,255,255,.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 0.8s linear infinite; /* アニメーション速度調整 */
+    -webkit-animation: spin 0.8s linear infinite;
+  }
+  
+  @keyframes spin {
+    to { -webkit-transform: rotate(360deg); transform: rotate(360deg); }
+  }
+  @-webkit-keyframes spin {
+    to { -webkit-transform: rotate(360deg); }
+  }
+  
+  .links-container {
+    text-align: center;
+    margin-top: 1rem; /* server-error-messageとの間隔を調整 */
+  }
+  
+  .form-link {
+    font-size: 0.875rem;
+    color: #4f46e5;
+    text-decoration: none;
+    transition: color 0.15s ease-in-out;
+    margin: 0 0.75rem; /* リンク間のマージンを少し広げる */
+  }
+  
+  .form-link:hover {
+    color: #3730a3;
+    text-decoration: underline;
+  }
+  
+  /* レスポンシブ対応: 画面幅が狭い場合はカードのパディングを少し減らす */
+  @media (max-width: 480px) {
+    .login-card {
+      padding: 2rem 1.5rem; /* 左右のパディングを少し狭く */
+    }
+    .login-title {
+      font-size: 1.625rem; /* 26px */
+      margin-bottom: 2rem;
+    }
+    .form-input, .submit-button {
+      padding: 0.8rem 1rem; /* 入力フィールドとボタンのパディングを少し調整 */
+    }
+  }

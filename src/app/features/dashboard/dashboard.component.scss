@@ -16,40 +16,87 @@
 //     // ul のスタイルは global でリセット済み
 //   }
   
+  .project-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 2.2rem;
+    margin-top: 2.5rem;
+  }
+  
   .project-item {
-    background-color: #ffffff; // 各プロジェクト項目の背景を白に
-    border: 1px solid #dee2e6; // 枠線
-    border-radius: 4px; // 角丸
-    padding: 15px;
-    margin-bottom: 15px; // 各項目の下のマージン
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); // 軽い影
-    transition: box-shadow 0.3s ease-in-out; // ホバー時の影の変化を滑らかに
+    background: #fff;
+    border-radius: 2.2rem;
+    box-shadow: 0 4px 24px rgba(30, 136, 229, 0.13);
+    padding: 2.2rem 1.5rem 1.5rem 1.5rem;
+    min-width: 0;
+    min-height: 340px;
+    aspect-ratio: 1 / 1;
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
-    align-items: center;
+    align-items: stretch;
+    transition: box-shadow 0.18s, transform 0.18s;
+    cursor: pointer;
   
     &:hover {
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); // ホバー時にもう少し濃い影
-    }
-  
-    a {
-      font-size: 1.2rem;
-      font-weight: 500;
-      color: #007bff; // リンクの色 (global で設定した色)
-      display: block; // リンクエリアを広げる
-      margin-bottom: 8px;
-  
-      &:hover {
-        text-decoration: underline; // ホバー時に下線 (global で設定済みだが明示)
-      }
+      box-shadow: 0 8px 32px rgba(30, 136, 229, 0.18);
+      transform: translateY(-6px) scale(1.04);
     }
   }
   
+  .project-info {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 0.7rem;
+  }
+  
+  .project-info a {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #1976d2;
+    margin-bottom: 0.3rem;
+    text-decoration: none;
+    border-radius: 1rem;
+    padding: 0.2rem 0.5rem;
+    transition: background 0.18s, color 0.18s;
+    text-align: center;
+    width: 100%;
+    display: block;
+    line-height: 1.4;
+  }
+  
+  .project-info a:hover {
+    background: #e3f2fd;
+    color: #0d47a1;
+  }
+  
   .project-description {
-    font-size: 0.9rem;
-    color: #6c757d; // 説明文の文字色 (少し薄いグレー)
-    line-height: 1.5;
-    margin-top: 0; // 上のマージンをリセット（<a>タグのマージンで調整）
+    margin-top: 0.7rem;
+    font-size: 0.95rem;
+    color: #555;
+    word-break: break-word;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  
+  .desc-label {
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 0.1rem;
+  }
+  
+  .desc-content {
+    white-space: pre-line;
+    line-height: 1.6;
+  }
+  
+  .project-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
   }
   
   // ローディングメッセージや「プロジェクトがありません」のスタイル
@@ -83,9 +130,13 @@
     padding: 10px 15px;
     border: none;
     border-radius: 4px;
-    font-size: 0.9rem;
-    display: flex; // アイコンとテキストを横並びにする場合
-    align-items: center; // アイコンとテキストを垂直中央揃え
+    font-size: 1.1rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 0.02em;
+    transition: background 0.18s;
   
     .material-icons-outlined { // Material Icons を使う場合のスタイル
       margin-right: 8px;
@@ -116,4 +167,20 @@
 .project-actions {
   flex-shrink: 0;
   margin-left: 16px;
+}
+
+.dashboard-title {
+  text-align: center;
+  font-size: 2.6rem;
+  font-weight: bold;
+  margin-bottom: 1.2rem;
+  letter-spacing: 0.05em;
+  color: #1976d2;
+}
+
+.project-period {
+  font-size: 1.15rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 0.4rem;
 }

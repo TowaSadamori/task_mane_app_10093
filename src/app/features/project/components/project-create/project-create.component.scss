@@ -1,115 +1,151 @@
 /* src/app/features/project/components/project-create/project-create.component.scss */
-.project-create-container {
-    max-width: 600px;
-    margin: 20px auto;
-    padding: 25px;
-    background-color: #fff;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  
-    h2[mat-dialog-title] {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-  }
-  
-  .form-field {
-    margin-bottom: 16px;
-    &:last-child {
-      margin-bottom: 0;
-    }
-  
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 500;
-      color: #495057;
-    }
-  
-    input[type="text"],
-    input[type="date"],
-    textarea {
-      width: calc(100% - 22px); // paddingを考慮
-      padding: 10px;
-      border: 1px solid #ced4da;
-      border-radius: 4px;
-      font-size: 1rem;
-      transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-  
-      &:focus {
-        border-color: #80bdff;
-        outline: 0;
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-      }
-    }
-  
-    textarea {
-      resize: vertical; // 縦方向のみリサイズ可
-    }
-  }
-  
-  .error-message {
-    margin-top: 5px;
-    small {
-      color: #f44336;
-      font-size: 0.75em;
-    }
-  }
-  
-  .form-actions {
-    margin-top: 30px;
-    display: flex;
-    justify-content: flex-end; // ボタンを右寄せ
-  
-    button {
-      padding: 10px 20px;
-      font-size: 1rem;
-      border-radius: 4px;
-      border: none;
-      cursor: pointer;
-      transition: background-color 0.2s ease-in-out;
-  
-      &:disabled {
-        opacity: 0.65;
-        cursor: not-allowed;
-      }
-    }
-  
-    button[type="submit"] {
-      background-color: #007bff; // 作成ボタンの色
-      color: white;
-      margin-left: 10px;
-  
-      &:hover:not(:disabled) {
-        background-color: #0056b3;
-      }
-    }
-  
-    .cancel-button {
-      background-color: #6c757d; // キャンセルボタンの色
-      color: white;
-  
-      &:hover:not(:disabled) {
-        background-color: #5a6268;
-      }
-    }
-  }
+.project-create-page-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #f3f4f6;
+  padding: 1rem;
+  box-sizing: border-box;
+}
 
-  .full-width {
-    width: 100%;
-  }
+.project-create-card {
+  background-color: #fff;
+  padding: 2.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.07);
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
+}
 
-  .date-range-fields {
-    display: flex;
-    gap: 16px;
-    .half-width {
-      flex: 1;
-    }
-  }
+.project-create-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  text-align: center;
+  color: #111827;
+  margin-bottom: 2.5rem;
+}
 
-  div[mat-dialog-actions] {
-    button:not(:last-child) {
-      margin-right: 8px;
-    }
+.form-field {
+  margin-bottom: 1.75rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.625rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.875rem 1.125rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  font-size: 1rem;
+  color: #1f2937;
+}
+
+.form-input::placeholder {
+  color: #9ca3af;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+}
+
+.error-message {
+  margin-top: 0.375rem;
+  font-size: 0.8125rem;
+  color: #ef4444;
+}
+
+.form-actions {
+  margin-top: 2.5rem;
+  margin-bottom: 1.75rem;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.submit-button {
+  flex: 1 1 0;
+  padding: 0.875rem 1.125rem;
+  background-color: #4f46e5;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+}
+.submit-button:hover:not(:disabled) {
+  background-color: #4338ca;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+}
+.submit-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.25);
+}
+.submit-button:disabled {
+  background-color: #a5b4fc;
+  cursor: not-allowed;
+}
+
+.cancel-button {
+  flex: 1 1 0;
+  padding: 0.875rem 1.125rem;
+  background-color: #6c757d;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+}
+.cancel-button:hover:not(:disabled) {
+  background-color: #495057;
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.15);
+}
+.cancel-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(108, 117, 125, 0.18);
+}
+.cancel-button:disabled {
+  background-color: #adb5bd;
+  cursor: not-allowed;
+}
+
+.date-range-fields {
+  display: flex;
+  gap: 1rem;
+}
+.half-width {
+  flex: 1 1 0;
+}
+
+.full-width {
+  width: 100%;
+}
+
+div[mat-dialog-actions] {
+  button:not(:last-child) {
+    margin-right: 8px;
   }
+}

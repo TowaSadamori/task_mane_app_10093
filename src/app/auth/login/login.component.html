@@ -1,38 +1,34 @@
-<div class="login-container">
-    <h2>ログイン</h2>
-
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()"> 
-        <mat-form-field appearance="outline">
-        <mat-label>メールアドレス</mat-label>
-        <input matInput type="email" placeholder="例: user@example.com" formControlName="email">
-        <mat-error *ngIf="loginForm.get('email')?.hasError('required') && loginForm.get('email')?.touched">
-            メールアドレスを入力してください
-            </mat-error>
-        <mat-error *ngIf="loginForm.get('email')?.hasError('email') && loginForm.get('email')?.touched">
-            有効なメールアドレスを入力してください。
-        </mat-error>
-        </mat-form-field>
-
-        <div *ngIf="loginError" class="error-message">
-            {{ loginError }}
+<div class="login-page-container">
+  <div class="login-card">
+    <div class="login-title">ログイン</div>
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div class="form-field">
+        <label class="form-label" for="email">メールアドレス</label>
+        <input id="email" class="form-input" type="email" placeholder="例: user@example.com" formControlName="email">
+        <div class="error-message" *ngIf="loginForm.get('email')?.hasError('required') && loginForm.get('email')?.touched">
+          メールアドレスを入力してください
         </div>
-
-        <mat-form-field appearance="outline">
-            <mat-label>パスワード</mat-label>
-            <input matInput type="password" placeholder="パスワードを入力してください" formControlName="password">
-            <mat-error *ngIf="loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched">
-                パスワードを入力してください
-                </mat-error>
-            </mat-form-field>
-
-        <button mat-raised-button color="primary" type="submit" [disabled]="loginForm.invalid">
-            ログイン
+        <div class="error-message" *ngIf="loginForm.get('email')?.hasError('email') && loginForm.get('email')?.touched">
+          有効なメールアドレスを入力してください。
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="password">パスワード</label>
+        <input id="password" class="form-input" type="password" placeholder="パスワードを入力してください" formControlName="password">
+        <div class="error-message" *ngIf="loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched">
+          パスワードを入力してください
+        </div>
+      </div>
+      <div *ngIf="loginError" class="server-error-message">{{ loginError }}</div>
+      <div class="form-actions">
+        <button class="submit-button" type="submit" [disabled]="loginForm.invalid">
+          ログイン
         </button>
-
+      </div>
     </form>
-
-    <div class="signup-link-container" style="text-align: center; margin-top: 20px;">
-        <span>アカウントをお持ちでないですか？ </span>
-        <a routerLink="/signup">新しいアカウントを作成</a>
+    <div class="links-container">
+      <span>アカウントをお持ちでないですか？</span><br>
+      <a class="form-link" routerLink="/signup">新しいアカウントを作成</a>
     </div>
+  </div>
 </div>

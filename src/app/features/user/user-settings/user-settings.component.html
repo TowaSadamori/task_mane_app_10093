@@ -1,92 +1,70 @@
-<div class="user-settings-container">
-    <h2 class="page-title">ユーザー設定</h2>
-  
-    <mat-card class="settings-card">
-      <mat-card-header>
-        <mat-card-title>メールアドレス</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <p *ngIf="userEmail; else loadingEmail">
-          {{ userEmail }}
-          <mat-icon matSuffix fontIcon="lock" matTooltip="メールアドレスは変更できません"></mat-icon>
-        </p>
+<div class="login-page-container">
+  <div class="login-card">
+    <div class="login-title">ユーザー設定</div>
+    <div class="form-field" style="text-align:center; margin-bottom: 2rem;">
+      <label class="form-label" for="userEmailDisplay">メールアドレス</label>
+      <input id="userEmailDisplay" type="email" style="display:none" readonly tabindex="-1" aria-hidden="true">
+      <div style="font-size: 1.1em; font-weight: 500;">
+        <span *ngIf="userEmail; else loadingEmail">{{ userEmail }}</span>
         <ng-template #loadingEmail>
-          <p>メールアドレスを読み込み中...</p>
+          <span>メールアドレスを読み込み中...</span>
         </ng-template>
-        <small>メールアドレスはログインIDとして使用されるため変更できません。</small>
-      </mat-card-content>
-    </mat-card>
-  
-    <mat-card class="settings-card">
-      <mat-card-header>
-        <mat-card-title>表示名の変更</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <form [formGroup]="displayNameForm" (ngSubmit)="onDisplayNameSubmit()" class="settings-form">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>新しい表示名</mat-label>
-            <input matInput formControlName="displayName" autocomplete="off">
-            <mat-error *ngIf="displayNameForm.get('displayName')?.hasError('required')">
-              表示名は必須です
-            </mat-error>
-          </mat-form-field>
-          <button mat-raised-button color="primary" type="submit" [disabled]="displayNameForm.invalid || isLoadingDisplayName" class="submit-button">
-            <mat-icon *ngIf="!isLoadingDisplayName">save</mat-icon>
-            <mat-progress-spinner *ngIf="isLoadingDisplayName" mode="indeterminate" diameter="20"></mat-progress-spinner>
-            <span *ngIf="!isLoadingDisplayName">表示名を変更</span>
-            <span *ngIf="isLoadingDisplayName">変更中...</span>
-          </button>
-        </form>
-      </mat-card-content>
-    </mat-card>
-  
-    <mat-card class="settings-card">
-      <mat-card-header>
-        <mat-card-title>パスワードの変更</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <form [formGroup]="passwordForm" (ngSubmit)="onPasswordSubmit()" class="settings-form">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>現在のパスワード</mat-label>
-            <input matInput type="password" formControlName="currentPassword" autocomplete="current-password">
-            <mat-error *ngIf="passwordForm.get('currentPassword')?.hasError('required')">
-              現在のパスワードは必須です
-            </mat-error>
-            <mat-error *ngIf="passwordForm.get('currentPassword')?.hasError('incorrect')">
-              現在のパスワードが正しくありません。
-            </mat-error>
-          </mat-form-field>
-  
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>新しいパスワード</mat-label>
-            <input matInput type="password" formControlName="newPassword" autocomplete="new-password">
-            <mat-hint>8文字以上で入力してください</mat-hint>
-            <mat-error *ngIf="passwordForm.get('newPassword')?.hasError('required')">
-              新しいパスワードは必須です
-            </mat-error>
-            <mat-error *ngIf="passwordForm.get('newPassword')?.hasError('minlength')">
-              8文字以上で入力してください
-            </mat-error>
-          </mat-form-field>
-  
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>新しいパスワード（確認）</mat-label>
-            <input matInput type="password" formControlName="confirmNewPassword" autocomplete="new-password">
-            <mat-error *ngIf="passwordForm.get('confirmNewPassword')?.hasError('required')">
-              新しいパスワード（確認）は必須です
-            </mat-error>
-            <mat-error *ngIf="passwordForm.hasError('mismatch') && passwordForm.get('confirmNewPassword')?.dirty">
-              新しいパスワードが一致しません
-            </mat-error>
-          </mat-form-field>
-          <button mat-raised-button color="primary" type="submit" [disabled]="passwordForm.invalid || isLoadingPassword" class="submit-button">
-            <mat-icon *ngIf="!isLoadingPassword">save</mat-icon>
-            <mat-progress-spinner *ngIf="isLoadingPassword" mode="indeterminate" diameter="20"></mat-progress-spinner>
-            <span *ngIf="!isLoadingPassword">パスワードを変更</span>
-            <span *ngIf="isLoadingPassword">変更中...</span>
-          </button>
-        </form>
-      </mat-card-content>
-    </mat-card>
+        <span style="margin-left: 8px; color: #aaa; font-size: 1.1em;">🔒</span>
+      </div>
+      <div style="font-size: 0.85em; color: #888; margin-top: 4px;">メールアドレスはログインIDとして使用されるため変更できません。</div>
+    </div>
+    <form [formGroup]="displayNameForm" (ngSubmit)="onDisplayNameSubmit()">
+      <div class="form-field">
+        <label class="form-label" for="displayName">表示名</label>
+        <input id="displayName" class="form-input" formControlName="displayName" autocomplete="off">
+        <div class="error-message" *ngIf="displayNameForm.get('displayName')?.hasError('required')">
+          表示名は必須です
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="submit-button" type="submit" [disabled]="displayNameForm.invalid || isLoadingDisplayName">
+          {{ isLoadingDisplayName ? '変更中...' : '表示名を変更' }}
+        </button>
+      </div>
+    </form>
+    <hr style="margin: 2.5rem 0; border: none; border-top: 1px solid #eee;">
+    <form [formGroup]="passwordForm" (ngSubmit)="onPasswordSubmit()">
+      <div class="form-field">
+        <label class="form-label" for="currentPassword">現在のパスワード</label>
+        <input id="currentPassword" class="form-input" type="password" formControlName="currentPassword" autocomplete="current-password">
+        <div class="error-message" *ngIf="passwordForm.get('currentPassword')?.hasError('required')">
+          現在のパスワードは必須です
+        </div>
+        <div class="error-message" *ngIf="passwordForm.get('currentPassword')?.hasError('incorrect')">
+          現在のパスワードが正しくありません。
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="newPassword">新しいパスワード</label>
+        <input id="newPassword" class="form-input" type="password" formControlName="newPassword" autocomplete="new-password">
+        <div class="error-message" *ngIf="passwordForm.get('newPassword')?.hasError('required')">
+          新しいパスワードは必須です
+        </div>
+        <div class="error-message" *ngIf="passwordForm.get('newPassword')?.hasError('minlength')">
+          8文字以上で入力してください
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="confirmNewPassword">新しいパスワード（確認）</label>
+        <input id="confirmNewPassword" class="form-input" type="password" formControlName="confirmNewPassword" autocomplete="new-password">
+        <div class="error-message" *ngIf="passwordForm.get('confirmNewPassword')?.hasError('required')">
+          新しいパスワード（確認）は必須です
+        </div>
+        <div class="error-message" *ngIf="passwordForm.hasError('mismatch') && passwordForm.get('confirmNewPassword')?.dirty">
+          新しいパスワードが一致しません
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="submit-button" type="submit" [disabled]="passwordForm.invalid || isLoadingPassword">
+          {{ isLoadingPassword ? '変更中...' : 'パスワードを変更' }}
+        </button>
+      </div>
+    </form>
   </div>
+</div>
   

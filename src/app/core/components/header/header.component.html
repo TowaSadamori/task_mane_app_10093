@@ -1,9 +1,9 @@
 <header class="app-header">
 <div class="header-content">
-<span class="app-title">課題Ⅱ:課題管理アプリを作成せよ10093</span>
+<!-- <span class="app-title">課題Ⅱ:課題管理アプリを作成せよ10093</span> -->
     
  <div *ngIf="user$ | async as user; else loggedOutContent" class="user-info">
-<span class="user-name">ようこそ、{{ user.displayName ? user.displayName : user.email }}さん</span>
+<span class="user-name">ID:{{ user.email }}<span *ngIf="user.displayName">　{{ user.displayName }}さん</span></span>
  </div>
     
  <ng-template #loggedOutContent>

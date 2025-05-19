@@ -1,39 +1,50 @@
 <div class="dashboard-container">
-    <div class="dashboard-header">
-      <h2>プロジェクト一覧</h2>
+  <h2 class="dashboard-title">HOME</h2>
+  <div class="dashboard-header">
+    <div style="margin-left: auto;">
       <button class="create-project-button" (click)="openCreateProjectDialog()">
-        <span class="material-icons-outlined">add_circle_outline</span> 新しいプロジェクトを作成
+        新しいプロジェクトを作成
       </button>
-      <a routerLink="/app/user-settings" class="user-settings-link" style="margin-left: 16px;">
-        <button mat-stroked-button color="primary">
-          <mat-icon>settings</mat-icon> ユーザー設定
-        </button>
-      </a>
     </div>
-    <div *ngIf="projects$ | async as projects; else loadingOrError">
-      <ul class="project-list" *ngIf="projects.length > 0; else noProjects">
-        <li *ngFor="let project of projects" class="project-item">
-          <div class="project-info">
-            <a [routerLink]="['/app/gantt-chart', project.id]">
-              {{ project.name }}
-            </a>
-            <p class="project-description">{{ project.description }}</p>
+  </div>
+  <div *ngIf="projects$ | async as projects; else loadingOrError">
+    <div class="project-list" *ngIf="projects.length > 0; else noProjects">
+      <div *ngFor="let project of projects" class="project-item">
+        <div class="project-info">
+          <a [routerLink]="['/app/gantt-chart', project.id]">
+            {{ project.name }}
+          </a>
+          <div class="project-period" *ngIf="project.startDate || project.endDate">
+            <ng-container *ngIf="project.startDate && project.endDate">
+              期間: {{ toDateSafe(project.startDate) | date:'yyyy/MM/dd' }} 〜 {{ toDateSafe(project.endDate) | date:'yyyy/MM/dd' }}
+            </ng-container>
+            <ng-container *ngIf="project.startDate && !project.endDate">
+              開始日: {{ toDateSafe(project.startDate) | date:'yyyy/MM/dd' }}
+            </ng-container>
+            <ng-container *ngIf="!project.startDate && project.endDate">
+              終了日: {{ toDateSafe(project.endDate) | date:'yyyy/MM/dd' }}
+            </ng-container>
           </div>
-          <div class="project-actions">
-            <button mat-icon-button color="primary" aria-label="プロジェクトを編集" (click)="openEditProjectDialog(project)">
-              <mat-icon>edit</mat-icon>
-            </button>
-            <button mat-icon-button color="warn" aria-label="プロジェクトを削除" (click)="confirmDeleteProject(project)">
-              <mat-icon>delete</mat-icon>
-            </button>
+          <div class="project-description">
+            <div class="desc-label">説明：</div>
+            <div class="desc-content">{{ project.description }}</div>
           </div>
-        </li>
-      </ul>
-      <ng-template #noProjects>
-        <p>現在進行中のプロジェクトはありません。</p>
-        </ng-template>
+        </div>
+        <div class="project-actions">
+          <button mat-icon-button color="primary" aria-label="プロジェクトを編集" (click)="openEditProjectDialog(project)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" aria-label="プロジェクトを削除" (click)="confirmDeleteProject(project)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </div>
     </div>
-    <ng-template #loadingOrError>
-      <p>プロジェクトを読み込んでいます...</p>
+    <ng-template #noProjects>
+      <p>現在進行中のプロジェクトはありません。</p>
     </ng-template>
   </div>
+  <ng-template #loadingOrError>
+    <p>プロジェクトを読み込んでいます...</p>
+  </ng-template>
+</div>

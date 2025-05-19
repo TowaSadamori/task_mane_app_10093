@@ -1,54 +1,46 @@
-<div class="user-create-container">
-  <h2>{{ registrationSuccess ? '登録完了' : '新規アカウント作成' }}</h2>
-
-  <div *ngIf="registrationSuccess" class="registration-success-message">
-    <p>アカウントの登録が完了しました。</p>
-    <button mat-stroked-button color="primary" routerLink="/login">
-      ログイン画面に戻る
-    </button>
+<div class="login-page-container">
+  <div class="login-card">
+    <div class="login-title">新規アカウント作成</div>
+    <div *ngIf="registrationSuccess" class="registration-success-message" style="text-align:center;">
+      <p>アカウントの登録が完了しました。</p>
+      <a class="form-link" routerLink="/login">ログイン画面に戻る</a>
+    </div>
+    <form *ngIf="!registrationSuccess" [formGroup]="userCreateForm" (ngSubmit)="onSubmit()">
+      <div class="form-field">
+        <label class="form-label" for="email">メールアドレス</label>
+        <input id="email" class="form-input" type="email" placeholder="例: new.user@example.com" formControlName="email" required>
+        <div class="error-message" *ngIf="userCreateForm.get('email')?.hasError('required') && userCreateForm.get('email')?.touched">
+          メールアドレスを入力してください
+        </div>
+        <div class="error-message" *ngIf="userCreateForm.get('email')?.hasError('email') && userCreateForm.get('email')?.touched">
+          有効なメールアドレスを入力してください
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="password">パスワード</label>
+        <input id="password" class="form-input" type="password" placeholder="パスワードを入力" formControlName="password" required>
+        <div class="error-message" *ngIf="userCreateForm.get('password')?.hasError('required') && userCreateForm.get('password')?.touched">
+          パスワードを入力してください
+        </div>
+        <div class="error-message" *ngIf="userCreateForm.get('password')?.hasError('minlength') && userCreateForm.get('password')?.touched">
+          パスワードは {{ userCreateForm.get('password')?.errors?.['minlength']?.requiredLength }} 文字以上で入力してください
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="displayName">表示名</label>
+        <input id="displayName" class="form-input" type="text" placeholder="例: 鈴木 一郎" formControlName="displayName">
+      </div>
+      <div class="form-actions" style="margin-top: 20px; display: flex; justify-content: flex-end; align-items: center;">
+        <button class="submit-button" type="submit" [disabled]="userCreateForm.invalid || isLoading">
+          {{ isLoading ? '登録中...' : 'ユーザー登録' }}
+        </button>
+      </div>
+      <div *ngIf="registrationError" class="server-error-message">
+        {{ registrationError }}
+      </div>
+      <div class="links-container" style="text-align: center; margin-top: 1.5rem;">
+        <a class="form-link" routerLink="/login">ログイン画面に戻る</a>
+      </div>
+    </form>
   </div>
-
-  <form *ngIf="!registrationSuccess" [formGroup]="userCreateForm" (ngSubmit)="onSubmit()">
-    <mat-form-field appearance="outline">
-      <mat-label>メールアドレス</mat-label>
-      <input matInput type="email" placeholder="例: new.user@example.com" formControlName="email" required>
-      <mat-error *ngIf="userCreateForm.get('email')?.hasError('required') && userCreateForm.get('email')?.touched">
-        メールアドレスを入力してください
-      </mat-error>
-      <mat-error *ngIf="userCreateForm.get('email')?.hasError('email') && userCreateForm.get('email')?.touched">
-        有効なメールアドレスを入力してください
-      </mat-error>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>初期パスワード</mat-label>
-      <input matInput type="password" placeholder="初期パスワードを入力" formControlName="password" required>
-      <mat-error *ngIf="userCreateForm.get('password')?.hasError('required') && userCreateForm.get('password')?.touched">
-        パスワードを入力してください
-      </mat-error>
-      <mat-error *ngIf="userCreateForm.get('password')?.hasError('minlength') && userCreateForm.get('password')?.touched">
-        パスワードは {{ userCreateForm.get('password')?.errors?.['minlength']?.requiredLength }} 文字以上で入力してください
-      </mat-error>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>表示名</mat-label>
-      <input matInput type="text" placeholder="例: 鈴木 一郎" formControlName="displayName">
-      <mat-error>
-      </mat-error>
-    </mat-form-field>
-
-    <div class="form-actions" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
-      <button mat-stroked-button type="button" routerLink="/login" [disabled]="isLoading">
-        ログイン画面へ戻る
-      </button>
-      <button mat-raised-button color="primary" type="submit" [disabled]="userCreateForm.invalid || isLoading">
-        {{ isLoading ? '登録中...' : 'ユーザー登録' }}
-      </button>
-    </div>
-
-    <div *ngIf="registrationError" class="error-message">
-      {{ registrationError }}
-    </div>
-  </form>
 </div>

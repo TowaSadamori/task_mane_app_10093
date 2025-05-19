@@ -10,6 +10,7 @@ import { ProjectCreateComponent } from '../project/components/project-create/pro
 // import { ProjectService as ProjectServiceType } from '../../core/project.service';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { filter, switchMap } from 'rxjs/operators';
+import { Timestamp } from '@angular/fire/firestore';
 // import { AuthService } from '../../auth/auth.service'; // ユーザーに紐づくプロジェクトを取得する場合
 
 @Component({
@@ -114,5 +115,16 @@ export class DashboardComponent implements OnInit {
         alert(`プロジェクト「${projectToDelete.name}」の削除に失敗しました。`);
       }
     });
+  }
+
+  toDateSafe(value: Date | Timestamp | null | undefined): Date | null {
+    if (!value) return null;
+    if (value instanceof Date) return value;
+    if (this.isTimestamp(value)) return value.toDate();
+    return null;
+  }
+
+  private isTimestamp(obj: unknown): obj is Timestamp {
+    return !!obj && typeof (obj as Timestamp).toDate === 'function';
   }
 }
