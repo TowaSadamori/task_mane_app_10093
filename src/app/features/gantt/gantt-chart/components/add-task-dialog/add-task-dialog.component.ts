@@ -72,10 +72,10 @@ export class AddTaskDialogComponent implements OnInit {
       this.submitButtonText = '更新';
       this.taskForm.patchValue({
         title: this.data.task.title,
-        plannedStartDate: this.data.task.plannedStartDate,
-        plannedEndDate: this.data.task.plannedEndDate,
-        actualStartDate: this.data.task.actualStartDate || null,
-        actualEndDate: this.data.task.actualEndDate || null,
+        plannedStartDate: this.toDateStringOrNull(this.data.task.plannedStartDate),
+        plannedEndDate: this.toDateStringOrNull(this.data.task.plannedEndDate),
+        actualStartDate: this.toDateStringOrNull(this.data.task.actualStartDate),
+        actualEndDate: this.toDateStringOrNull(this.data.task.actualEndDate),
         status: this.data.task.status || 'todo',
         memo: this.data.task.memo
       });
@@ -104,5 +104,19 @@ export class AddTaskDialogComponent implements OnInit {
       };
       this.dialogRef.close(resultData);
     }
+  }
+
+  private toDateStringOrNull(value: unknown): string | null {
+    let date: Date | null = null;
+    if (!value) return null;
+    if (value instanceof Date) date = value;
+    else if (this.isTimestamp(value)) date = value.toDate();
+    else if (typeof value === 'string' && !isNaN(Date.parse(value))) date = new Date(value);
+    if (!date) return null;
+    return date.toISOString().slice(0, 10);
+  }
+
+  private isTimestamp(value: unknown): value is { toDate: () => Date } {
+    return !!value && typeof (value as { toDate?: unknown }).toDate === 'function';
   }
 }
