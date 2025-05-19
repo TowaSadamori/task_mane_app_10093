@@ -30,14 +30,9 @@
     <div class="main-gantt-area">
         <div class="task-list-area">
             <div class="action-buttons-container" style="margin-bottom: 10px; text-align: right; display: flex; justify-content: flex-end; gap: 10px;">
-                <button mat-raised-button color="warn" [disabled]="true">
-                    選択したタスクを削除 (既存・一時無効)
+                <button mat-raised-button color="primary" (click)="openAddTaskDialog()">
+                    <mat-icon>add_circle_outline</mat-icon> タスク追加
                 </button>
-
-                <button mat-raised-button color="accent" (click)="confirmAndDeleteNewSimpleTask()" [disabled]="!selectedTask">
-                    シンプル削除 (選択タスク)
-                </button>
-                <button mat-raised-button color="primary" (click)="openAddTaskDialog()">タスク追加</button> 
             </div>
             <div class="task-list-header">
                 <div class="task-list-cell header-cell" style="width: 50px;">番号</div>
@@ -48,15 +43,14 @@
                 <div class="task-list-cell header-cell" style="width: 100px">予定開始日</div>
                 <div class="task-list-cell header-cell" style="width: 100px">予定終了日</div>
                 <div class="task-list-cell header-cell" style="width: 100px;">実績開始日</div>
-               <div class="task-list-cell header-cell" style="width: 100px;">実績終了日</div>
-                <div class="task-list-cell header-cell" style="width: 70px;">操作</div>
+                <div class="task-list-cell header-cell" style="width: 100px;">実績終了日</div>
+                <div class="task-list-cell header-cell" style="width: 100px;">操作</div>
             </div>
 
             
             <div *ngFor="let taskItem of ganttTasks; let i = index; trackBy: trackByTaskId"
                  class="task-list-row"
-                 [id]="'task-row-' + taskItem.id" (click)="selectTask(taskItem)"
-                 tabindex="0"
+                 [id]="'task-row-' + taskItem.id!" (click)="selectTask(taskItem)" tabindex="0"
                  (keydown.enter)="selectTask(taskItem)"
                  (keydown.space)="selectTask(taskItem)"
                  [ngClass]="{'selected-task': taskItem.id === selectedTask?.id}">
@@ -64,9 +58,9 @@
                  <div class="task-list-cell"
                      style="width: 150px; cursor: pointer; text-decoration: underline; color: blue;"
                      [style.paddingLeft.px]="taskItem.level ? taskItem.level * 20 : 0"
-                     (click)="navigateToTaskDetail(taskItem.id ? taskItem.id : ''); $event.stopPropagation()"
-                     (keydown.enter)="navigateToTaskDetail(taskItem.id ? taskItem.id : ''); $event.stopPropagation()"
-                     (keydown.space)="navigateToTaskDetail(taskItem.id ? taskItem.id : ''); $event.stopPropagation()"
+                     (click)="navigateToTaskDetail(taskItem.id!); $event.stopPropagation()"
+                     (keydown.enter)="navigateToTaskDetail(taskItem.id!); $event.stopPropagation()"
+                     (keydown.space)="navigateToTaskDetail(taskItem.id!); $event.stopPropagation()"
                      tabindex="0"
                      role="link"
                      [attr.aria-label]="'タスク「' + taskItem.title + '」の詳細を開く'">
@@ -83,7 +77,14 @@
                 </div>
                 <div class="task-list-cell" style="width: 100px;">-</div>
                 <div class="task-list-cell" style="width: 100px;">-</div>
-                <div class="task-list-cell" style="width: 70px;">編集ボタン(一時無効)</div>
+                <div class="task-list-cell task-actions" style="width: 100px;">
+                    <button mat-icon-button color="primary" (click)="openEditTaskDialog(taskItem); $event.stopPropagation()" aria-label="タスクを編集">
+                        <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button color="warn" (click)="confirmDeleteNewSimpleTask(taskItem); $event.stopPropagation()" aria-label="タスクを削除">
+                        <mat-icon>delete</mat-icon>
+                    </button>
+                </div>
             </div>
         </div>
 

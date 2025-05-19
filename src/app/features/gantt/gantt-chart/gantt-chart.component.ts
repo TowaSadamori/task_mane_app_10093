@@ -14,11 +14,14 @@ import { MatButtonModule } from '@angular/material/button';
 // import { ConfirmDialogComponent, ConfirmDialogData } from './components/confirm-dialog/confirm-dialog.component';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatSelectModule } from '@angular/material/select';
-import { firstValueFrom, of, Observable,  } from 'rxjs';
+import { firstValueFrom, of, Observable } from 'rxjs';
 import { catchError, switchMap, 
   //tap
  } from 'rxjs/operators';
 import { GanttChartTask } from '../../../core/models/gantt-chart-task.model'; 
+import { MatIconModule } from '@angular/material/icon';
+import { filter } from 'rxjs/operators';
+import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 
 interface TimelineDay {
@@ -51,7 +54,7 @@ interface TimelineYear {
     MatDialogModule,
     MatButtonModule,
     MatSelectModule,
-
+    MatIconModule,
   ],
   templateUrl: './gantt-chart.component.html',
   styleUrl: './gantt-chart.component.scss'
@@ -337,6 +340,10 @@ openAddTaskDialog(): void {
         title: result.taskName,
         plannedStartDate: Timestamp.fromDate(new Date(result.plannedStartDate)),
         plannedEndDate: Timestamp.fromDate(new Date(result.plannedEndDate)),
+        assigneeId: result.assigneeId,
+        status: result.status,
+        dueDate: result.dueDate ?? null,
+        blockerStatus: null,
       };
 
       console.log('Firestoreに保存するデータ:', newTaskData);
@@ -698,43 +705,36 @@ confirmAndDeleteSimpleTask(): void {
   }
 }
 
-confirmAndDeleteNewSimpleTask(): void {
-  if (!this.selectedTask || !this.selectedTask.id) {
-    alert('削除するタスクを選択してください。');
+confirmDeleteNewSimpleTask(taskToDelete: GanttChartTask): void {
+  if (!taskToDelete || !taskToDelete.id) {
+    alert('削除するタスクの情報が不完全です。');
     return;
   }
-
-  const taskToDelete = this.selectedTask;
+  const taskId = taskToDelete.id;
   const taskTitle = taskToDelete.title;
-  const taskIdToDelete = taskToDelete.id;
 
-  // taskIdToDelete が string であることを保証
-  if (typeof taskIdToDelete !== 'string') {
-    console.error('[GanttComponent] Invalid Task ID for deletion:', taskIdToDelete);
-    alert('タスクIDが無効なため、削除できませんでした。');
-    return;
-  }
+  const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+    width: '350px',
+    data: { message: `タスク「${taskTitle}」を本当に削除してもよろしいですか？` }
+  });
 
-  if (confirm(`新しいタスク「${taskTitle}」を削除してもよろしいですか？`)) {
-    console.log('[GanttComponent] Deleting new simple task. ID:', taskIdToDelete);
-
-    this.taskService.deleteGanttChartTask(taskIdToDelete)
+  dialogRef.afterClosed().pipe(
+    filter(result => result === true)
+  ).subscribe(() => {
+    this.taskService.deleteGanttChartTask(taskId)
       .then(() => {
-        console.log(`[GanttComponent] Task (ID: ${taskIdToDelete}) deleted successfully from Firestore.`);
         alert(`タスク「${taskTitle}」を削除しました。`);
-
-        // ローカルのタスクリストから削除
-        this.ganttTasks = this.ganttTasks.filter(task => task.id !== taskIdToDelete);
-        this.selectedTask = null; // 選択を解除
-        this.cdr.detectChanges(); // 画面を更新
+        this.ganttTasks = this.ganttTasks.filter(task => task.id !== taskId);
+        if (this.selectedTask && this.selectedTask.id === taskId) {
+          this.selectedTask = null;
+        }
+        this.cdr.detectChanges();
       })
-      .catch((error: unknown) => {
-        console.error(`[GanttComponent] Error deleting task (ID: ${taskIdToDelete}):`, error);
+      .catch(error => {
         alert(`タスク「${taskTitle}」の削除に失敗しました。`);
+        console.error('タスク削除エラー:', error);
       });
-  } else {
-    console.log('[GanttComponent] Task deletion cancelled.');
-  }
+  });
 }
 
 }// GanttChartComponent クラスの閉じ括弧

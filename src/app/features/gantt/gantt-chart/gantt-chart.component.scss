@@ -182,5 +182,19 @@
   // padding や overflow なども .gantt-bar と同様に設定されているか確認
 }
 
+.task-list-row {
+  .task-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+
+    button {
+      margin-right: 4px;
+      &:last-child {
+        margin-right: 0;
+      }
+    }
+  }
+}
 
   

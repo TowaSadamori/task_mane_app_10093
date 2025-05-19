@@ -7,16 +7,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core'; 
-import { GanttTaskDisplayItem } from '../../../../../core/project.service';
+import { ProjectService } from '../../../../../core/project.service';
 import { MatSelectModule } from '@angular/material/select';
 import { UserService } from '../../../../../core/user.service'; // ★ 追加
 import { User } from '../../../../../core/models/user.model'; // ★ 追加
-import { ProjectService } from '../../../../../core/project.service'; // ★ 追加
-
-
+import { GanttChartTask } from '../../../../../core/models/gantt-chart-task.model';
 
 export interface TaskDialogData { 
-  task?: GanttTaskDisplayItem;  
+  task?: GanttChartTask;  // 型をGanttChartTaskに変更
   isEditMode: boolean; 
   projectId: string;         
 }
@@ -47,59 +45,48 @@ export class AddTaskDialogComponent implements OnInit {
   private projectId!: string; 
   private projectService = inject(ProjectService); 
 
- // decisionMakers プロパティの型を User[] に変更し、初期値を空配列に
-decisionMakers: User[] = []; // ★ 変更 (ダミーデータは削除)
-
-// projectMembers も同様に型定義だけしておく (実際のデータ取得は次のステップ)
-projectMembers: User[] = []; // ★ 変更 (ダミーデータは削除)
-
-private userService = inject(UserService); // ★ UserService をインジェクト
+  decisionMakers: User[] = [];
+  projectMembers: User[] = [];
+  private userService = inject(UserService);
 
   constructor(
-    private fb: FormBuilder, // FormBuilder を注入
+    private fb: FormBuilder,
     public dialogRef: MatDialogRef<AddTaskDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: TaskDialogData | null
   ) {
-
     this.taskForm = this.fb.group({
-      taskName: ['', Validators.required],
+      title: ['', Validators.required], // 'taskName'→'title'に変更
       plannedStartDate: [null, Validators.required],
       plannedEndDate: [null, Validators.required],
-      assigneeId: ['', Validators.required], // ★ 追加: 担当者ID (必須入力)
-      dueDate: [null],                       // ★ 追加: ToDo期限 (任意入力)
-      category: [''],                       // ★ 追加: カテゴリ (任意入力、初期値は空文字)
-      decisionMakerId: ['']                  // ★ 追加: 意思決定者ID (任意入力、初期値は空文字)
+      assigneeId: ['', Validators.required],
+      status: ['todo', Validators.required],
+      dueDate: [null],
+      category: [''],
+      decisionMakerId: ['']
     });
 
     if (this.data) {
       this.isEditMode = this.data.isEditMode;
-      // ここで projectId を this.projectId に代入するロジックが必要
-      if (this.data.projectId) { // このようなチェックと代入が期待されます
-          this.projectId = this.data.projectId;
+      if (this.data.projectId) {
+        this.projectId = this.data.projectId;
       } else if (!this.isEditMode) {
-          console.error('プロジェクトIDがダイアログに渡されていません。');
-          // エラー処理
+        console.error('プロジェクトIDがダイアログに渡されていません。');
       }
     }
 
-    
-
-    if (this.data) { // ★ data が存在する場合の初期設定
-      this.isEditMode = this.data.isEditMode;
-      if (this.isEditMode && this.data.task) {
-        this.dialogTitle = 'タスク編集';
-        this.submitButtonText = '更新';
-        // フォームに初期値を設定
-        this.taskForm.patchValue({
-          taskName: this.data.task.name, // `GanttTaskDisplayItem` の `name` は `Task` の `title` に対応
-          plannedStartDate: this.data.task.plannedStartDate,
-          plannedEndDate: this.data.task.plannedEndDate,
-          assigneeId: this.data.task.assigneeId,         // ★ 追加
-          dueDate: this.data.task.dueDate,               // ★ 追加
-          category: this.data.task.category,             // ★ 追加
-          decisionMakerId: this.data.task.decisionMakerId  // ★ 追加
-        });
-      }
+    if (this.data && this.isEditMode && this.data.task) {
+      this.dialogTitle = 'タスク編集';
+      this.submitButtonText = '更新';
+      this.taskForm.patchValue({
+        title: this.data.task.title, // 'taskName'→'title'
+        plannedStartDate: this.data.task.plannedStartDate,
+        plannedEndDate: this.data.task.plannedEndDate,
+        assigneeId: this.data.task.assigneeId,
+        status: this.data.task.status || 'todo',
+        dueDate: this.data.task.dueDate,
+        category: this.data.task.category,
+        decisionMakerId: this.data.task.decisionMakerId
+      });
     }
   }
 
@@ -153,10 +140,20 @@ private userService = inject(UserService); // ★ UserService をインジェク
     this.dialogRef.close();
   }
 
-  // フォーム送信時の処理（今回はまだ呼ばれないが、将来的に「追加」ボタンから呼ぶ）
   onSubmit(): void {
     if (this.taskForm.valid) {
-      this.dialogRef.close(this.taskForm.value); // フォームの値を親コンポーネントに渡す
+      const formData = this.taskForm.value;
+      const resultData: Partial<GanttChartTask> = {
+        title: formData.title,
+        plannedStartDate: formData.plannedStartDate,
+        plannedEndDate: formData.plannedEndDate,
+        assigneeId: formData.assigneeId,
+        status: formData.status,
+        dueDate: formData.dueDate,
+        category: formData.category,
+        decisionMakerId: formData.decisionMakerId
+      };
+      this.dialogRef.close(resultData);
     }
   }
 }

@@ -24,8 +24,8 @@
   <div mat-dialog-content>
     <mat-form-field appearance="fill" class="full-width">
       <mat-label>タスク名</mat-label>
-      <input matInput formControlName="taskName" placeholder="タスクの名称を入力" required>
-      <mat-error *ngIf="taskForm.get('taskName')?.hasError('required')">
+      <input matInput formControlName="title" placeholder="タスクの名称を入力" required>
+      <mat-error *ngIf="taskForm.get('title')?.hasError('required')">
         タスク名は必須です。
       </mat-error>
     </mat-form-field>
