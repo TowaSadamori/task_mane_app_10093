@@ -8,10 +8,17 @@
     <div *ngIf="projects$ | async as projects; else loadingOrError">
       <ul class="project-list" *ngIf="projects.length > 0; else noProjects">
         <li *ngFor="let project of projects" class="project-item">
-          <a [routerLink]="['/app/gantt-chart', project.id]">
-            {{ project.name }}
-          </a>
-          <p class="project-description">{{ project.description }}</p>
+          <div class="project-info">
+            <a [routerLink]="['/app/gantt-chart', project.id]">
+              {{ project.name }}
+            </a>
+            <p class="project-description">{{ project.description }}</p>
+          </div>
+          <div class="project-actions">
+            <button mat-icon-button color="warn" aria-label="プロジェクトを削除" (click)="confirmDeleteProject(project)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
         </li>
       </ul>
       <ng-template #noProjects>

@@ -24,6 +24,9 @@
     margin-bottom: 15px; // 各項目の下のマージン
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); // 軽い影
     transition: box-shadow 0.3s ease-in-out; // ホバー時の影の変化を滑らかに
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   
     &:hover {
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); // ホバー時にもう少し濃い影
@@ -105,3 +108,12 @@
   //     background-color: #0056b3;
   //   }
   // }
+
+.project-info {
+  flex-grow: 1;
+}
+
+.project-actions {
+  flex-shrink: 0;
+  margin-left: 16px;
+}

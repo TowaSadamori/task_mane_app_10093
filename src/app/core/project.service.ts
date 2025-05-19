@@ -13,10 +13,10 @@ import {
   Timestamp,
   updateDoc,
   deleteDoc,
-  // query,
-  // where,
-  // getDocs,
-  // writeBatch,
+  query,
+  where,
+  getDocs,
+  writeBatch,
 //  FieldValue,
   // orderBy,
 } from '@angular/fire/firestore';
@@ -314,5 +314,46 @@ async deleteGanttTaskRecursive(taskIdToDelete: string): Promise<void> {
           // (例: projectId, assigneeId など、TaskDisplay の Omit で除外されていなければtdに含まれる)
         } as GanttTaskDisplayItem;
       })));
+  }
+
+  /**
+   * 指定されたプロジェクトIDのプロジェクトと、そのプロジェクトに関連するすべてのタスクを削除します。
+   * @param projectId 削除するプロジェクトのID
+   */
+  async deleteProjectAndTasks(projectId: string): Promise<void> {
+    if (!projectId) {
+      throw new Error('プロジェクトIDが必要です。');
+    }
+    console.log(`ProjectService: プロジェクト (ID: ${projectId}) と関連タスクの削除を開始します。`);
+    const batch = writeBatch(this.firestore);
+    // 1. プロジェクトに関連するタスクを取得してバッチに削除処理を追加
+    try {
+      const tasksQuery = query(collection(this.firestore, 'Tasks'), where('projectId', '==', projectId));
+      const tasksSnapshot = await getDocs(tasksQuery);
+      if (!tasksSnapshot.empty) {
+        console.log(`ProjectService: プロジェクト (ID: ${projectId}) に関連する ${tasksSnapshot.size} 件のタスクを削除対象とします。`);
+        tasksSnapshot.forEach(taskDoc => {
+          batch.delete(taskDoc.ref);
+          console.log(`  - タスク (ID: ${taskDoc.id}) をバッチに追加しました。`);
+        });
+      } else {
+        console.log(`ProjectService: プロジェクト (ID: ${projectId}) に関連するタスクは見つかりませんでした。`);
+      }
+    } catch (error) {
+      console.error(`ProjectService: プロジェクト (ID: ${projectId}) の関連タスク取得中にエラー:`, error);
+      throw new Error('関連タスクの取得に失敗しました。プロジェクト削除を中止します。');
+    }
+    // 2. プロジェクト本体をバッチに削除処理を追加
+    const projectDocRef = doc(this.firestore, 'Projects', projectId);
+    batch.delete(projectDocRef);
+    console.log(`ProjectService: プロジェクト本体 (ID: ${projectId}) をバッチに追加しました。`);
+    // 3. バッチ処理を実行
+    try {
+      await batch.commit();
+      console.log(`ProjectService: プロジェクト (ID: ${projectId}) と関連タスクの削除バッチ処理が正常に完了しました。`);
+    } catch (error) {
+      console.error(`ProjectService: プロジェクト (ID: ${projectId}) と関連タスクの削除バッチ処理中にエラー:`, error);
+      throw new Error('プロジェクトと関連タスクの削除処理に失敗しました。');
+    }
   }
 }

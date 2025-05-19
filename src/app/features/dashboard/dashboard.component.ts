@@ -7,7 +7,9 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { ProjectCreateComponent } from '../project/components/project-create/project-create.component';
-import { ProjectService as ProjectServiceType } from '../../core/project.service';
+// import { ProjectService as ProjectServiceType } from '../../core/project.service';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import { filter, switchMap } from 'rxjs/operators';
 // import { AuthService } from '../../auth/auth.service'; // ユーザーに紐づくプロジェクトを取得する場合
 
 @Component({
@@ -89,24 +91,28 @@ export class DashboardComponent implements OnInit {
   confirmDeleteProject(projectToDelete: Project): void {
     if (!projectToDelete || !projectToDelete.id) {
       console.error('削除対象のプロジェクト情報が無効です。');
+      alert('削除対象のプロジェクト情報が見つかりませんでした。');
       return;
     }
-    const projectName = projectToDelete.name;
-    if (confirm(`プロジェクト「${projectName}」(ID: ${projectToDelete.id}) と関連するすべてのタスクを削除してもよろしいですか？\nこの操作は取り消せません。`)) {
-      (this.projectService as ProjectServiceType & { deleteProjectAndTasks: (id: string) => Promise<void> }).deleteProjectAndTasks(projectToDelete.id)
-        .then(() => {
-          alert(`プロジェクト「${projectName}」を削除しました。`);
-          this.loadProjects();
-        })
-        .catch((error: unknown) => {
-          if (error instanceof Error) {
-            console.error(`プロジェクト「${projectName}」の削除中にエラーが発生しました:`, error.message);
-            alert(`プロジェクト「${projectName}」の削除に失敗しました。エラー: ${error.message}`);
-          } else {
-            console.error(`プロジェクト「${projectName}」の削除中にエラーが発生しました:`, error);
-            alert(`プロジェクト「${projectName}」の削除に失敗しました。`);
-          }
-        });
-    }
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '350px',
+      // data: { message: `プロジェクト「${projectToDelete.name}」を本当に削除してもよろしいですか？関連するタスクもすべて削除されます。` }
+    });
+
+    dialogRef.afterClosed().pipe(
+      filter(result => result === true),
+      switchMap(() => this.projectService.deleteProjectAndTasks(projectToDelete.id))
+    ).subscribe({
+      next: () => {
+        console.log(`プロジェクト (ID: ${projectToDelete.id}) および関連タスクが正常に削除されました。`);
+        alert(`プロジェクト「${projectToDelete.name}」を削除しました。`);
+        this.loadProjects();
+      },
+      error: (error) => {
+        console.error(`プロジェクト (ID: ${projectToDelete.id}) の削除中にエラーが発生しました:`, error);
+        alert(`プロジェクト「${projectToDelete.name}」の削除に失敗しました。`);
+      }
+    });
   }
 }
