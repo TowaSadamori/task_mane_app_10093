@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef, ElementRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, ElementRef, HostBinding } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Project, ProjectService, GanttTaskDisplayItem, 
   // NewGanttTaskData
@@ -22,6 +22,8 @@ import { GanttChartTask } from '../../../core/models/gantt-chart-task.model';
 import { MatIconModule } from '@angular/material/icon';
 import { filter } from 'rxjs/operators';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { FormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
 
 
 interface TimelineDay {
@@ -55,6 +57,8 @@ interface TimelineYear {
     MatButtonModule,
     MatSelectModule,
     MatIconModule,
+    FormsModule,
+    MatFormFieldModule,
   ],
   templateUrl: './gantt-chart.component.html',
   styleUrl: './gantt-chart.component.scss'
@@ -80,6 +84,32 @@ export class GanttChartComponent implements OnInit {
   ganttTasks: GanttChartTask[] = []; 
 
   totalTimelineWidthPx = 0;
+  readonly TASK_ROW_HEIGHT_PX = 40;
+  public readonly DAY_CELL_WIDTH = 50; // 1日のセルの幅 (px) テンプレートから参照できるようにpublicに
+
+  @HostBinding('style.--row-height') get cssRowHeight() { return this.TASK_ROW_HEIGHT_PX + 'px'; }
+  @HostBinding('style.--day-cell-width') get cssDayCellWidth() { return this.DAY_CELL_WIDTH + 'px'; }
+  @HostBinding('style.--task-count') get cssTaskCount() { return (this.ganttTasks?.length || 1).toString(); }
+
+  private _project: Project | undefined;
+
+  get projectName(): string | undefined {
+    return this._project?.name;
+  }
+  get projectStartDate(): Date | null {
+    const s = this._project?.startDate;
+    if (!s) return null;
+    if (s instanceof Date) return s;
+    if (this.isTimestamp(s)) return s.toDate();
+    return null;
+  }
+  get projectEndDate(): Date | null {
+    const e = this._project?.endDate;
+    if (!e) return null;
+    if (e instanceof Date) return e;
+    if (this.isTimestamp(e)) return e.toDate();
+    return null;
+  }
 
   constructor(
     public dialog: MatDialog
@@ -176,6 +206,7 @@ export class GanttChartComponent implements OnInit {
       next: project => {
         console.log('読み込まれたプロジェクト情報:', project);
         this.project$ = of(project);
+        this._project = project ?? undefined;
         this.isLoadingProject = false;
 
         if (project && project.startDate && project.endDate) {
@@ -289,13 +320,7 @@ private mapProjectsToGanttItems(projects: Project[]): GanttTaskDisplayItem[] { /
 }
 
 
-  private readonly DAY_CELL_WIDTH = 50; // 1日のセルの幅 (px) 
-
-  
-
- // ... (DAY_CELL_WIDTH の定義の後)
-
- getBarLeftPosition(startDate: Date): number { // 引数は Date 型を期待
+  getBarLeftPosition(startDate: Date): number { // 引数は Date 型を期待
   // console.log('[getBarLeftPosition] timelineStartDate:', this.timelineStartDate, 'taskStartDate:', startDate); // ★デバッグログ追加
   if (!this.timelineStartDate || !startDate || !(startDate instanceof Date)) { // ★ startDate が Date インスタンスか確認
     // console.warn('[getBarLeftPosition] Invalid arguments or startDate is not a Date object');
@@ -364,16 +389,19 @@ openAddTaskDialog(): void {
   dialogRef.afterClosed().subscribe(result => {
     console.log('タスク追加ダイアログの結果:', result); // ★ まずはこれを確認！
 
-    if (result && result.taskName && result.plannedStartDate && result.plannedEndDate) {
+    if (result && result.title && result.plannedStartDate && result.plannedEndDate) {
       const newTaskData: Omit<GanttChartTask, 'id' | 'createdAt'> = {
         projectId: this.projectId!,
-        title: result.taskName,
+        title: result.title,
         plannedStartDate: Timestamp.fromDate(new Date(result.plannedStartDate)),
         plannedEndDate: Timestamp.fromDate(new Date(result.plannedEndDate)),
-        assigneeId: result.assigneeId,
         status: result.status,
+        assigneeId: result.assigneeId ?? null,
         dueDate: result.dueDate ?? null,
         blockerStatus: null,
+        actualStartDate: null,
+        actualEndDate: null,
+        progress: 0,
       };
 
       console.log('Firestoreに保存するデータ:', newTaskData);
@@ -392,7 +420,7 @@ openAddTaskDialog(): void {
           alert('タスクの保存に失敗しました。コンソールを確認してください。');
         });
     } else {
-      console.log('タスク追加キャンセル、または必須データ不足。');
+      console.log('タスク追加キャンセル、または必須データ不足。result:', result); // resultの内容もログに出す
     }
   });
 }
@@ -418,12 +446,89 @@ openEditTaskDialog(taskToEdit: GanttChartTask): void {
   dialogRef.afterClosed().subscribe(result => {
     console.log('編集ダイアログが閉じられました。結果:', result);
     if (result) {
+      console.log('編集ダイアログが返したresult:', result);
       const updatedTaskData: Partial<GanttChartTask> = {
-        title: result.taskName,
-        plannedStartDate: result.plannedStartDate ? Timestamp.fromDate(new Date(result.plannedStartDate)) : undefined,
-        plannedEndDate: result.plannedEndDate ? Timestamp.fromDate(new Date(result.plannedEndDate)) : undefined,
+        title: result.title,
+        status: result.status,
       };
-      console.log('Firestoreに更新するデータ:', updatedTaskData);
+      // plannedStartDate
+      if (Object.prototype.hasOwnProperty.call(result, 'plannedStartDate')) {
+        if (result.plannedStartDate === null) {
+          updatedTaskData.plannedStartDate = null as unknown as Timestamp;
+        } else if (this.isTimestamp(result.plannedStartDate)) {
+          updatedTaskData.plannedStartDate = result.plannedStartDate as Timestamp;
+        } else if (typeof result.plannedStartDate === 'string' && !isNaN(new Date(result.plannedStartDate).getTime())) {
+          updatedTaskData.plannedStartDate = Timestamp.fromDate(new Date(result.plannedStartDate));
+        } else if (result.plannedStartDate instanceof Date && !isNaN(result.plannedStartDate.getTime())) {
+          updatedTaskData.plannedStartDate = Timestamp.fromDate(result.plannedStartDate);
+        }
+      }
+      // plannedEndDate
+      if (Object.prototype.hasOwnProperty.call(result, 'plannedEndDate')) {
+        if (result.plannedEndDate === null) {
+          updatedTaskData.plannedEndDate = null as unknown as Timestamp;
+        } else if (this.isTimestamp(result.plannedEndDate)) {
+          updatedTaskData.plannedEndDate = result.plannedEndDate as Timestamp;
+        } else if (typeof result.plannedEndDate === 'string' && !isNaN(new Date(result.plannedEndDate).getTime())) {
+          updatedTaskData.plannedEndDate = Timestamp.fromDate(new Date(result.plannedEndDate));
+        } else if (result.plannedEndDate instanceof Date && !isNaN(result.plannedEndDate.getTime())) {
+          updatedTaskData.plannedEndDate = Timestamp.fromDate(result.plannedEndDate);
+        }
+      }
+      // actualStartDate
+      if (Object.prototype.hasOwnProperty.call(result, 'actualStartDate')) {
+        if (result.actualStartDate === null) {
+          updatedTaskData.actualStartDate = null as unknown as Timestamp;
+        } else if (this.isTimestamp(result.actualStartDate)) {
+          updatedTaskData.actualStartDate = result.actualStartDate as Timestamp;
+        } else if (typeof result.actualStartDate === 'string' && !isNaN(new Date(result.actualStartDate).getTime())) {
+          updatedTaskData.actualStartDate = Timestamp.fromDate(new Date(result.actualStartDate));
+        } else if (result.actualStartDate instanceof Date && !isNaN(result.actualStartDate.getTime())) {
+          updatedTaskData.actualStartDate = Timestamp.fromDate(result.actualStartDate);
+        }
+      }
+      // actualEndDate
+      if (Object.prototype.hasOwnProperty.call(result, 'actualEndDate')) {
+        if (result.actualEndDate === null) {
+          updatedTaskData.actualEndDate = null as unknown as Timestamp;
+        } else if (this.isTimestamp(result.actualEndDate)) {
+          updatedTaskData.actualEndDate = result.actualEndDate as Timestamp;
+        } else if (typeof result.actualEndDate === 'string' && !isNaN(new Date(result.actualEndDate).getTime())) {
+          updatedTaskData.actualEndDate = Timestamp.fromDate(new Date(result.actualEndDate));
+        } else if (result.actualEndDate instanceof Date && !isNaN(result.actualEndDate.getTime())) {
+          updatedTaskData.actualEndDate = Timestamp.fromDate(result.actualEndDate);
+        }
+      }
+      // assigneeId, dueDate, progress など他のフィールドも同様に処理
+      if (Object.prototype.hasOwnProperty.call(result, 'assigneeId')) {
+        updatedTaskData.assigneeId = result.assigneeId ?? null;
+      }
+      if (Object.prototype.hasOwnProperty.call(result, 'dueDate')) {
+        if (result.dueDate === null) {
+          updatedTaskData.dueDate = null as unknown as Timestamp;
+        } else if (this.isTimestamp(result.dueDate)) {
+          updatedTaskData.dueDate = result.dueDate as Timestamp;
+        } else if (typeof result.dueDate === 'string' && !isNaN(new Date(result.dueDate).getTime())) {
+          updatedTaskData.dueDate = Timestamp.fromDate(new Date(result.dueDate));
+        } else if (result.dueDate instanceof Date && !isNaN(result.dueDate.getTime())) {
+          updatedTaskData.dueDate = Timestamp.fromDate(result.dueDate);
+        }
+      }
+      if (Object.prototype.hasOwnProperty.call(result, 'progress')) {
+        updatedTaskData.progress = result.progress;
+      }
+      // undefined のプロパティを削除
+      Object.keys(updatedTaskData).forEach(keyStr => {
+        const key = keyStr as keyof Partial<GanttChartTask>;
+        if (updatedTaskData[key] === undefined) {
+          delete updatedTaskData[key];
+        }
+      });
+      console.log('Firestoreに更新するデータ (修正確認版):', updatedTaskData);
+      if (Object.keys(updatedTaskData).length === 0) {
+        console.log('更新するフィールドがありません。');
+        return;
+      }
       this.taskService.updateGanttChartTask(taskToEdit.id!, updatedTaskData)
         .then(() => {
           console.log(`タスク (ID: ${taskToEdit.id}) が正常に更新されました。`);
@@ -769,6 +874,14 @@ confirmDeleteNewSimpleTask(taskToDelete: GanttChartTask): void {
 
 private calculateTotalTimelineWidth(): void {
   this.totalTimelineWidthPx = this.allDaysInTimeline.length * this.DAY_CELL_WIDTH;
+}
+
+getTaskRowHeight(): number {
+  return this.TASK_ROW_HEIGHT_PX;
+}
+
+getTaskRowTopPosition(index: number): number {
+  return index * this.TASK_ROW_HEIGHT_PX;
 }
 
 }// GanttChartComponent クラスの閉じ括弧

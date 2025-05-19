@@ -1,0 +1,90 @@
+<div class="grid-gantt-container">
+  <div class="grid-area-controls">
+    <button mat-raised-button color="primary" (click)="openAddTaskDialog()">
+      <mat-icon>add_circle_outline</mat-icon> タスク追加
+    </button>
+  </div>
+
+  <div class="grid-area-timeline-year">
+    <div class="timeline-row timeline-year" [style.width.px]="totalTimelineWidthPx">
+      <div *ngFor="let yearItem of timelineYears" class="timeline-cell year-cell"
+           [style.minWidth.px]="yearItem.colspan * DAY_CELL_WIDTH"
+           [style.flexBasis.px]="yearItem.colspan * DAY_CELL_WIDTH">
+        {{ yearItem.year }}年
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-area-timeline-month">
+    <div class="timeline-row timeline-month" [style.width.px]="totalTimelineWidthPx">
+      <ng-container *ngFor="let yearItem of timelineYears">
+        <div *ngFor="let monthItem of yearItem.months" class="timeline-cell month-cell"
+             [style.minWidth.px]="monthItem.colspan * DAY_CELL_WIDTH"
+             [style.flexBasis.px]="monthItem.colspan * DAY_CELL_WIDTH">
+          {{ monthItem.monthName }}
+        </div>
+      </ng-container>
+    </div>
+  </div>
+
+  <div class="grid-area-task-header">
+    <div class="gantt-task-details-header">
+      <div class="gantt-details-cell header-actions"></div>
+      <div class="gantt-details-cell header-task-name">タスク名</div>
+      <div class="gantt-details-cell header-planned-start">予定開始</div>
+      <div class="gantt-details-cell header-planned-end">予定終了</div>
+      <div class="gantt-details-cell header-status">状況</div>
+    </div>
+  </div>
+
+  <div class="grid-area-timeline-days">
+    <div class="timeline-row timeline-days" [style.width.px]="totalTimelineWidthPx">
+      <div *ngFor="let dayItem of allDaysInTimeline" class="timeline-cell day-cell"
+           [class.weekend]="dayItem.isWeekend">
+        {{ dayItem.dayNumber }}
+      </div>
+    </div>
+  </div>
+
+  <!-- タスクごとに左右を横並びで1行ずつ表示 -->
+  <ng-container *ngFor="let taskItem of ganttTasks; let i = index; trackBy: trackByTaskId">
+    <div class="grid-area-task-list gantt-task-details-row"
+         [style.gridRow]="5 + i"
+         [style.minHeight.px]="getTaskRowHeight()">
+      <div class="gantt-details-cell cell-actions">
+        <button mat-icon-button color="primary" (click)="openEditTaskDialog(taskItem); $event.stopPropagation()" aria-label="タスクを編集">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" (click)="confirmDeleteNewSimpleTask(taskItem); $event.stopPropagation()" aria-label="タスクを削除">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+      <div class="gantt-details-cell cell-task-name">{{ taskItem.title }}</div>
+      <div class="gantt-details-cell cell-planned-start">{{ taskItem.plannedStartDate?.toDate() | date:'MM/dd' }}</div>
+      <div class="gantt-details-cell cell-planned-end">{{ taskItem.plannedEndDate?.toDate() | date:'MM/dd' }}</div>
+      <div class="gantt-details-cell cell-status">
+        <span>{{ taskItem.status === 'todo' ? '未着手' : (taskItem.status === 'doing' ? '作業中' : '完了') }}</span>
+      </div>
+    </div>
+    <div class="grid-area-gantt-bars gantt-task-bar-row"
+         [style.gridRow]="5 + i"
+         [style.height.px]="getTaskRowHeight()">
+      <div *ngIf="taskItem.plannedStartDate && taskItem.plannedEndDate" class="gantt-bar"
+           [ngClass]="{'completed': taskItem.status === 'done'}"
+           [style.left.px]="getBarLeftPosition(taskItem.plannedStartDate.toDate())"
+           [style.width.px]="getBarWidth(taskItem.plannedStartDate.toDate(), taskItem.plannedEndDate.toDate())"
+           [style.top.px]="10"
+           [style.height.px]="20"
+           [title]="taskItem.title + ' (予定)'">
+        <!-- バーは色だけでOK、テキスト不要 -->
+      </div>
+      <div *ngIf="taskItem.actualStartDate" class="gantt-bar actual-bar"
+           [style.left.px]="getBarLeftPosition(taskItem.actualStartDate.toDate())"
+           [style.width.px]="getBarWidth(taskItem.actualStartDate.toDate(), (taskItem.actualEndDate ? taskItem.actualEndDate.toDate() : getToday()))"
+           [style.top.px]="32"
+           [style.height.px]="8"
+           [title]="taskItem.title + ' (実績)'">
+      </div>
+    </div>
+  </ng-container>
+</div> 

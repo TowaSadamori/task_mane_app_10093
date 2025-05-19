@@ -1,160 +1,103 @@
 <div class="gantt-container">
-    <div class="timeline-header">
-        <div class="timeline-row timeline-year">
-            <div *ngFor="let yearItem of timelineYears" 
-                 class="timeline-cell year-cell" 
-                 [style.minWidth.px]="yearItem.colspan * 50" [style.flexBasis.px]="yearItem.colspan * 50"> 
-                 {{ yearItem.year }}年
+    <div class="gantt-main-content-area">
+        <div class="gantt-task-details-pane">
+            <div class="gantt-task-details-header project-name-header">
+                {{ projectName }}
             </div>
-        </div>
-        <div class="timeline-row timeline-month">
-            <ng-container *ngFor="let yearItem of timelineYears">
-                <div *ngFor="let monthItem of yearItem.months" 
-                     class="timeline-cell month-cell"
-                     [style.minWidth.px]="monthItem.colspan * 50"
-                     [style.flexBasis.px]="monthItem.colspan * 50">
-                     {{ monthItem.monthName }}
+            <div class="gantt-task-details-header project-period-header">
+                {{ projectStartDate | date:'yyyy/MM/dd' }} ～ {{ projectEndDate | date:'yyyy/MM/dd' }}
+            </div>
+            <div class="gantt-task-details-header">
+                <div class="gantt-details-cell header-actions"></div>
+                <div class="gantt-details-cell header-task-name">
+                    タスク名
+                    <button mat-icon-button color="primary" (click)="openAddTaskDialog()" aria-label="タスク追加" style="margin-left: 8px; vertical-align: middle;">
+                        <mat-icon>add_circle_outline</mat-icon>
+                    </button>
                 </div>
-            </ng-container>
-        </div>
-        <div class="timeline-row timeline-days">
-            <div *ngFor="let dayItem of allDaysInTimeline" 
-                 class="timeline-cell day-cell"
-                 [class.weekend]="dayItem.isWeekend"> {{ dayItem.dayNumber }}
+                <div class="gantt-details-cell header-planned-start">予定開始</div>
+                <div class="gantt-details-cell header-planned-end">予定終了</div>
+                <div class="gantt-details-cell header-status">状況</div>
+            </div>
+            <div class="gantt-task-details-rows-container">
+                <div *ngFor="let taskItem of ganttTasks; let i = index; trackBy: trackByTaskId"
+                     class="gantt-task-details-row"
+                     [id]="'task-details-row-' + taskItem.id!"
+                     [ngClass]="{'selected-task-row': taskItem.id === selectedTask?.id}"
+                     [style.minHeight.px]="getTaskRowHeight()"
+                     (click)="selectTask(taskItem)"
+                     tabindex="0"
+                     (keydown.enter)="selectTask(taskItem)"
+                     (keydown.space)="selectTask(taskItem)">
+                    <div class="gantt-details-cell cell-actions">
+                        <button mat-icon-button color="primary" (click)="openEditTaskDialog(taskItem); $event.stopPropagation()" aria-label="タスクを編集">
+                            <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button color="warn" (click)="confirmDeleteNewSimpleTask(taskItem); $event.stopPropagation()" aria-label="タスクを削除">
+                            <mat-icon>delete</mat-icon>
+                        </button>
+                    </div>
+                    <div class="gantt-details-cell cell-task-name">{{ taskItem.title }}</div>
+                    <div class="gantt-details-cell cell-planned-start">{{ taskItem.plannedStartDate.toDate() | date:'MM/dd' }}</div>
+                    <div class="gantt-details-cell cell-planned-end">{{ taskItem.plannedEndDate.toDate() | date:'MM/dd' }}</div>
+                    <div class="gantt-details-cell cell-status">
+                        <mat-form-field appearance="outline" class="status-select-field">
+                            <mat-select [(ngModel)]="taskItem.status" (selectionChange)="onStatusChange($event.value, taskItem.id!, taskItem)">
+                                <mat-option value="todo">未着手</mat-option>
+                                <mat-option value="doing">作業中</mat-option>
+                                <mat-option value="done">完了</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                </div>
             </div>
         </div>
-
-
+        <div class="gantt-chart-bars-pane">
+            <div class="timeline-header">
+                <div class="timeline-row timeline-year" [style.width.px]="totalTimelineWidthPx">
+                    <div *ngFor="let yearItem of timelineYears"
+                         class="timeline-cell year-cell"
+                         [style.minWidth.px]="yearItem.colspan * DAY_CELL_WIDTH"
+                         [style.flexBasis.px]="yearItem.colspan * DAY_CELL_WIDTH">
+                        {{ yearItem.year }}年
+                    </div>
+                </div>
+                <div class="timeline-row timeline-month" [style.width.px]="totalTimelineWidthPx">
+                    <ng-container *ngFor="let yearItem of timelineYears">
+                        <div *ngFor="let monthItem of yearItem.months"
+                             class="timeline-cell month-cell"
+                             [style.minWidth.px]="monthItem.colspan * DAY_CELL_WIDTH"
+                             [style.flexBasis.px]="monthItem.colspan * DAY_CELL_WIDTH">
+                            {{ monthItem.monthName }}
+                        </div>
+                    </ng-container>
+                </div>
+                <div class="timeline-row timeline-days" [style.width.px]="totalTimelineWidthPx">
+                    <div *ngFor="let dayItem of allDaysInTimeline"
+                         class="timeline-cell day-cell"
+                         [class.weekend]="dayItem.isWeekend">
+                        {{ dayItem.dayNumber }}
+                    </div>
+                </div>
+            </div>
+            <div class="gantt-bars-rows-container" [style.width.px]="totalTimelineWidthPx">
+                <div *ngFor="let taskItem of ganttTasks; let i = index"
+                     class="gantt-task-bar-row"
+                     [style.height.px]="getTaskRowHeight()">
+                    <div *ngIf="taskItem.plannedStartDate && taskItem.plannedEndDate"
+                         class="gantt-bar"
+                         [ngClass]="{'completed': taskItem.status === 'done'}"
+                         [style.left.px]="getBarLeftPosition(taskItem.plannedStartDate.toDate())"
+                         [style.width.px]="getBarWidth(taskItem.plannedStartDate.toDate(), taskItem.plannedEndDate.toDate())"
+                         [title]="taskItem.title + ' (予定)'">
+                        {{ taskItem.title }}
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <div class="main-gantt-area">
-        <div class="task-list-area">
-            <div class="action-buttons-container" style="margin-bottom: 10px; text-align: left; display: flex; justify-content: flex-start; gap: 10px;">
-                <button mat-raised-button color="primary" (click)="openAddTaskDialog()">
-                    <mat-icon>add_circle_outline</mat-icon> タスク追加
-                </button>
-            </div>
-            <div class="task-list-header">
-                <div class="task-list-cell header-cell" style="width: 50px;">番号</div>
-                <div class="task-list-cell header-cell" style="width: 150px">タスク名</div>
-                <div class="task-list-cell header-cell" style="width: 100px">担当者</div>
-                <div class="task-list-cell header-cell" style="width: 80px">状況</div>
-                <div class="task-list-cell header-cell" style="width: 70px;">進捗率</div>
-                <div class="task-list-cell header-cell" style="width: 100px">予定開始日</div>
-                <div class="task-list-cell header-cell" style="width: 100px">予定終了日</div>
-                <div class="task-list-cell header-cell" style="width: 100px;">実績開始日</div>
-                <div class="task-list-cell header-cell" style="width: 100px;">実績終了日</div>
-                <div class="task-list-cell header-cell" style="width: 100px;">操作</div>
-            </div>
-
-            
-            <div *ngFor="let taskItem of ganttTasks; let i = index; trackBy: trackByTaskId"
-                 class="task-list-row gantt-task-card"
-                 [id]="'task-row-' + taskItem.id!" (click)="selectTask(taskItem)" tabindex="0"
-                 (keydown.enter)="selectTask(taskItem)"
-                 (keydown.space)="selectTask(taskItem)"
-                 [ngClass]="{'selected-task': taskItem.id === selectedTask?.id}">
-                 <div class="gantt-task-info">
-                     <div class="gantt-task-title">{{ taskItem.title }}</div>
-                     <div class="gantt-task-periods">
-                         <div class="gantt-task-period planned-period">
-                             <span class="period-label">予:</span>
-                             <ng-container *ngIf="taskItem.plannedStartDate && taskItem.plannedEndDate">
-                                 {{ taskItem.plannedStartDate.toDate() | date:'yyyy/MM/dd' }} ～ {{ taskItem.plannedEndDate.toDate() | date:'yyyy/MM/dd' }}
-                             </ng-container>
-                             <ng-container *ngIf="taskItem.plannedStartDate && !taskItem.plannedEndDate">
-                                 {{ taskItem.plannedStartDate.toDate() | date:'yyyy/MM/dd' }}
-                             </ng-container>
-                             <ng-container *ngIf="!taskItem.plannedStartDate && taskItem.plannedEndDate">
-                                 {{ taskItem.plannedEndDate.toDate() | date:'yyyy/MM/dd' }}
-                             </ng-container>
-                         </div>
-                         <div class="gantt-task-period actual-period" *ngIf="taskItem.actualStartDate || taskItem.actualEndDate">
-                             <span class="period-label">実:</span>
-                             <ng-container *ngIf="taskItem.actualStartDate && taskItem.actualEndDate">
-                                 {{ taskItem.actualStartDate.toDate() | date:'yyyy/MM/dd' }} ～ {{ taskItem.actualEndDate.toDate() | date:'yyyy/MM/dd' }}
-                             </ng-container>
-                             <ng-container *ngIf="taskItem.actualStartDate && !taskItem.actualEndDate">
-                                 {{ taskItem.actualStartDate.toDate() | date:'yyyy/MM/dd' }}
-                             </ng-container>
-                             <ng-container *ngIf="!taskItem.actualStartDate && taskItem.actualEndDate">
-                                 {{ taskItem.actualEndDate.toDate() | date:'yyyy/MM/dd' }}
-                             </ng-container>
-                         </div>
-                     </div>
-                     <div class="gantt-task-status">状況: {{ taskItem.status }}</div>
-                 </div>
-                 <div class="task-actions task-actions-vertical">
-                     <button mat-icon-button color="primary" (click)="openEditTaskDialog(taskItem); $event.stopPropagation()" aria-label="タスクを編集">
-                         <mat-icon>edit</mat-icon>
-                     </button>
-                     <button mat-icon-button color="warn" (click)="confirmDeleteNewSimpleTask(taskItem); $event.stopPropagation()" aria-label="タスクを削除">
-                         <mat-icon>delete</mat-icon>
-                     </button>
-                 </div>
-            </div>
-        </div>
-
-        <div class="gantt-bars-area">
-            <div class="gantt-row-background">
-                <div *ngFor="let day of allDaysInTimeline" class="gantt-day-cell"></div>
-            </div>
-            <div *ngFor="let taskItem of ganttTasks"
-                 class="gantt-row"
-                 [ngClass]="{'selected-task-bar-indicator': taskItem.id === selectedTask?.id}">
-
-                <div class="gantt-bar"
-                     [ngClass]="{'completed': taskItem.status === 'done'}"
-                     [style.left.px]="getBarLeftPosition(taskItem.plannedStartDate.toDate())"
-                     [style.width.px]="getBarWidth(taskItem.plannedStartDate.toDate(), taskItem.plannedEndDate.toDate())"
-                     [title]="taskItem.title + ' (予定: ' + (taskItem.plannedStartDate.toDate() | date:'MM/dd') + '-' + (taskItem.plannedEndDate.toDate() | date:'MM/dd') + ')'">
-                    {{ taskItem.title }}
-                </div>
-
-                <div *ngIf="taskItem.actualStartDate"
-                     class="gantt-bar actual-bar" [style.left.px]="getBarLeftPosition(taskItem.actualStartDate.toDate())"
-                     [style.width.px]="getBarWidth(taskItem.actualStartDate.toDate(), (taskItem.actualEndDate ? taskItem.actualEndDate.toDate() : getToday()))"
-                     [title]="taskItem.title + ' (実績: ' + (taskItem.actualStartDate.toDate() | date:'MM/dd') + '-' + (taskItem.actualEndDate ? (taskItem.actualEndDate.toDate() | date:'MM/dd') : '継続中') + ')'">
-                    <!-- 実績バーは内容表示なし -->
-                </div>
-            </div>
-        </div>
-
-        <div *ngIf="isLoadingProject; else projectContentLoaded">
-            <p>プロジェクト情報を読み込んでいます...</p>
-          </div>
-          <ng-template #projectContentLoaded>
-            <div *ngIf="projectError" class="error-message">
-              <p>{{ projectError }}</p>
-            </div>
-          
-            <div *ngIf="project$ | async as project"> <h2 *ngIf="project">{{ project.name }} - ガントチャート</h2>
-              <h2 *ngIf="!project && projectId">プロジェクト (ID: {{ projectId }}) - ガントチャート</h2>
-          
-              <div *ngIf="isLoadingTasks; else tasksContentLoaded">
-                <p>タスクを読み込んでいます...</p>
-              </div>
-              <ng-template #tasksContentLoaded>
-                <div *ngIf="tasksError" class="error-message">
-                  <p>{{ tasksError }}</p>
-                </div>
-          
-                <div *ngIf="tasks$ | async as tasks"> <div *ngIf="tasks.length > 0; else noTasks">
-                    <p>ガントチャート表示エリア (タスク数: {{ tasks.length }})</p>
-                    <ul class="task-list">
-                      <li *ngFor="let task of tasks" class="task-item">
-                        <strong>{{ task.title }}</strong>
-                        <span *ngIf="task.plannedStartDate && task.plannedEndDate">
-                          ({{ task.plannedStartDate.toDate() | date:'yyyy/MM/dd' }} - {{ task.plannedEndDate.toDate() | date:'yyyy/MM/dd' }})
-                        </span>
-                        <!-- <p *ngIf="task.description">{{ task.description }}</p> -->
-                        <p>ステータス: - | 進捗: -</p>
-                      </li>
-                    </ul>
-                  </div>
-                  <ng-template #noTasks><p>このプロジェクトには表示できるタスクがありません。</p></ng-template>
-                </div>
-              </ng-template>
-            </div>
-          </ng-template>
+    <div *ngIf="isLoadingProject && !projectError">
+        <p>プロジェクト情報を読み込んでいます...</p>
     </div>
+    <ng-template #projectContentLoaded> ... </ng-template>
+</div>

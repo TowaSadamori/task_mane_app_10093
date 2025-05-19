@@ -1,289 +1,303 @@
-.gantt-container {
-    display: flex;
-    flex-direction: column;
+:host {
+  --left-pane-width: 780px;
+  --controls-area-height: 48px;
+  --timeline-year-height: 28px;
+  --timeline-month-height: 28px;
+  --column-and-day-header-height: 42px;
+  --data-row-height: var(--column-and-day-header-height);
+  --timeline-year-row-height: 28px;
+  --timeline-month-row-height: 28px;
+  --left-header-spacer-height: calc(var(--timeline-year-row-height) + var(--timeline-month-row-height));
+  --common-row-height: 42px;
+  --actions-column-width: 70px;
+  --task-name-column-width: 350px;
+  --date-column-width: 110px;
+  --status-column-width: 150px;
+  --day-cell-width: 50px;
+  --bar-height: 20px;
+  --bar-top-offset: calc((var(--common-row-height) - var(--bar-height)) / 2);
+}
+
+.grid-gantt-container {
+  display: grid;
+  width: 100%;
+  height: calc(100vh - 64px);
+  overflow: hidden;
+  grid-template-columns: var(--left-pane-width) 1fr;
+  grid-template-rows:
+    var(--controls-area-height)
+    var(--timeline-year-height)
+    var(--timeline-month-height)
+    var(--column-and-day-header-height)
+    1fr;
+  grid-template-areas:
+    "controls timeline-year"
+    "controls timeline-month"
+    "task-header timeline-days"
+    "task-list gantt-bars";
+  border: 1px solid #ccc;
+}
+
+.grid-area-controls {
+  grid-area: controls;
+  background-color: lightyellow;
+  border-bottom: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.grid-area-timeline-year {
+  grid-area: timeline-year;
+  background-color: lightblue;
+  overflow: hidden;
+  display: flex;
+  .timeline-row { width: 100%; display: flex; }
+  .timeline-cell { height: 100%; }
+}
+
+.grid-area-timeline-month {
+  grid-area: timeline-month;
+  background-color: lightcoral;
+  overflow: hidden;
+  display: flex;
+  .timeline-row { width: 100%; display: flex; }
+  .timeline-cell { height: 100%; }
+}
+
+.grid-area-task-header {
+  grid-area: task-header;
+  background-color: lightgreen;
+  border-right: 1px solid #ccc;
+  display: flex;
+  overflow: hidden;
+  .gantt-task-details-header {
+    width: 100%; display: flex; align-items: stretch; height: 100%;
+  }
+}
+
+.grid-area-timeline-days {
+  grid-area: timeline-days;
+  background-color: lightsalmon;
+  overflow: hidden;
+  display: flex;
+  .timeline-row.timeline-days {
     width: 100%;
-    overflow-x: auto;
-    border: 1px solid #ccc;
-    // height: 80vh;
-}
-
-
-.timeline-header {
     display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-    border-bottom: 1px solid #ccc;
-}
-
-.timeline-row {
-    display: flex;
-    flex-direction: row;
-    background-color: #f8f;
-    &:first-child {
-        border-top: 1px solid #ddd;
-    }
-}
-
-.timeline-cell {
-    padding: 0;
-    border-right: 1px solid #ddd;
-    text-align: center;
-    min-width: 50px;
-    font-size: 0.9em;
-    white-space: nowrap;
-    box-sizing: border-box;
-}
-
-.main-gantt-area {
-    display: flex;
-    flex-direction: row;
-    width: 100%; // 親要素いっぱいに広がることを想定
-    // overflow: hidden; // ★ 一旦コメントアウトして影響を見るか、状況に応じて overflow-x: auto; などに変更
-  }
-  
-
-  .task-list-area {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1.2rem;
-    padding: 1rem 0.5rem;
-    background: #f7fafd;
-    flex-shrink: 0;
-    width: 450px; /* ★★★ 例: 固定幅を指定。実際のデザインに合わせて調整してください ★★★ */
-    // flex-basis: 450px; /* または flex-basis を使用 */
-    border-right: 1px solid #eee;
-    overflow-y: auto; 
-    position: relative; /* ★ 追加: z-index のスタッキングコンテキストを作るため */
-    z-index: 1;      /* ★ 追加: gantt-bars-area より手前に来るように */
-  }
-
-.task-list-header {
-    background-color: #f0f0f0;
-    font-weight: bold;
-    position:sticky;
-    top: 0;
-    z-index: 1;
-}
-
-.task-list-cell:last-child {
-    border-right: none;
-}
-
-.gantt-chart-area {
-    flex-grow: 1;
-    position: relative;
-    overflow: auto;
-    overflow-y: hidden;
-}
-
-.gantt-row-background {
-    display: flex;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: fit-content;
-    height:100%;
-    z-index: 0;
-}
-
-.gantt-day-cell {
-    min-width: 50px;
-    height: 100%;
-    border-right: 1px solid #ddd;
-    box-sizing: border-box;
-    padding: 0;
-}
-
-.gantt-day-cell:last-child {
-    border-right: none;
-}
-
-
-.gantt-bars-area {
-    position: relative; 
-    flex-grow: 1;     
-    min-width: 0;     /* ★ 追加: flexアイテムが内容によって不必要に広がるのを防ぐ */
-    overflow-x: auto; 
-    z-index: 0;      /* ★ 追加: task-list-area より背面にいくように (必要に応じて調整) */
-    // 以前のデバッグ用の !important スタイルは削除またはコメントアウト
-    // background-color: lightgoldenrodyellow !important; 
-    // border: 3px dashed purple !important; 
-  }
-  
-
-  
-  .gantt-bar {
-    position: absolute;
-    top: 5px;
-    height: 25px;
-    background-color: crimson !important;
-    z-index: 10 !important;
-    color: white;
-    font-size: 0.8em;
-    padding: 0 5px;
-    line-height: 25px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    box-sizing: border-box;
-    cursor: pointer;
-    border-radius: 16px;
-  }
-
-.task-list-row {
-    cursor: pointer;
-    // &:not(.selected-task):hover { /* ★ :not(.selected-task) を追加して、hoverを有効化 */
-    //   background-color: #f0f0f0; /* ホバー時の背景色 */
-    // }
-  }
-  .selected-task {
-    background-color: #e0e0ff !important; /* 選択された行の背景色 */
-  }
-  
-  .selected-task {
-    background-color: #e0e0ff !important; // 選択された行の背景色 (任意の色に変更してください)
-    // 必要であれば他のスタイルも追加 (例: font-weight: bold;)
-  }
-  
-  // オプション: ガントバーエリアの選択インジケーター用スタイル
-  .selected-task-bar-indicator {
-    .gantt-bar { // もしバー自体の見た目を変えたい場合
-      // border: 2px solid blue; // 例: 選択されたタスクのバーに枠線を追加
-      opacity: 0.7; // 例: 選択されたタスクのバーを少し透過させる
-    }
-    // あるいは、行全体に何かスタイルを適用する場合
-    // background-color: rgba(0, 0, 255, 0.05); // 例：行の背景を薄い青に
-  }
-  
-  .action-buttons-container { // ボタンコンテナ用のスタイル（既にあれば調整）
-    margin-bottom: 10px;
-    text-align: right;
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px; // ボタン間のスペース
-  }
-
-  // ... (既存の .gantt-bar スタイル定義の後など) ...
-
-// ... (既存の .gantt-bar スタイル定義など) ...
-
-.actual-bar {
-  background-color: #4CAF50; /* 実績バーの色 (例: 緑) */
-  // 予定バーと実績バーを区別するためのスタイル調整
-  // 例1: 予定バーの下に少しずらして表示
-  top: 15px; // .gantt-bar の top が 5px, height が 25px と仮定した場合、少し下にずらす
-             // 実際の .gantt-bar のスタイルに合わせて調整してください。
-  height: 10px; // 予定バーより細くする例
-  // 例2: 予定バーと同じ高さで、透明度を変えるなど
-  // opacity: 0.7;
-
-  // .gantt-bar から共通で継承されるスタイル (position: absolute など) を考慮し、
-  // 上書きや追加が必要なスタイルをここに記述します。
-  // 例えば、実績バーにテキストを表示しないなら text-indent: -9999px; なども使えます。
-  color: white;       // バー内のテキストの色 (もし表示する場合)
-  font-size: 0.7em;   // バー内のテキストのサイズ
-  line-height: 10px;  // 高さに合わせる
-  // padding や overflow なども .gantt-bar と同様に設定されているか確認
-}
-
-.task-list-row {
-  .task-actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-
-    button {
-      margin-right: 4px;
-      &:last-child {
-        margin-right: 0;
-      }
-    }
+    .timeline-cell.day-cell { height: 100%; }
   }
 }
 
-.gantt-task-card {
-  background: #fff;
-  border-radius: 1.5rem;
-  box-shadow: 0 2px 12px rgba(30, 136, 229, 0.10);
-  padding: 1.2rem 1.5rem 1.2rem 1.5rem;
-  min-width: 320px;
-  min-height: 80px;
-  max-width: 600px;
-  aspect-ratio: unset;
+.grid-area-task-list {
+  grid-area: task-list;
+  background-color: #fff;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-right: 1px solid #ccc;
+  display: flex;
+  align-items: stretch;
+  min-height: var(--data-row-height);
+  border-bottom: 1px solid #eee;
+}
+
+.grid-area-gantt-bars {
+  grid-area: gantt-bars;
+  background-color: #fff;
+  overflow: auto;
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  min-height: var(--data-row-height);
+  border-bottom: 1px solid #eee;
+}
+
+.gantt-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: calc(100vh - 64px);
+  border: 1px solid #ccc;
+  overflow: hidden;
+}
+.gantt-controls-header {
+  height: 48px;
+  flex-shrink: 0;
+  border-bottom: 1px solid #ddd;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+}
+
+.gantt-headers-wrapper {
   display: flex;
   flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  transition: box-shadow 0.18s, transform 0.18s;
-  cursor: pointer;
+  width: 100%;
+  flex-shrink: 0;
+  border-bottom: 1px solid #bfbfbf;
 }
-.gantt-task-info {
-  flex: 1 1 auto;
+.gantt-task-details-header-wrapper {
+  flex: 0 0 var(--left-pane-width);
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
+  justify-content: flex-end;
+  background-color: #f0f3f5;
+  border-right: 1px solid #ccc;
 }
-.gantt-task-title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 0.4rem;
-  color: #1976d2;
-  word-break: break-word;
-}
-.gantt-task-periods {
+.gantt-task-details-header {
   display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  margin-bottom: 0.2rem;
-}
-.planned-period, .actual-period {
-  display: flex;
-  align-items: center;
-  font-size: 1rem;
-  color: #555;
-}
-.period-label {
-  font-weight: bold;
-  color: #1976d2;
-  margin-right: 0.3em;
-  min-width: 1.5em;
-  display: inline-block;
-}
-.actual-period {
-  color: #388e3c;
-}
-.task-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.gantt-task-card:hover {
-  box-shadow: 0 4px 20px rgba(30, 136, 229, 0.18);
-  transform: translateY(-4px) scale(1.03);
-}
-.selected-task.gantt-task-card {
-  border: 2px solid #1976d2;
-}
-
-.task-actions-vertical {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
-.gantt-task-status {
-  font-size: 1.05rem;
-  color: #1976d2;
+  align-items: stretch;
+  min-height: var(--common-row-height);
+  height: var(--common-row-height);
+  background-color: #e9eef0;
+  border-bottom: 1px solid #d1d9e0;
   font-weight: 500;
-  margin-top: 0.3rem;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.timeline-header-wrapper {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #f8f9fa;
+}
+.timeline-header {
+  flex-shrink: 0;
+  background-color: white;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+}
+.timeline-row { display: flex; }
+.timeline-cell {
+  min-width: var(--day-cell-width);
+  padding: 0;
+  border-right: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85em;
+}
+.timeline-row.timeline-year .timeline-cell   { height: var(--timeline-year-row-height); background-color: #e0e6eb; font-weight: bold; }
+.timeline-row.timeline-month .timeline-cell  { height: var(--timeline-month-row-height); background-color: #e9eef0; }
+.timeline-row.timeline-days .timeline-cell   { height: var(--common-row-height); background-color: #f7f9fc; }
+.timeline-row.timeline-days .timeline-cell.weekend { background-color: #f0f3f5; }
+
+.gantt-main-content-area {
+  display: flex;
+  flex-grow: 1;
+  overflow: hidden;
+}
+.gantt-task-details-pane {
+  flex: 0 0 var(--left-pane-width);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #ccc;
+}
+.left-pane-header-spacer {
+  height: var(--left-header-spacer-height);
+  flex-shrink: 0;
+  background: transparent;
+  border-bottom: 1px solid #ddd;
+}
+.gantt-task-details-rows-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: #fff;
+}
+.gantt-task-details-row {
+  display: flex;
+  align-items: stretch;
+  min-height: var(--common-row-height);
+  height: var(--common-row-height);
+  border-bottom: 1px solid #eef1f3;
+}
+.gantt-details-cell {
+  padding: 0 15px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  border-right: 1px solid #e0e6eb;
+  font-size: 0.9rem;
+}
+.gantt-details-cell:last-child { border-right: none; }
+.gantt-details-cell.header-actions, .gantt-details-cell.cell-actions { flex: 0 0 var(--actions-column-width); justify-content: center; }
+.gantt-details-cell.header-task-name, .gantt-details-cell.cell-task-name { flex: 0 0 var(--task-name-column-width); }
+.gantt-details-cell.header-planned-start, .gantt-details-cell.cell-planned-start { flex: 0 0 var(--date-column-width); justify-content: center; }
+.gantt-details-cell.header-planned-end, .gantt-details-cell.cell-planned-end { flex: 0 0 var(--date-column-width); justify-content: center; }
+.gantt-details-cell.header-status, .gantt-details-cell.cell-status {
+  flex: 0 0 var(--status-column-width); justify-content: center;
+}
+.status-select-field { width: 95%; }
+.gantt-chart-bars-pane {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: auto;
+  background-color: #fff;
+}
+.gantt-bars-rows-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: var(--total-timeline-width-px);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.gantt-row-background {
+  height: calc(var(--common-row-height) * var(--task-count));
+}
+.gantt-task-bar-row {
+  position: relative;
+  height: var(--common-row-height);
+  min-height: var(--common-row-height);
+}
+.gantt-bar {
+  position: absolute;
+  left: 0;
+  top: 10px;
+  height: 20px;
+  background: #1976d2;
+  border-radius: 4px;
+  z-index: 1;
+}
+.gantt-bar.completed {
+  background: #a3001f;
 }
 
-.gantt-bar.completed {
-  background-color: #a3001f !important; /* crimsonより約30%暗い色 */
-  border: 1.5px solid #a3001f;
-  color: #fff;
-  opacity: 0.85;
+.project-name-header {
+  font-size: 1.1rem;
+  font-weight: bold;
+  background: #f7f9fc;
+  border-bottom: 1px solid #e0e6eb;
+  min-height: var(--timeline-year-row-height);
+  height: var(--timeline-year-row-height);
+  display: flex;
+  align-items: center;
+  padding-left: 16px;
+}
+.project-period-header {
+  font-size: 1rem;
+  color: #666;
+  background: #f7f9fc;
+  border-bottom: 1px solid #e0e6eb;
+  min-height: var(--timeline-month-row-height);
+  height: var(--timeline-month-row-height);
+  display: flex;
+  align-items: center;
+  padding-left: 16px;
+}
+.gantt-project-info, .project-name, .project-period {
+  display: none !important;
 }
 
   

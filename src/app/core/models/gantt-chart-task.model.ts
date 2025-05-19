@@ -10,8 +10,8 @@ export interface GanttChartTask extends Task {
   createdAt: Timestamp;
   status: 'todo' | 'doing' | 'done';
   progress?: number;
-  actualStartDate?: Timestamp;
-  actualEndDate?: Timestamp;
+  actualStartDate?: Timestamp | null;
+  actualEndDate?: Timestamp | null;
   parentId?: string | null;
   level?: number;
   memo?: string | null;
