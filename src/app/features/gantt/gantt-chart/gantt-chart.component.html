@@ -15,8 +15,8 @@
                         <mat-icon>add_circle_outline</mat-icon>
                     </button>
                 </div>
-                <div class="gantt-details-cell header-planned-start">予定開始</div>
-                <div class="gantt-details-cell header-planned-end">予定終了</div>
+                <div class="gantt-details-cell header-planned-start">予定開始日</div>
+                <div class="gantt-details-cell header-planned-end">予定終了日</div>
                 <div class="gantt-details-cell header-status">状況</div>
             </div>
             <div class="gantt-task-details-rows-container">
@@ -38,8 +38,8 @@
                         </button>
                     </div>
                     <div class="gantt-details-cell cell-task-name">{{ taskItem.title }}</div>
-                    <div class="gantt-details-cell cell-planned-start">{{ taskItem.plannedStartDate.toDate() | date:'MM/dd' }}</div>
-                    <div class="gantt-details-cell cell-planned-end">{{ taskItem.plannedEndDate.toDate() | date:'MM/dd' }}</div>
+                    <div class="gantt-details-cell cell-planned-start">{{ taskItem.plannedStartDate.toDate() | date:'yyyy/MM/dd' }}</div>
+                    <div class="gantt-details-cell cell-planned-end">{{ taskItem.plannedEndDate.toDate() | date:'yyyy/MM/dd' }}</div>
                     <div class="gantt-details-cell cell-status" matTooltip="編集ボタンで変更できます">
                         <span>
                             {{

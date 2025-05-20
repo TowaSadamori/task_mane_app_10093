@@ -442,7 +442,9 @@ openEditTaskDialog(taskToEdit: GanttChartTask): void {
     data: {
       isEditMode: true,
       task: { ...taskToEdit },
-      projectId: this.projectId
+      projectId: this.projectId,
+      minDate: this.projectStartDate ? this.projectStartDate.toISOString().slice(0, 10) : null,
+      maxDate: this.projectEndDate ? this.projectEndDate.toISOString().slice(0, 10) : null
     }
   });
 

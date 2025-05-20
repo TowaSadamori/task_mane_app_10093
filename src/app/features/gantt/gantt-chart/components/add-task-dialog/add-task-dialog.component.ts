@@ -60,7 +60,7 @@ export class AddTaskDialogComponent implements OnInit {
       actualEndDate: [null],
       status: ['todo', Validators.required],
       memo: ['']
-    }, { validators: plannedEndDateAfterOrEqualStartDateValidator });
+    }, { validators: [plannedEndDateAfterOrEqualStartDateValidator, plannedDateWithinProjectPeriodValidator(this.minDate, this.maxDate)] });
 
     if (this.data) {
       this.isEditMode = this.data.isEditMode;
@@ -134,4 +134,29 @@ function plannedEndDateAfterOrEqualStartDateValidator(group: FormGroup) {
     return { plannedEndDateBeforeStartDate: true };
   }
   return null;
+}
+
+function plannedDateWithinProjectPeriodValidator(minDate: string | null, maxDate: string | null) {
+  return (group: FormGroup) => {
+    const start = group.get('plannedStartDate')?.value;
+    const end = group.get('plannedEndDate')?.value;
+    const errors: Record<string, boolean> = {};
+    if (minDate) {
+      if (start && start < minDate) {
+        errors['plannedStartDateBeforeProject'] = true;
+      }
+      if (end && end < minDate) {
+        errors['plannedEndDateBeforeProject'] = true;
+      }
+    }
+    if (maxDate) {
+      if (start && start > maxDate) {
+        errors['plannedStartDateAfterProject'] = true;
+      }
+      if (end && end > maxDate) {
+        errors['plannedEndDateAfterProject'] = true;
+      }
+    }
+    return Object.keys(errors).length ? errors : null;
+  };
 }

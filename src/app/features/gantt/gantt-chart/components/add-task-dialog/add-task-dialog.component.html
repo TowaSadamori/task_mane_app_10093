@@ -15,6 +15,12 @@
         <div class="error-message" *ngIf="taskForm.get('plannedStartDate')?.hasError('required')">
           予定開始日は必須です。
         </div>
+        <div class="error-message" *ngIf="taskForm.errors?.['plannedStartDateBeforeProject'] && (taskForm.get('plannedStartDate')?.touched || taskForm.get('plannedStartDate')?.dirty)">
+          予定開始日はプロジェクトの開始日以降を選択してください。
+        </div>
+        <div class="error-message" *ngIf="taskForm.errors?.['plannedStartDateAfterProject'] && (taskForm.get('plannedStartDate')?.touched || taskForm.get('plannedStartDate')?.dirty)">
+          予定開始日はプロジェクトの終了日以前を選択してください。
+        </div>
       </div>
       <div class="form-field">
         <label class="form-label" for="planned-end">予定終了日</label>
@@ -24,6 +30,12 @@
         </div>
         <div class="error-message" *ngIf="taskForm.errors?.['plannedEndDateBeforeStartDate'] && (taskForm.get('plannedEndDate')?.touched || taskForm.get('plannedStartDate')?.touched)">
           予定終了日は予定開始日と同じか、それ以降の日付を選択してください。
+        </div>
+        <div class="error-message" *ngIf="taskForm.errors?.['plannedEndDateBeforeProject'] && (taskForm.get('plannedEndDate')?.touched || taskForm.get('plannedEndDate')?.dirty)">
+          予定終了日はプロジェクトの開始日以降を選択してください。
+        </div>
+        <div class="error-message" *ngIf="taskForm.errors?.['plannedEndDateAfterProject'] && (taskForm.get('plannedEndDate')?.touched || taskForm.get('plannedEndDate')?.dirty)">
+          予定終了日はプロジェクトの終了日以前を選択してください。
         </div>
       </div>
       <div class="form-field">
