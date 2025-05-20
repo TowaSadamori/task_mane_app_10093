@@ -11,7 +11,7 @@
                 <div class="gantt-details-cell header-actions"></div>
                 <div class="gantt-details-cell header-task-name">
                     タスク名
-                    <button mat-icon-button color="primary" (click)="openAddTaskDialog()" aria-label="タスク追加" style="margin-left: 8px; vertical-align: middle;">
+                    <button mat-icon-button color="primary" (click)="openAddTaskDialog()" aria-label="タスク追加" style="margin-left: 8px; vertical-align: middle;" matTooltip="タスクを追加します">
                         <mat-icon>add_circle_outline</mat-icon>
                     </button>
                 </div>
@@ -30,17 +30,17 @@
                      (keydown.enter)="selectTask(taskItem)"
                      (keydown.space)="selectTask(taskItem)">
                     <div class="gantt-details-cell cell-actions">
-                        <button mat-icon-button color="primary" (click)="openEditTaskDialog(taskItem); $event.stopPropagation()" aria-label="タスクを編集">
+                        <button mat-icon-button color="primary" (click)="openEditTaskDialog(taskItem); $event.stopPropagation()" aria-label="タスクを編集" matTooltip="タスク詳細を開きます">
                             <mat-icon>edit</mat-icon>
                         </button>
-                        <button mat-icon-button color="warn" (click)="confirmDeleteNewSimpleTask(taskItem); $event.stopPropagation()" aria-label="タスクを削除">
+                        <button mat-icon-button color="warn" (click)="confirmDeleteNewSimpleTask(taskItem); $event.stopPropagation()" aria-label="タスクを削除" matTooltip="タスクを削除します">
                             <mat-icon>delete</mat-icon>
                         </button>
                     </div>
                     <div class="gantt-details-cell cell-task-name">{{ taskItem.title }}</div>
                     <div class="gantt-details-cell cell-planned-start">{{ taskItem.plannedStartDate.toDate() | date:'MM/dd' }}</div>
                     <div class="gantt-details-cell cell-planned-end">{{ taskItem.plannedEndDate.toDate() | date:'MM/dd' }}</div>
-                    <div class="gantt-details-cell cell-status">
+                    <div class="gantt-details-cell cell-status" matTooltip="編集ボタンで変更できます">
                         <span>
                             {{
                                 (taskItem.status + '') === 'todo' ? '未着手' :

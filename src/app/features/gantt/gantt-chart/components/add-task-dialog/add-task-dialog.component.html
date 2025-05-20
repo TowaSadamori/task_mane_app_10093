@@ -11,16 +11,19 @@
       </div>
       <div class="form-field">
         <label class="form-label" for="planned-start">予定開始日</label>
-        <input id="planned-start" class="form-input" type="date" formControlName="plannedStartDate" required>
+        <input id="planned-start" class="form-input" type="date" formControlName="plannedStartDate" required [min]="minDate" [max]="maxDate">
         <div class="error-message" *ngIf="taskForm.get('plannedStartDate')?.hasError('required')">
           予定開始日は必須です。
         </div>
       </div>
       <div class="form-field">
         <label class="form-label" for="planned-end">予定終了日</label>
-        <input id="planned-end" class="form-input" type="date" formControlName="plannedEndDate" required>
+        <input id="planned-end" class="form-input" type="date" formControlName="plannedEndDate" required [min]="taskForm.get('plannedStartDate')?.value || minDate" [max]="maxDate">
         <div class="error-message" *ngIf="taskForm.get('plannedEndDate')?.hasError('required')">
           予定終了日は必須です。
+        </div>
+        <div class="error-message" *ngIf="taskForm.errors?.['plannedEndDateBeforeStartDate'] && (taskForm.get('plannedEndDate')?.touched || taskForm.get('plannedStartDate')?.touched)">
+          予定終了日は予定開始日と同じか、それ以降の日付を選択してください。
         </div>
       </div>
       <div class="form-field">
@@ -29,7 +32,10 @@
       </div>
       <div class="form-field">
         <label class="form-label" for="actual-end">実際終了日</label>
-        <input id="actual-end" class="form-input" type="date" formControlName="actualEndDate">
+        <input id="actual-end" class="form-input" type="date" formControlName="actualEndDate" [min]="taskForm.get('actualStartDate')?.value">
+        <div class="error-message" *ngIf="taskForm.get('actualEndDate')?.value && taskForm.get('actualStartDate')?.value && taskForm.get('actualEndDate')?.value < taskForm.get('actualStartDate')?.value">
+          実際終了日は実際開始日と同じか、それ以降の日付を選択してください。
+        </div>
       </div>
       <div class="form-field">
         <label class="form-label" for="status">状況</label>

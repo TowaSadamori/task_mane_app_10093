@@ -24,7 +24,7 @@ import { filter } from 'rxjs/operators';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
-
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 interface TimelineDay {
   dayNumber: number; // 日 (1, 2, ..., 31)
@@ -59,6 +59,7 @@ interface TimelineYear {
     MatIconModule,
     FormsModule,
     MatFormFieldModule,
+    MatTooltipModule,
   ],
   templateUrl: './gantt-chart.component.html',
   styleUrl: './gantt-chart.component.scss'
@@ -382,7 +383,9 @@ openAddTaskDialog(): void {
     data: {
       isEditMode: false,
       task: null,
-      projectId: this.projectId
+      projectId: this.projectId,
+      minDate: this.projectStartDate ? this.projectStartDate.toISOString().slice(0, 10) : null,
+      maxDate: this.projectEndDate ? this.projectEndDate.toISOString().slice(0, 10) : null
     }
   });
 

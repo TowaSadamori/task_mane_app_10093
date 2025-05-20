@@ -15,6 +15,8 @@ export interface TaskDialogData {
   task?: GanttChartTask;  // 型をGanttChartTaskに変更
   isEditMode: boolean; 
   projectId: string;         
+  minDate?: string | null;
+  maxDate?: string | null;
 }
 
 @Component({
@@ -42,6 +44,8 @@ export class AddTaskDialogComponent implements OnInit {
   submitButtonText = '追加';
   private projectId!: string; 
   private projectService = inject(ProjectService); 
+  public minDate: string | null = null;
+  public maxDate: string | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -56,7 +60,7 @@ export class AddTaskDialogComponent implements OnInit {
       actualEndDate: [null],
       status: ['todo', Validators.required],
       memo: ['']
-    });
+    }, { validators: plannedEndDateAfterOrEqualStartDateValidator });
 
     if (this.data) {
       this.isEditMode = this.data.isEditMode;
@@ -65,6 +69,8 @@ export class AddTaskDialogComponent implements OnInit {
       } else if (!this.isEditMode) {
         console.error('プロジェクトIDがダイアログに渡されていません。');
       }
+      this.minDate = this.data.minDate ?? null;
+      this.maxDate = this.data.maxDate ?? null;
     }
 
     if (this.data && this.isEditMode && this.data.task) {
@@ -119,4 +125,13 @@ export class AddTaskDialogComponent implements OnInit {
   private isTimestamp(value: unknown): value is { toDate: () => Date } {
     return !!value && typeof (value as { toDate?: unknown }).toDate === 'function';
   }
+}
+
+function plannedEndDateAfterOrEqualStartDateValidator(group: FormGroup) {
+  const start = group.get('plannedStartDate')?.value;
+  const end = group.get('plannedEndDate')?.value;
+  if (start && end && end < start) {
+    return { plannedEndDateBeforeStartDate: true };
+  }
+  return null;
 }
