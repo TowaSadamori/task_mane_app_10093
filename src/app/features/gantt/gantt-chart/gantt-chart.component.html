@@ -41,13 +41,13 @@
                     <div class="gantt-details-cell cell-planned-start">{{ taskItem.plannedStartDate.toDate() | date:'MM/dd' }}</div>
                     <div class="gantt-details-cell cell-planned-end">{{ taskItem.plannedEndDate.toDate() | date:'MM/dd' }}</div>
                     <div class="gantt-details-cell cell-status">
-                        <mat-form-field appearance="outline" class="status-select-field">
-                            <mat-select [(ngModel)]="taskItem.status" (selectionChange)="onStatusChange($event.value, taskItem.id!, taskItem)">
-                                <mat-option value="todo">未着手</mat-option>
-                                <mat-option value="doing">作業中</mat-option>
-                                <mat-option value="done">完了</mat-option>
-                            </mat-select>
-                        </mat-form-field>
+                        <span>
+                            {{
+                                (taskItem.status + '') === 'todo' ? '未着手' :
+                                ((taskItem.status + '') === 'progress' || (taskItem.status + '') === 'doing') ? '進捗中' :
+                                (taskItem.status + '') === 'done' ? '完了' : ''
+                            }}
+                        </span>
                     </div>
                 </div>
             </div>
