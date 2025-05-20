@@ -17,6 +17,23 @@ export interface ProjectDialogData {
   project?: Project | null;
 }
 
+function endDateAfterOrEqualStartDateValidator(group: FormGroup) {
+  const start = group.get('startDate')?.value;
+  const end = group.get('endDate')?.value;
+  if (start && end && new Date(end) < new Date(start)) {
+    return { endDateBeforeStartDate: true };
+  }
+  return null;
+}
+
+function toDateInputValue(date: Date | null | undefined): string | null {
+  if (!date) return null;
+  const d = new Date(date);
+  const month = ('0' + (d.getMonth() + 1)).slice(-2);
+  const day = ('0' + d.getDate()).slice(-2);
+  return `${d.getFullYear()}-${month}-${day}`;
+}
+
 @Component({
   selector: 'app-project-create',
   standalone: true,
@@ -38,7 +55,7 @@ export class ProjectCreateComponent implements OnInit {
   isLoading = false;
   currentUser: User | null = null;
   isEditMode = false;
-  dialogTitle = '新しいプロジェクトを作成';
+  dialogTitle = '新規プロジェクトを作成';
   submitButtonText = '作成する';
   private editingProjectId: string | null = null;
 
@@ -53,10 +70,10 @@ export class ProjectCreateComponent implements OnInit {
   ) {
     this.projectForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
-      description: ['', Validators.required],
-      startDate: [null],
-      endDate: [null]
-    });
+      description: [''],
+      startDate: [null, Validators.required],
+      endDate: [null, Validators.required]
+    }, { validators: endDateAfterOrEqualStartDateValidator });
 
     if (this.data && this.data.project) {
       this.isEditMode = true;
@@ -66,8 +83,16 @@ export class ProjectCreateComponent implements OnInit {
       this.projectForm.patchValue({
         name: this.data.project.name,
         description: this.data.project.description,
-        startDate: this.data.project.startDate instanceof Timestamp ? this.data.project.startDate.toDate() : this.data.project.startDate,
-        endDate: this.data.project.endDate instanceof Timestamp ? this.data.project.endDate.toDate() : this.data.project.endDate,
+        startDate: toDateInputValue(
+          this.data.project.startDate instanceof Timestamp
+            ? this.data.project.startDate.toDate()
+            : this.data.project.startDate
+        ),
+        endDate: toDateInputValue(
+          this.data.project.endDate instanceof Timestamp
+            ? this.data.project.endDate.toDate()
+            : this.data.project.endDate
+        ),
       });
     }
   }

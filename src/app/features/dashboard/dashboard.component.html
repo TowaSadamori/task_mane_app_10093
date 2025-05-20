@@ -2,7 +2,7 @@
   <h2 class="dashboard-title">HOME</h2>
   <div class="dashboard-header">
     <div style="margin-left: auto;">
-      <button class="create-project-button" (click)="openCreateProjectDialog()">
+      <button class="create-project-button" (click)="openCreateProjectDialog()" matTooltip="新しいプロジェクトを作成します。">
         新しいプロジェクトを作成
       </button>
     </div>
@@ -11,7 +11,7 @@
     <div class="project-list" *ngIf="projects.length > 0; else noProjects">
       <div *ngFor="let project of projects" class="project-item">
         <div class="project-info">
-          <a [routerLink]="['/app/gantt-chart', project.id]">
+          <a [routerLink]="['/app/gantt-chart', project.id]" matTooltip="クリックしてタスク一覧へ">
             {{ project.name }}
           </a>
           <div class="project-period" *ngIf="project.startDate || project.endDate">
@@ -31,10 +31,10 @@
           </div>
         </div>
         <div class="project-actions">
-          <button mat-icon-button color="primary" aria-label="プロジェクトを編集" (click)="openEditProjectDialog(project)">
+          <button mat-icon-button color="primary" aria-label="プロジェクトを編集" (click)="openEditProjectDialog(project)" matTooltip="編集します。">
             <mat-icon>edit</mat-icon>
           </button>
-          <button mat-icon-button color="warn" aria-label="プロジェクトを削除" (click)="confirmDeleteProject(project)">
+          <button mat-icon-button color="warn" aria-label="プロジェクトを削除" (click)="confirmDeleteProject(project)" matTooltip="削除します。">
             <mat-icon>delete</mat-icon>
           </button>
         </div>

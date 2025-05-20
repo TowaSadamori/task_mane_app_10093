@@ -11,6 +11,7 @@ import { ProjectCreateComponent } from '../project/components/project-create/pro
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { filter, switchMap } from 'rxjs/operators';
 import { Timestamp } from '@angular/fire/firestore';
+import { MatTooltipModule } from '@angular/material/tooltip';
 // import { AuthService } from '../../auth/auth.service'; // ユーザーに紐づくプロジェクトを取得する場合
 
 @Component({
@@ -21,7 +22,8 @@ import { Timestamp } from '@angular/fire/firestore';
     RouterModule,
     MatDialogModule,
     MatButtonModule,
-    MatIconModule
+    MatIconModule,
+    MatTooltipModule
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'] // styleUrls に修正 (単数形でも動くが複数形が一般的)

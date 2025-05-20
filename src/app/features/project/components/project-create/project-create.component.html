@@ -12,19 +12,22 @@
       </div>
       <div class="form-field">
         <label class="form-label" for="project-description">説明</label>
-        <textarea id="project-description" class="form-input" formControlName="description" rows="4" placeholder="プロジェクトの目的や概要を入力" required></textarea>
-        <div class="error-message" *ngIf="description?.invalid && (description?.dirty || description?.touched)">
-          <span *ngIf="description?.errors?.['required']">説明は必須です。</span>
-        </div>
+        <textarea id="project-description" class="form-input" formControlName="description" rows="4" placeholder="プロジェクトの目的や概要を入力"></textarea>
       </div>
       <div class="form-field date-range-fields">
         <div class="half-width">
           <label class="form-label" for="start-date">予定開始日</label>
           <input id="start-date" class="form-input" type="date" formControlName="startDate">
+          <div class="error-message" *ngIf="startDate?.invalid && (startDate?.dirty || startDate?.touched)">
+            <span *ngIf="startDate?.errors?.['required']">予定開始日は必須です。</span>
+          </div>
         </div>
         <div class="half-width">
           <label class="form-label" for="end-date">予定終了日</label>
-          <input id="end-date" class="form-input" type="date" formControlName="endDate">
+          <input id="end-date" class="form-input" type="date" formControlName="endDate" [min]="startDate?.value">
+          <div class="error-message" *ngIf="endDate?.invalid && (endDate?.dirty || endDate?.touched)">
+            <span *ngIf="endDate?.errors?.['required']">予定終了日は必須です。</span>
+          </div>
           <div class="error-message" *ngIf="projectForm.errors?.['endDateBeforeStartDate'] && (endDate?.dirty || endDate?.touched)">
             終了日は開始日以降に設定してください。
           </div>

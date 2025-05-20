@@ -18,18 +18,21 @@
   
   .project-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    grid-template-columns: repeat(auto-fit, 520px);
     gap: 2.2rem;
     margin-top: 2.5rem;
+    justify-content: center;
+    min-height: 520px;
   }
   
   .project-item {
     background: #fff;
     border-radius: 2.2rem;
     box-shadow: 0 4px 24px rgba(30, 136, 229, 0.13);
-    padding: 2.2rem 1.5rem 1.5rem 1.5rem;
+    padding: 1.2rem 1rem 1rem 1rem;
     min-width: 0;
-    min-height: 340px;
+    width: 520px;
+    min-height: 180px;
     aspect-ratio: 1 / 1;
     display: flex;
     flex-direction: column;
@@ -97,6 +100,16 @@
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
+  }
+  
+  .project-actions button[mat-icon-button] {
+    width: 48px;
+    height: 48px;
+    font-size: 2.2rem;
+  }
+  
+  .project-actions .mat-icon {
+    font-size: 2.2rem;
   }
   
   // ローディングメッセージや「プロジェクトがありません」のスタイル
