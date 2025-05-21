@@ -12,7 +12,7 @@
     <div class="task-info">
       <div><strong>実績開始日:</strong> {{ ganttTask.actualStartDate | timestampToDate | date:'yyyy/MM/dd' }}</div>
       <div><strong>実績終了日:</strong> {{ ganttTask.actualEndDate | timestampToDate | date:'yyyy/MM/dd' }}</div>
-      <div><strong>ステータス:</strong> {{ ganttTask.status }}</div>
+      <div><strong>ステータス:</strong> {{ ganttTask.status | statusLabel }}</div>
       <div><strong>メモ:</strong> {{ ganttTask.memo }}</div>
       <div><strong>プロジェクトID:</strong> {{ ganttTask.projectId }}</div>
       <div><strong>ID:</strong> {{ ganttTaskId }}</div>
@@ -33,89 +33,91 @@
     <div class="daily-logs-section" style="margin-top: 32px;">
       <h3>日次ログ一覧</h3>
       <ng-container *ngIf="dailyLogs$ | async as logs">
-        <table mat-table [dataSource]="logs" class="mat-elevation-z8" style="width: 100%;">
-          <!-- 作業日 Column -->
-          <ng-container matColumnDef="workDate">
-            <th mat-header-cell *matHeaderCellDef>作業日</th>
-            <td mat-cell *matCellDef="let log">{{ log.workDate.toDate() | date:'yyyy/MM/dd' }}</td>
-          </ng-container>
+        <div style="max-height: 400px; overflow-y: auto;">
+          <table mat-table [dataSource]="logs" class="mat-elevation-z8" style="width: 100%;">
+            <!-- 作業日 Column -->
+            <ng-container matColumnDef="workDate">
+              <th mat-header-cell *matHeaderCellDef>作業日</th>
+              <td mat-cell *matCellDef="let log">{{ log.workDate.toDate() | date:'yyyy/MM/dd' }}</td>
+            </ng-container>
 
-          <!-- 開始時刻 Column -->
-          <ng-container matColumnDef="actualStartTime">
-            <th mat-header-cell *matHeaderCellDef>開始時刻</th>
-            <td mat-cell *matCellDef="let log">{{ log.actualStartTime }}</td>
-          </ng-container>
+            <!-- 開始時刻 Column -->
+            <ng-container matColumnDef="actualStartTime">
+              <th mat-header-cell *matHeaderCellDef>開始時刻</th>
+              <td mat-cell *matCellDef="let log">{{ log.actualStartTime }}</td>
+            </ng-container>
 
-          <!-- 終了時刻 Column -->
-          <ng-container matColumnDef="actualEndTime">
-            <th mat-header-cell *matHeaderCellDef>終了時刻</th>
-            <td mat-cell *matCellDef="let log">{{ log.actualEndTime }}</td>
-          </ng-container>
+            <!-- 終了時刻 Column -->
+            <ng-container matColumnDef="actualEndTime">
+              <th mat-header-cell *matHeaderCellDef>終了時刻</th>
+              <td mat-cell *matCellDef="let log">{{ log.actualEndTime }}</td>
+            </ng-container>
 
-          <!-- 休憩時間 Column -->
-          <ng-container matColumnDef="breakTime">
-            <th mat-header-cell *matHeaderCellDef>休憩(分)</th>
-            <td mat-cell *matCellDef="let log">{{ log.actualBreakTime }}</td>
-          </ng-container>
+            <!-- 休憩時間 Column -->
+            <ng-container matColumnDef="breakTime">
+              <th mat-header-cell *matHeaderCellDef>休憩(分)</th>
+              <td mat-cell *matCellDef="let log">{{ log.actualBreakTime }}</td>
+            </ng-container>
 
-          <!-- 進捗率 Column -->
-          <ng-container matColumnDef="progressRate">
-            <th mat-header-cell *matHeaderCellDef>進捗率</th>
-            <td mat-cell *matCellDef="let log">{{ log.progressRate }}%</td>
-          </ng-container>
+            <!-- 進捗率 Column -->
+            <ng-container matColumnDef="progressRate">
+              <th mat-header-cell *matHeaderCellDef>進捗率</th>
+              <td mat-cell *matCellDef="let log">{{ log.progressRate }}%</td>
+            </ng-container>
 
-          <!-- 作業員数 Column -->
-          <ng-container matColumnDef="workerCount">
-            <th mat-header-cell *matHeaderCellDef>作業員数</th>
-            <td mat-cell *matCellDef="let log">{{ log.workerCount }}</td>
-          </ng-container>
+            <!-- 作業員数 Column -->
+            <ng-container matColumnDef="workerCount">
+              <th mat-header-cell *matHeaderCellDef>作業員数</th>
+              <td mat-cell *matCellDef="let log">{{ log.workerCount }}</td>
+            </ng-container>
 
-          <!-- 作業指示者 Column -->
-          <ng-container matColumnDef="supervisor">
-            <th mat-header-cell *matHeaderCellDef>作業指示者</th>
-            <td mat-cell *matCellDef="let log">{{ log.supervisor }}</td>
-          </ng-container>
+            <!-- 作業指示者 Column -->
+            <ng-container matColumnDef="supervisor">
+              <th mat-header-cell *matHeaderCellDef>作業指示者</th>
+              <td mat-cell *matCellDef="let log">{{ log.supervisor }}</td>
+            </ng-container>
 
-          <!-- コメント Column -->
-          <ng-container matColumnDef="comment">
-            <th mat-header-cell *matHeaderCellDef>コメント</th>
-            <td mat-cell *matCellDef="let log">{{ log.comment }}</td>
-          </ng-container>
+            <!-- コメント Column -->
+            <ng-container matColumnDef="comment">
+              <th mat-header-cell *matHeaderCellDef>コメント</th>
+              <td mat-cell *matCellDef="let log">{{ log.comment }}</td>
+            </ng-container>
 
-          <!-- 写真 Column -->
-          <ng-container matColumnDef="photo">
-            <th mat-header-cell *matHeaderCellDef>写真</th>
-            <td mat-cell *matCellDef="let log">
-              <ng-container *ngIf="log.photoUrls?.length; else noPhoto">
-                <span *ngFor="let url of log.photoUrls" style="display: inline-block; margin-right: 8px;">
-                  <button mat-icon-button (click)="openPhotoViewer(url)" aria-label="写真を表示">
-                    <img [src]="url" alt="作業写真" style="max-height: 50px;" />
-                  </button>
-                  <button mat-icon-button type="button" (click)="downloadPhoto(url)" aria-label="ダウンロード">
-                    <mat-icon>download</mat-icon>
-                  </button>
-                </span>
-              </ng-container>
-              <ng-template #noPhoto>なし</ng-template>
-            </td>
-          </ng-container>
+            <!-- 写真 Column -->
+            <ng-container matColumnDef="photo">
+              <th mat-header-cell *matHeaderCellDef>写真</th>
+              <td mat-cell *matCellDef="let log">
+                <ng-container *ngIf="log.photoUrls?.length; else noPhoto">
+                  <span *ngFor="let url of log.photoUrls" style="display: inline-block; margin-right: 8px;">
+                    <button mat-icon-button (click)="openPhotoViewer(url)" aria-label="写真を表示">
+                      <img [src]="url" alt="作業写真" style="max-height: 50px;" />
+                    </button>
+                    <button mat-icon-button type="button" (click)="downloadPhoto(url)" aria-label="ダウンロード">
+                      <mat-icon>download</mat-icon>
+                    </button>
+                  </span>
+                </ng-container>
+                <ng-template #noPhoto>なし</ng-template>
+              </td>
+            </ng-container>
 
-          <!-- Actions Column（先頭に移動） -->
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef></th>
-            <td mat-cell *matCellDef="let log">
-              <button mat-icon-button color="primary" aria-label="編集">
-                <mat-icon>edit</mat-icon>
-              </button>
-              <button mat-icon-button color="warn" aria-label="削除" (click)="deleteDailyLog(log.id)">
-                <mat-icon>delete</mat-icon>
-              </button>
-            </td>
-          </ng-container>
+            <!-- Actions Column（先頭に移動） -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let log">
+                <button mat-icon-button color="primary" aria-label="編集" (click)="openEditDailyLogDialog(log)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" aria-label="削除" (click)="deleteDailyLog(log.id)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </td>
+            </ng-container>
 
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-        </table>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+        </div>
         <div *ngIf="logs.length === 0" style="margin-top: 16px; color: grey;">
           日次ログはありません。
         </div>

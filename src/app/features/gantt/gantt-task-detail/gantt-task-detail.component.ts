@@ -13,6 +13,7 @@ import { GanttDailyLogFormDialogComponent } from '../gantt-daily-log-form-dialog
 import { GanttDailyLogService, GanttDailyLog } from '../gantt-daily-log-form-dialog/gantt-daily-log.service';
 import { Observable } from 'rxjs';
 import { MatTableModule } from '@angular/material/table';
+import { StatusLabelPipe } from '../../../shared/pipes/status-label.pipe';
 
 @Component({
   selector: 'app-gantt-task-detail',
@@ -22,7 +23,8 @@ import { MatTableModule } from '@angular/material/table';
     MatIconModule,
     MatButtonModule,
     TimestampToDatePipe,
-    MatTableModule
+    MatTableModule,
+    StatusLabelPipe
   ],
   templateUrl: './gantt-task-detail.component.html',
   styleUrls: ['./gantt-task-detail.component.scss']
@@ -159,5 +161,27 @@ export class GanttTaskDetailComponent implements OnInit {
         window.URL.revokeObjectURL(blobUrl);
       })
       .catch(() => alert('ダウンロードに失敗しました'));
+  }
+
+  openEditDailyLogDialog(log: GanttDailyLog): void {
+    if (!this.ganttTaskId) return;
+    const dialogRef = this.dialog.open(GanttDailyLogFormDialogComponent, {
+      width: '500px',
+      maxHeight: '90vh',
+      viewContainerRef: this.viewContainerRef,
+      data: { ganttTaskId: this.ganttTaskId, log }
+    });
+    dialogRef.afterClosed().subscribe(async (result: GanttDailyLog | undefined) => {
+      if (result && log.id) {
+        try {
+          // Firestoreの該当ドキュメントを更新
+          const logRef = doc(this.firestore, `GanttChartTasks/${this.ganttTaskId}/WorkLogs/${log.id}`);
+          await updateDoc(logRef, result as DocumentData);
+          this.loadDailyLogs();
+        } catch {
+          alert('日次ログの更新に失敗しました');
+        }
+      }
+    });
   }
 } 

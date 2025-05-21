@@ -10,7 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { GanttDailyLogService, GanttDailyLog } from './gantt-daily-log.service';
-import { Timestamp } from '@angular/fire/firestore';
+import { Timestamp, doc, updateDoc } from '@angular/fire/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
 
 @Component({
@@ -49,14 +49,31 @@ export class GanttDailyLogFormDialogComponent {
 
   constructor(
     private dialogRef: MatDialogRef<GanttDailyLogFormDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { ganttTaskId: string }
-  ) {}
+    @Inject(MAT_DIALOG_DATA) public data: { ganttTaskId: string, log?: GanttDailyLog }
+  ) {
+    if (data.log) {
+      this.form.patchValue({
+        workDate:
+          data.log.workDate && typeof data.log.workDate.toDate === 'function'
+            ? data.log.workDate.toDate()
+            : (data.log.workDate instanceof Date ? data.log.workDate : null),
+        actualStartTime: data.log.actualStartTime,
+        actualEndTime: data.log.actualEndTime,
+        actualBreakTime: data.log.actualBreakTime,
+        progressRate: data.log.progressRate,
+        workerCount: data.log.workerCount,
+        supervisor: data.log.supervisor,
+        comment: data.log.comment || '',
+      });
+    }
+  }
 
   async onSubmit() {
     if (this.form.valid && this.data?.ganttTaskId) {
       this.isSaving = true;
       const formValue = this.form.value;
       const photoUrls: string[] = [];
+      const existingPhotoUrls: string[] = this.data.log?.photoUrls || [];
 
       const photoFiles = formValue.photos as File[];
       if (photoFiles && photoFiles.length > 0) {
@@ -70,6 +87,7 @@ export class GanttDailyLogFormDialogComponent {
       }
 
       const log: GanttDailyLog = {
+        ...(this.data.log || {}),
         workDate: Timestamp.fromDate(formValue.workDate!),
         actualStartTime: formValue.actualStartTime!,
         actualEndTime: formValue.actualEndTime!,
@@ -78,12 +96,17 @@ export class GanttDailyLogFormDialogComponent {
         workerCount: formValue.workerCount!,
         supervisor: formValue.supervisor!,
         comment: formValue.comment || '',
-        photoUrls
+        photoUrls: [...existingPhotoUrls, ...photoUrls]
       };
-      console.log('ganttTaskId:', this.data.ganttTaskId);
-      console.log('log:', log);
       try {
-        await this.dailyLogService.addDailyLog(this.data.ganttTaskId, log);
+        if (this.data.log?.id) {
+          // 編集時はupdate
+          const logRef = doc(this.dailyLogService['firestore'], `GanttChartTasks/${this.data.ganttTaskId}/WorkLogs/${this.data.log.id}`);
+          await updateDoc(logRef, log as Partial<GanttDailyLog>);
+        } else {
+          // 新規作成
+          await this.dailyLogService.addDailyLog(this.data.ganttTaskId, log);
+        }
         this.isSaving = false;
         this.dialogRef.close(log);
       } catch {
@@ -110,6 +133,12 @@ export class GanttDailyLogFormDialogComponent {
     } catch (error) {
       console.error('削除に失敗しました', error);
       alert('削除に失敗しました');
+    }
+  }
+
+  removeExistingPhoto(i: number) {
+    if (this.data.log && Array.isArray(this.data.log.photoUrls)) {
+      this.data.log.photoUrls.splice(i, 1);
     }
   }
 } 
