@@ -98,14 +98,14 @@
             </td>
           </ng-container>
 
-          <!-- Actions Column -->
+          <!-- Actions Column（先頭に移動） -->
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef></th>
             <td mat-cell *matCellDef="let log">
               <button mat-icon-button color="primary" aria-label="編集">
                 <mat-icon>edit</mat-icon>
               </button>
-              <button mat-icon-button color="warn" aria-label="削除">
+              <button mat-icon-button color="warn" aria-label="削除" (click)="deleteDailyLog(log.id)">
                 <mat-icon>delete</mat-icon>
               </button>
             </td>

@@ -89,4 +89,14 @@ export class GanttDailyLogFormDialogComponent {
     const input = event.target as HTMLInputElement;
     this.form.get('photo')?.setValue(input.files && input.files[0] ? input.files[0] : null);
   }
+
+  async deleteDailyLog(logId: string) {
+    try {
+      await this.dailyLogService.deleteDailyLog(this.data.ganttTaskId, logId);
+      this.dialogRef.close();
+    } catch (error) {
+      console.error('削除に失敗しました', error);
+      alert('削除に失敗しました');
+    }
+  }
 } 

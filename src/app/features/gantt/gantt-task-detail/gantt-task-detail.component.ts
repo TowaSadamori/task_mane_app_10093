@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ViewContainerRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Firestore, doc, getDoc, updateDoc, DocumentData } from '@angular/fire/firestore';
+import { Firestore, doc, getDoc, updateDoc, DocumentData, deleteDoc } from '@angular/fire/firestore';
 import { GanttChartTask } from '../../../core/models/gantt-chart-task.model';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -133,5 +133,14 @@ export class GanttTaskDetailComponent implements OnInit {
     // 写真表示機能は現在準備中
     console.log('写真を表示します:', photoUrl);
     window.open(photoUrl, '_blank');
+  }
+
+  async deleteDailyLog(logId: string) {
+    const confirmed = window.confirm('この日次ログを削除しますか？');
+    if (!confirmed) return;
+    if (!this.ganttTaskId) return;
+    const logRef = doc(this.firestore, `GanttChartTasks/${this.ganttTaskId}/WorkLogs/${logId}`);
+    await deleteDoc(logRef);
+    this.loadDailyLogs();
   }
 } 

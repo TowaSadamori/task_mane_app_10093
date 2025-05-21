@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, addDoc, CollectionReference, Timestamp, serverTimestamp, collectionData, query, orderBy, DocumentReference } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, CollectionReference, Timestamp, serverTimestamp, collectionData, query, orderBy, DocumentReference, doc, deleteDoc } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 
 export interface GanttDailyLog {
@@ -32,5 +32,10 @@ export class GanttDailyLogService {
       ...log,
       createdAt: serverTimestamp(),
     });
+  }
+
+  async deleteDailyLog(ganttTaskId: string, logId: string): Promise<void> {
+    const logRef = doc(this.firestore, `GanttChartTasks/${ganttTaskId}/WorkLogs/${logId}`);
+    await deleteDoc(logRef);
   }
 } 
