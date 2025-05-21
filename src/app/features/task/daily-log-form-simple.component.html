@@ -1,0 +1,17 @@
+<h2>日次作業ログ追加</h2>
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+  <mat-form-field appearance="fill" style="width: 100%; margin-bottom: 16px;">
+    <mat-label>作業日</mat-label>
+    <input matInput [matDatepicker]="picker" formControlName="workDate" required>
+    <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+    <mat-datepicker #picker></mat-datepicker>
+    <mat-error *ngIf="form.get('workDate')?.hasError('required')">作業日は必須です</mat-error>
+  </mat-form-field>
+
+  <div *ngIf="error" style="color: red; margin-bottom: 12px;">{{ error }}</div>
+
+  <div style="display: flex; justify-content: flex-end; gap: 8px;">
+    <button mat-stroked-button type="button" (click)="onCancel()" [disabled]="loading">キャンセル</button>
+    <button mat-raised-button color="primary" type="submit" [disabled]="loading || !form.valid">保存</button>
+  </div>
+</form>
