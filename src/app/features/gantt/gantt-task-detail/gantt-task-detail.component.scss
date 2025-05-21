@@ -1,6 +1,14 @@
 h2 { margin-bottom: 16px; }
 p { margin: 4px 0; }
 
+.task-detail-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  margin-left: 48px;
+}
+
 .task-detail-card {
   background: #fff;
   border-radius: 32px;
@@ -8,7 +16,7 @@ p { margin: 4px 0; }
   padding: 32px 24px 24px 24px;
   width: 100%;
   max-width: 900px;
-  margin: 40px auto;
+  margin: 40px 0 0 0;
   min-height: 340px;
   display: flex;
   flex-direction: column;
@@ -50,4 +58,11 @@ p { margin: 4px 0; }
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.daily-log-actions {
+  margin-top: 24px;
+  display: flex;
+  gap: 16px;
+  justify-content: flex-start;
 } 
