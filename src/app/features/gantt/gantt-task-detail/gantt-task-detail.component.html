@@ -4,24 +4,24 @@
     <div class="task-period">
       <span>
         予定: 
-        {{ ganttTask.plannedStartDate | timestampToDate | date:'yyyy/MM/dd' }}
+        {{ ganttTask.plannedStartDate.toDate() | date:'yyyy/MM/dd' }}
         ～
-        {{ ganttTask.plannedEndDate | timestampToDate | date:'yyyy/MM/dd' }}
+        {{ ganttTask.plannedEndDate.toDate() | date:'yyyy/MM/dd' }}
       </span>
     </div>
     <div class="task-info">
-      <div><strong>実績開始日:</strong> {{ ganttTask.actualStartDate | timestampToDate | date:'yyyy/MM/dd' }}</div>
-      <div><strong>実績終了日:</strong> {{ ganttTask.actualEndDate | timestampToDate | date:'yyyy/MM/dd' }}</div>
+      <div><strong>実績開始日:</strong> {{ ganttTask.actualStartDate?.toDate() | date:'yyyy/MM/dd' }}</div>
+      <div><strong>実績終了日:</strong> {{ ganttTask.actualEndDate?.toDate() | date:'yyyy/MM/dd' }}</div>
       <div><strong>ステータス:</strong> {{ ganttTask.status }}</div>
       <div><strong>メモ:</strong> {{ ganttTask.memo }}</div>
       <div><strong>プロジェクトID:</strong> {{ ganttTask.projectId }}</div>
       <div><strong>ID:</strong> {{ ganttTaskId }}</div>
     </div>
-    <div class="task-actions" style="display: flex; gap: 8px;">
+    <div class="task-actions">
       <button mat-stroked-button color="primary" (click)="navigateToGanttChart()">
         <mat-icon>arrow_back</mat-icon> ガントチャートに戻る
       </button>
-      <button mat-stroked-button color="accent" (click)="openEditDialog()">
+      <button mat-stroked-button color="accent" (click)="openEditDialog()" style="margin-left: 8px;">
         <mat-icon>edit</mat-icon> 編集
       </button>
       <button mat-raised-button color="accent">
