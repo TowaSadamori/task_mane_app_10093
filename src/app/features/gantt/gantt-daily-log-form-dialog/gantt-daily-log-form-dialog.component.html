@@ -1,0 +1,93 @@
+<div class="dialog-content">
+  <h2>日次ログ追加</h2>
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <mat-form-field appearance="outline">
+      <mat-label>作業日</mat-label>
+      <input matInput [matDatepicker]="picker" formControlName="workDate" required>
+      <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
+      <mat-error *ngIf="form.get('workDate')?.hasError('required') && form.get('workDate')?.touched">
+        作業日は必須です。
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>実績開始時刻</mat-label>
+      <input matInput type="time" formControlName="actualStartTime" required>
+      <mat-error *ngIf="form.get('actualStartTime')?.hasError('required') && form.get('actualStartTime')?.touched">
+        実績開始時刻は必須です。
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>実績終了時刻</mat-label>
+      <input matInput type="time" formControlName="actualEndTime" required>
+      <mat-error *ngIf="form.get('actualEndTime')?.hasError('required') && form.get('actualEndTime')?.touched">
+        実績終了時刻は必須です。
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>実績休憩時間(分)</mat-label>
+      <input matInput type="number" formControlName="actualBreakTime" required>
+      <mat-error *ngIf="form.get('actualBreakTime')?.hasError('required') && form.get('actualBreakTime')?.touched">
+        実績休憩時間は必須です。
+      </mat-error>
+      <mat-error *ngIf="form.get('actualBreakTime')?.hasError('min') && form.get('actualBreakTime')?.touched">
+        0以上の値を入力してください。
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>進捗率（％）</mat-label>
+      <input matInput type="number" formControlName="progressRate" min="0" max="100" required>
+      <mat-error *ngIf="form.get('progressRate')?.hasError('required') && form.get('progressRate')?.touched">
+        進捗率（0-100%）は必須です。
+      </mat-error>
+      <mat-error *ngIf="form.get('progressRate')?.hasError('min') || form.get('progressRate')?.hasError('max')">
+        0から100の間で入力してください。
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>作業員構成（人数）</mat-label>
+      <input matInput type="number" formControlName="workerCount" min="1" required>
+      <mat-error *ngIf="form.get('workerCount')?.hasError('required') && form.get('workerCount')?.touched">
+        作業員数は必須です。
+      </mat-error>
+      <mat-error *ngIf="form.get('workerCount')?.hasError('min') && form.get('workerCount')?.touched">
+        1以上の値を入力してください。
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>作業指示者</mat-label>
+      <input matInput type="text" formControlName="supervisor" required>
+      <mat-error *ngIf="form.get('supervisor')?.hasError('required') && form.get('supervisor')?.touched">
+        作業指示者は必須です。
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>コメント（任意）</mat-label>
+      <textarea matInput rows="3" formControlName="comment"></textarea>
+    </mat-form-field>
+
+    <div class="photo-upload">
+      <label for="photoInput"><strong>写真添付（任意）</strong></label>
+      <input
+        id="photoInput"
+        type="file"
+        (change)="onPhotoSelected($event)"
+        accept="image/*">
+      <div class="selected-file" *ngIf="form.get('photo')?.value">
+        選択中: {{ form.get('photo')?.value?.name }}
+      </div>
+    </div>
+
+    <div class="dialog-actions">
+      <button mat-stroked-button type="button" (click)="onCancel()">キャンセル</button>
+      <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">OK</button>
+    </div>
+  </form>
+</div> 

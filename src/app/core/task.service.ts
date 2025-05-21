@@ -247,22 +247,22 @@ createTask(taskData: NewTaskData): Promise<DocumentReference<Task>> {
 
   getDailyLogs(taskId: string): Observable<DailyLog[]> {
     const taskDocRef = doc(this.firestore, 'Tasks', taskId) as DocumentReference<Task>;
-    const dailyLogsCollectionRef = collection(taskDocRef, 'DailyLogs') as CollectionReference<DailyLog>;
+    const dailyLogsCollectionRef = collection(taskDocRef, 'WorkLogs') as CollectionReference<DailyLog>;
     const q = query(dailyLogsCollectionRef, orderBy('workDate', 'asc'));
     return collectionData<DailyLog>(q, { idField: 'id' });
   }
 
-  addDailyLog(taskId: string, dailyLogData: NewDailyLogData): Promise<DocumentReference<DocumentData>> {
+  async addDailyLog(taskId: string, dailyLogData: NewDailyLogData): Promise<DocumentReference<DocumentData>> {
     const taskDocRef = doc(this.firestore, 'Tasks', taskId);
-    const dailyLogsCollectionRef = collection(taskDocRef, 'DailyLogs');
+    const dailyLogsCollectionRef = collection(taskDocRef, 'WorkLogs');
     return addDoc(dailyLogsCollectionRef, {
       ...dailyLogData,
-      createdAt: serverTimestamp()
+      createdAt: Timestamp.now(),
     });
   }
 
-  updateDailyLog(taskId: string, logId: string, updatedData:Partial<DailyLog>):Promise<void> {
-    const dailyLogDocRef = doc(this.firestore, 'Tasks', taskId, 'DailyLogs', logId);
+  async updateDailyLog(taskId: string, logId: string, updatedData: Partial<DailyLog>): Promise<void> {
+    const dailyLogDocRef = doc(this.firestore, 'Tasks', taskId, 'WorkLogs', logId);
     return updateDoc(dailyLogDocRef, updatedData);
   }
 

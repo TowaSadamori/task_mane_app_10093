@@ -83,13 +83,13 @@
             <mat-icon>attach_file</mat-icon>
             ファイルを選択
         </button>
-        <input hidden type="file" #fileInput (change)="onFileSelect($event, false)" accept="image/*,video/*" multiple>
+        <input hidden type="file" #fileInput (change)="onFileSelect($event)" accept="image/*,video/*" multiple>
 
         <button mat-stroked-button type="button" (click)="cameraInput.click()">
             <mat-icon>photo_camera</mat-icon>
             カメラで撮影
         </button>
-        <input hidden type="file" #cameraInput (change)="onFileSelect($event, true)" accept="image/*" capture="environment">
+        <input hidden type="file" #cameraInput (change)="onFileSelect($event)" accept="image/*" capture="environment">
         </div>
         
         <span *ngIf="selectedFileName" style="margin-left: 8px;">選択中:{{ selectedFileName }}</span>

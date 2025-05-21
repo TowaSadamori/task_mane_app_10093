@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ViewContainerRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Firestore, doc, getDoc, updateDoc, DocumentData } from '@angular/fire/firestore';
@@ -8,11 +8,22 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { AddTaskDialogComponent } from '../gantt-chart/components/add-task-dialog/add-task-dialog.component';
 import { TimestampToDatePipe } from '../../../shared/pipes/timestamp-to-date.pipe';
+import { DailyLogFormComponent } from '../../task/daily-log-form/daily-log-form.component';
+import { GanttDailyLogFormDialogComponent } from '../gantt-daily-log-form-dialog/gantt-daily-log-form-dialog.component';
+import { GanttDailyLogService, GanttDailyLog } from '../gantt-daily-log-form-dialog/gantt-daily-log.service';
+import { Observable } from 'rxjs';
+import { MatTableModule } from '@angular/material/table';
 
 @Component({
   selector: 'app-gantt-task-detail',
   standalone: true,
-  imports: [CommonModule, MatIconModule, MatButtonModule, TimestampToDatePipe],
+  imports: [
+    CommonModule,
+    MatIconModule,
+    MatButtonModule,
+    TimestampToDatePipe,
+    MatTableModule
+  ],
   templateUrl: './gantt-task-detail.component.html',
   styleUrls: ['./gantt-task-detail.component.scss']
 })
@@ -21,9 +32,24 @@ export class GanttTaskDetailComponent implements OnInit {
   private firestore = inject(Firestore);
   private router = inject(Router);
   private dialog = inject(MatDialog);
+  private viewContainerRef = inject(ViewContainerRef);
+  private dailyLogService = inject(GanttDailyLogService);
 
   ganttTaskId: string | null = null;
   ganttTask: GanttChartTask | null = null;
+  dailyLogs$!: Observable<GanttDailyLog[]>;
+  displayedColumns: string[] = [
+    'actions',
+    'workDate',
+    'actualStartTime',
+    'actualEndTime',
+    'breakTime',
+    'progressRate',
+    'workerCount',
+    'supervisor',
+    'comment',
+    'photo'
+  ];
 
   async ngOnInit() {
     this.ganttTaskId = this.route.snapshot.paramMap.get('ganttTaskId');
@@ -33,6 +59,13 @@ export class GanttTaskDetailComponent implements OnInit {
       if (docSnap.exists()) {
         this.ganttTask = docSnap.data() as GanttChartTask;
       }
+      this.loadDailyLogs();
+    }
+  }
+
+  loadDailyLogs() {
+    if (this.ganttTaskId) {
+      this.dailyLogs$ = this.dailyLogService.getDailyLogs(this.ganttTaskId);
     }
   }
 
@@ -71,5 +104,34 @@ export class GanttTaskDetailComponent implements OnInit {
         }
       }
     });
+  }
+
+  openDailyLogDialog(): void {
+    if (!this.ganttTaskId) return;
+    this.dialog.open(DailyLogFormComponent, {
+      width: '700px',
+      data: { taskId: this.ganttTaskId }
+    });
+  }
+
+  openGanttDailyLogDialog(): void {
+    if (!this.ganttTaskId) return;
+    const dialogRef = this.dialog.open(GanttDailyLogFormDialogComponent, {
+      width: '500px',
+      maxHeight: '90vh',
+      viewContainerRef: this.viewContainerRef,
+      data: { ganttTaskId: this.ganttTaskId }
+    });
+    dialogRef.afterClosed().subscribe(newLog => {
+      if (newLog) {
+        this.loadDailyLogs();
+      }
+    });
+  }
+
+  openPhotoViewer(photoUrl: string): void {
+    // 写真表示機能は現在準備中
+    console.log('写真を表示します:', photoUrl);
+    window.open(photoUrl, '_blank');
   }
 } 
