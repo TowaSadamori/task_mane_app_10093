@@ -12,7 +12,7 @@ export interface GanttDailyLog {
   workerCount: number;
   supervisor: string;
   comment?: string;
-  photoUrl?: string;
+  photoUrls?: string[];
   createdAt?: Timestamp;
 }
 

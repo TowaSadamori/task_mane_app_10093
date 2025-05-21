@@ -74,14 +74,18 @@
     </mat-form-field>
 
     <div class="photo-upload">
-      <label for="photoInput"><strong>写真添付（任意）</strong></label>
+      <label for="photoInput"><strong>写真添付（複数可）</strong></label>
       <input
         id="photoInput"
         type="file"
         (change)="onPhotoSelected($event)"
-        accept="image/*">
-      <div class="selected-file" *ngIf="form.get('photo')?.value">
-        選択中: {{ form.get('photo')?.value?.name }}
+        accept="image/*"
+        multiple>
+      <div class="selected-file" *ngIf="form.get('photos')?.value?.length">
+        選択中:
+        <span *ngFor="let file of form.get('photos')?.value; let i = index">
+          {{ file.name }}<span *ngIf="i < (form.get('photos')?.value?.length || 0) - 1">, </span>
+        </span>
       </div>
     </div>
 

@@ -40,7 +40,7 @@ export class GanttDailyLogFormDialogComponent {
     workerCount: new FormControl<number | null>(null, [Validators.required, Validators.min(1)]),
     supervisor: new FormControl('', Validators.required),
     comment: new FormControl(''),
-    photo: new FormControl<File | null>(null),
+    photos: new FormControl<File[]>([]),
   });
 
   isSaving = false;
@@ -56,15 +56,17 @@ export class GanttDailyLogFormDialogComponent {
     if (this.form.valid && this.data?.ganttTaskId) {
       this.isSaving = true;
       const formValue = this.form.value;
-      let photoUrl: string | undefined = undefined;
+      const photoUrls: string[] = [];
 
-      // 画像ファイルが選択されている場合はアップロード
-      const photoFile = formValue.photo as File | null;
-      if (photoFile) {
+      const photoFiles = formValue.photos as File[];
+      if (photoFiles && photoFiles.length > 0) {
         const storage = getStorage();
-        const storageRef = ref(storage, `gantt-daily-logs/${this.data.ganttTaskId}/${Date.now()}_${photoFile.name}`);
-        await uploadBytes(storageRef, photoFile);
-        photoUrl = await getDownloadURL(storageRef);
+        for (const photoFile of photoFiles) {
+          const storageRef = ref(storage, `gantt-daily-logs/${this.data.ganttTaskId}/${Date.now()}_${photoFile.name}`);
+          await uploadBytes(storageRef, photoFile);
+          const url = await getDownloadURL(storageRef);
+          photoUrls.push(url);
+        }
       }
 
       const log: GanttDailyLog = {
@@ -76,16 +78,14 @@ export class GanttDailyLogFormDialogComponent {
         workerCount: formValue.workerCount!,
         supervisor: formValue.supervisor!,
         comment: formValue.comment || '',
-        photoUrl // ここでURLをセット
+        photoUrls
       };
-      // ここでganttTaskIdとlogを出力
       console.log('ganttTaskId:', this.data.ganttTaskId);
       console.log('log:', log);
       try {
-        // 必要なフィールドだけを渡す
         await this.dailyLogService.addDailyLog(this.data.ganttTaskId, log);
         this.isSaving = false;
-        this.dialogRef.close(log); // 保存したデータを返す
+        this.dialogRef.close(log);
       } catch {
         this.isSaving = false;
         alert('保存に失敗しました');
@@ -99,7 +99,8 @@ export class GanttDailyLogFormDialogComponent {
 
   onPhotoSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    this.form.get('photo')?.setValue(input.files && input.files[0] ? input.files[0] : null);
+    const files = input.files ? Array.from(input.files) : [];
+    this.form.get('photos')?.setValue(files);
   }
 
   async deleteDailyLog(logId: string) {
