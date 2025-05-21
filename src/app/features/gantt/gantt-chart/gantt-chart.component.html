@@ -3,6 +3,9 @@
         <div class="gantt-task-details-pane">
             <div class="gantt-task-details-header project-name-header">
                 {{ projectName }}
+                <span *ngIf="overallProgressRate !== null" style="margin-left: 24px; font-size: 1rem; color: #1976d2;">
+                  全体進捗率: {{ overallProgressRate }}%
+                </span>
             </div>
             <div class="gantt-task-details-header project-period-header">
                 {{ projectStartDate | date:'yyyy/MM/dd' }} ～ {{ projectEndDate | date:'yyyy/MM/dd' }}

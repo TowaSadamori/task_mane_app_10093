@@ -886,6 +886,12 @@ getDate(val: unknown): Date | null {
   return null;
 }
 
+get overallProgressRate(): number | null {
+  if (!this.ganttTasks || this.ganttTasks.length === 0) return null;
+  const doneCount = this.ganttTasks.filter(t => t.status === 'done').length;
+  return Math.round((doneCount / this.ganttTasks.length) * 100);
+}
+
 }// GanttChartComponent クラスの閉じ括弧
 
 

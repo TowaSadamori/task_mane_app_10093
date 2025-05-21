@@ -29,6 +29,24 @@
             <div class="desc-label">説明：</div>
             <div class="desc-content">{{ project.description }}</div>
           </div>
+          <div class="progress-circle-large" style="display: flex; justify-content: center; width: 100%; margin: 16px 0;">
+            <svg width="160" height="160">
+              <circle cx="80" cy="80" r="64" stroke="#eee" stroke-width="24" fill="none"/>
+              <circle
+                cx="80" cy="80" r="64"
+                stroke="#1976d2"
+                stroke-width="24"
+                fill="none"
+                [attr.stroke-dasharray]="2 * 3.1416 * 64"
+                [attr.stroke-dashoffset]="2 * 3.1416 * 64 - (2 * 3.1416 * 64 * getProjectProgress(project.id) / 100)"
+                stroke-linecap="round"
+                style="transition: stroke-dashoffset 0.5s;"
+              />
+              <text x="80" y="100" text-anchor="middle" font-size="40" fill="#1976d2" font-weight="bold">
+                {{ getProjectProgress(project.id) }}%
+              </text>
+            </svg>
+          </div>
         </div>
         <div class="project-actions">
           <button mat-icon-button color="primary" aria-label="プロジェクトを編集" (click)="openEditProjectDialog(project)" matTooltip="編集します。">

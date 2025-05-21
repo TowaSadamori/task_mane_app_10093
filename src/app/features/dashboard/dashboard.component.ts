@@ -12,6 +12,8 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
 import { filter, switchMap } from 'rxjs/operators';
 import { Timestamp } from '@angular/fire/firestore';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { TaskService } from '../../core/task.service';
+// import { GanttChartTask } from '../../core/models/gantt-chart-task.model';
 // import { AuthService } from '../../auth/auth.service'; // ユーザーに紐づくプロジェクトを取得する場合
 
 @Component({
@@ -32,6 +34,8 @@ export class DashboardComponent implements OnInit {
   projects$: Observable<Project[]> | undefined;
   private projectService: ProjectService = inject(ProjectService); // inject を使用
   private dialog: MatDialog = inject(MatDialog);
+  private taskService = inject(TaskService);
+  progressMap: Record<string, number> = {};
   // private authService?: AuthService; // 必要に応じて
 
   constructor() {
@@ -56,6 +60,22 @@ export class DashboardComponent implements OnInit {
 
   loadProjects(): void {
     this.projects$ = this.projectService.getProjects();
+    this.projects$?.subscribe(projects => {
+      projects.forEach(project => {
+        this.taskService.getGanttChartTasksByProjectId(project.id).subscribe(tasks => {
+          if (tasks.length === 0) {
+            this.progressMap[project.id] = 0;
+          } else {
+            const doneCount = tasks.filter(t => t.status === 'done').length;
+            this.progressMap[project.id] = Math.round((doneCount / tasks.length) * 100);
+          }
+        });
+      });
+    });
+  }
+
+  getProjectProgress(projectId: string): number {
+    return this.progressMap[projectId] ?? 0;
   }
 
   openCreateProjectDialog(): void {
