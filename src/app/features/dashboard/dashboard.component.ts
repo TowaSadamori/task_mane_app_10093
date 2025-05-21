@@ -59,14 +59,14 @@ export class DashboardComponent implements OnInit {
   }
 
   openCreateProjectDialog(): void {
-    console.log('DashboardComponent: openCreateProjectDialog method CALLED!'); // ★ デバッグ用ログ
+    // console.log('DashboardComponent: openCreateProjectDialog method CALLED!'); // ★ デバッグ用ログ
     const dialogRef = this.dialog.open(ProjectCreateComponent, {
       width: '600px',
       disableClose: true,
       data: { project: null }
     });
     dialogRef.afterClosed().subscribe(result => {
-      console.log('プロジェクト作成ダイアログの結果 (DashboardComponent):', result);
+      // console.log('プロジェクト作成ダイアログの結果 (DashboardComponent):', result);
       if (result) {
         this.loadProjects();
       }
@@ -75,7 +75,7 @@ export class DashboardComponent implements OnInit {
 
   openEditProjectDialog(projectToEdit: Project): void {
     if (!projectToEdit || !projectToEdit.id) {
-      console.error('編集対象のプロジェクト情報が無効です。');
+      // console.error('編集対象のプロジェクト情報が無効です。');
       return;
     }
     const dialogRef = this.dialog.open(ProjectCreateComponent, {
@@ -84,7 +84,7 @@ export class DashboardComponent implements OnInit {
       data: { project: projectToEdit }
     });
     dialogRef.afterClosed().subscribe(result => {
-      console.log('プロジェクト編集ダイアログの結果:', result);
+      // console.log('プロジェクト編集ダイアログの結果:', result);
       if (result) {
         this.loadProjects();
       }
@@ -93,7 +93,7 @@ export class DashboardComponent implements OnInit {
 
   confirmDeleteProject(projectToDelete: Project): void {
     if (!projectToDelete || !projectToDelete.id) {
-      console.error('削除対象のプロジェクト情報が無効です。');
+      // console.error('削除対象のプロジェクト情報が無効です。');
       alert('削除対象のプロジェクト情報が見つかりませんでした。');
       return;
     }
@@ -108,12 +108,12 @@ export class DashboardComponent implements OnInit {
       switchMap(() => this.projectService.deleteProjectAndTasks(projectToDelete.id))
     ).subscribe({
       next: () => {
-        console.log(`プロジェクト (ID: ${projectToDelete.id}) および関連タスクが正常に削除されました。`);
+        // console.log(`プロジェクト (ID: ${projectToDelete.id}) および関連タスクが正常に削除されました。`);
         alert(`プロジェクト「${projectToDelete.name}」を削除しました。`);
         this.loadProjects();
       },
-      error: (error) => {
-        console.error(`プロジェクト (ID: ${projectToDelete.id}) の削除中にエラーが発生しました:`, error);
+      error: () => {
+        // console.error(`プロジェクト (ID: ${projectToDelete.id}) の削除中にエラーが発生しました:`);
         alert(`プロジェクト「${projectToDelete.name}」の削除に失敗しました。`);
       }
     });

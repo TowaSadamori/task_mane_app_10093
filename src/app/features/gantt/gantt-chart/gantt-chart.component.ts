@@ -176,8 +176,6 @@ export class GanttChartComponent implements OnInit {
       }
       this.allDaysInTimeline.push(dayCell); // 全ての日をフラットな配列にも追加
     }
-    console.log('Generated Timeline Years:', this.timelineYears);
-    console.log('Generated All Days:', this.allDaysInTimeline);
   }
 
 
@@ -205,7 +203,6 @@ export class GanttChartComponent implements OnInit {
       })
     ).subscribe({
       next: project => {
-        console.log('読み込まれたプロジェクト情報:', project);
         this.project$ = of(project);
         this._project = project ?? undefined;
         this.isLoadingProject = false;
@@ -250,13 +247,11 @@ export class GanttChartComponent implements OnInit {
   }
 
   loadTasksForProject(projectId: string): void {
-    console.log('[GanttChartComponent] Loading GanttChartTasks for project ID (using new service):', projectId);
     this.isLoadingTasks = true;
     this.tasksError = null;
   
     this.taskService.getGanttChartTasksByProjectId(projectId).subscribe({
       next: (ganttTasks: GanttChartTask[]) => {
-        console.log('[GanttChartComponent] Successfully fetched GanttChartTasks:', ganttTasks);
         this.ganttTasks = ganttTasks; // ★ 取得したタスクをそのまま代入
         this.isLoadingTasks = false;
   
@@ -267,7 +262,6 @@ export class GanttChartComponent implements OnInit {
         } else {
           this.timelineYears = [];
           this.allDaysInTimeline = [];
-          console.log('[GanttChartComponent] No GanttChartTasks found for this project.');
         }
         this.cdr.detectChanges(); // UIに変更を反映
       },
@@ -322,26 +316,19 @@ private mapProjectsToGanttItems(projects: Project[]): GanttTaskDisplayItem[] { /
 
 
   getBarLeftPosition(startDate: Date): number { // 引数は Date 型を期待
-  // console.log('[getBarLeftPosition] timelineStartDate:', this.timelineStartDate, 'taskStartDate:', startDate); // ★デバッグログ追加
   if (!this.timelineStartDate || !startDate || !(startDate instanceof Date)) { // ★ startDate が Date インスタンスか確認
-    // console.warn('[getBarLeftPosition] Invalid arguments or startDate is not a Date object');
     return 0;
   }
   const diffTime = startDate.getTime() - this.timelineStartDate.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   const leftPosition = Math.max(0, diffDays) * this.DAY_CELL_WIDTH;
-  // console.log('[getBarLeftPosition] diffDays:', diffDays, 'leftPosition:', leftPosition); // ★デバッグログ追加
   return leftPosition;
 }
 
 // ... (getBarLeftPosition の後)
 
 getBarWidth(startDate: Date, endDate: Date): number {
-  // 元の日時もログ出力（デバッグに役立つ場合がある）
-  // console.log('[getBarWidth] original taskStartDate:', startDate, 'original taskEndDate:', endDate);
-
   if (!startDate || !endDate || !(startDate instanceof Date) || !(endDate instanceof Date) || endDate < startDate) {
-    console.warn('[getBarWidth] Invalid arguments or dates are not Date objects or endDate is before startDate');
     return 0;
   }
 
@@ -354,8 +341,6 @@ getBarWidth(startDate: Date, endDate: Date): number {
 
 
   const barWidth = durationDays * this.DAY_CELL_WIDTH;
-  // console.log('[getBarWidth] calculated startDay:', startDay, 'calculated endDay:', endDay);
-  // console.log('[getBarWidth] durationDays:', durationDays, 'barWidth:', barWidth);
   return barWidth;
 }
 
@@ -390,8 +375,6 @@ openAddTaskDialog(): void {
   });
 
   dialogRef.afterClosed().subscribe(result => {
-    console.log('タスク追加ダイアログの結果:', result); // ★ まずはこれを確認！
-
     if (result && result.title && result.plannedStartDate && result.plannedEndDate) {
       const newTaskData: Omit<GanttChartTask, 'id' | 'createdAt'> = {
         projectId: this.projectId!,
@@ -407,23 +390,16 @@ openAddTaskDialog(): void {
         progress: 0,
       };
 
-      console.log('Firestoreに保存するデータ:', newTaskData);
-
       this.taskService.addGanttChartTask(newTaskData) // TaskServiceのメソッド呼び出し
-        .then(docRef => {
-          console.log('Firestoreに保存成功！ ID:', docRef.id);
+        .then(() => {
           alert('タスク「' + newTaskData.title + '」を保存しました！');
           if (this.projectId) {
             this.loadTasksForProject(this.projectId);
-            console.log('タスクリストを再読み込みしました。');
           }
         })
-        .catch(error => {
-          console.error('Firestoreへの保存中にエラー:', error);
+        .catch(() => {
           alert('タスクの保存に失敗しました。コンソールを確認してください。');
         });
-    } else {
-      console.log('タスク追加キャンセル、または必須データ不足。result:', result); // resultの内容もログに出す
     }
   });
 }
@@ -434,8 +410,6 @@ openEditTaskDialog(taskToEdit: GanttChartTask): void {
     alert('エラー: 編集対象のタスク情報が正しくありません。');
     return;
   }
-
-  console.log('編集ダイアログを開きます。対象タスク:', taskToEdit);
 
   const dialogRef = this.dialog.open(AddTaskDialogComponent, {
     width: '400px',
@@ -449,9 +423,7 @@ openEditTaskDialog(taskToEdit: GanttChartTask): void {
   });
 
   dialogRef.afterClosed().subscribe(result => {
-    console.log('編集ダイアログが閉じられました。結果:', result);
     if (result) {
-      console.log('編集ダイアログが返したresult:', result);
       const updatedTaskData: Partial<GanttChartTask> = {
         title: result.title,
         status: result.status,
@@ -529,26 +501,19 @@ openEditTaskDialog(taskToEdit: GanttChartTask): void {
           delete updatedTaskData[key];
         }
       });
-      console.log('Firestoreに更新するデータ (修正確認版):', updatedTaskData);
       if (Object.keys(updatedTaskData).length === 0) {
-        console.log('更新するフィールドがありません。');
         return;
       }
       this.taskService.updateGanttChartTask(taskToEdit.id!, updatedTaskData)
         .then(() => {
-          console.log(`タスク (ID: ${taskToEdit.id}) が正常に更新されました。`);
           alert('タスクを更新しました。');
           if (this.projectId) {
             this.loadTasksForProject(this.projectId);
-            console.log('タスクリストを再読み込みしました。');
           }
         })
-        .catch(error => {
-          console.error(`タスク (ID: ${taskToEdit.id}) の更新中にエラーが発生しました:`, error);
+        .catch(() => {
           alert('タスクの更新に失敗しました。コンソールを確認してください。');
         });
-    } else {
-      console.log('タスク編集がキャンセルされたか、データが返されませんでした。');
     }
   });
 }
@@ -558,21 +523,13 @@ public trackByTaskId(index: number, item: GanttChartTask): string {
 }
 
 selectTask(task: GanttChartTask | null): void {
-  console.log('selectTask CALLED. Clicked task:', task);
-
   if (this.selectedTask && task && this.selectedTask.id === task.id) {
     this.selectedTask = null;
-    console.log('Task DESELECTED. this.selectedTask is now:', this.selectedTask);
   } else {
     this.selectedTask = task;
-    console.log('Task SELECTED. this.selectedTask is now:', this.selectedTask);
-    if (this.selectedTask) {
-      console.log('Selected Task ID:', this.selectedTask.id);
-    }
   }
   // ここで変更検知を明示的にトリガー
   this.cdr.detectChanges();
-  console.log('Change detection triggered after selectTask.');
 }
 
 
@@ -648,8 +605,7 @@ selectTask(task: GanttChartTask | null): void {
 
   // 収集したIDに基づいてローカルリストからタスクを削除
   this.ganttTasks = this.ganttTasks.filter(task => task.id && !tasksToRemove.has(task.id));
-  console.log('ローカルのタスクリストから削除対象をフィルタリングしました。残りのタスク数:', this.ganttTasks.length);
- }
+}
   
 
   public logTestClick(task: GanttChartTask | null): void {
@@ -687,7 +643,6 @@ selectTask(task: GanttChartTask | null): void {
   if (originalStatus === newStatusSelected) {
     // もし進捗率も変更するロジックがここにあるなら、ステータスが同じでも進捗だけ変わるケースを考慮
     // 今回はステータス変更がトリガーなので、ステータスが変わらなければ何もしないで良いでしょう。
-    console.log('ステータスに変更はありません。');
     return;
   }
 
