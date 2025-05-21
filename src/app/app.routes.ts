@@ -54,6 +54,18 @@ export const routes: Routes = [
         path: 'gantt-task-detail/:ganttTaskId',
         loadComponent: () => import('./features/gantt/gantt-task-detail/gantt-task-detail.component').then(m => m.GanttTaskDetailComponent)
       },
+      {
+        path: 'daily-report',
+        loadComponent: () => import('./features/daily-report/daily-report.component').then(m => m.DailyReportComponent)
+      },
+      {
+        path: 'weekly-report',
+        loadComponent: () => import('./features/weekly-report/weekly-report.component').then(m => m.WeeklyReportComponent)
+      },
+      {
+        path: 'monthly-report',
+        loadComponent: () => import('./features/monthly-report/monthly-report.component').then(m => m.MonthlyReportComponent)
+      },
       // {
       //   path: 'projects/create', // 新規作成画面のパス
       //   loadComponent: () => import('./features/project/components/project-create/project-create.component').then(m => m.ProjectCreateComponent)

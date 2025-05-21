@@ -1,8 +1,11 @@
 <div class="gantt-container">
     <div class="gantt-main-content-area">
         <div class="gantt-task-details-pane">
-            <div class="gantt-task-details-header project-name-header">
-                {{ projectName }}
+            <div class="gantt-task-details-header project-name-header" style="display: flex; align-items: center;">
+                <button mat-icon-button color="primary" (click)="navigateToHome()" aria-label="HOMEに戻る" matTooltip="HOMEに戻る" style="margin-right: 16px;">
+                  <mat-icon>home</mat-icon>
+                </button>
+                <span>{{ projectName }}</span>
                 <span *ngIf="overallProgressRate !== null" style="margin-left: 24px; font-size: 1rem; color: #1976d2;">
                   全体進捗率: {{ overallProgressRate }}%
                 </span>

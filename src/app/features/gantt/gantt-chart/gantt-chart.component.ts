@@ -892,6 +892,10 @@ get overallProgressRate(): number | null {
   return Math.round((doneCount / this.ganttTasks.length) * 100);
 }
 
+navigateToHome(): void {
+  this.router.navigate(['/app/dashboard']);
+}
+
 }// GanttChartComponent クラスの閉じ括弧
 
 
