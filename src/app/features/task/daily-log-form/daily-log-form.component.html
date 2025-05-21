@@ -1,4 +1,8 @@
 <h2>日時作業ログ入力</h2>
+<button mat-stroked-button color="primary" (click)="navigateToGanttChart()" style="margin-bottom: 16px;">
+  <mat-icon>arrow_back</mat-icon>
+  ガントチャートに戻る
+</button>
 
 <form class="daily-log-form" [formGroup]="dailyLogForm" (ngSubmit)="onSubmit()">
     

@@ -46,6 +46,14 @@ export const routes: Routes = [
         path: 'user-settings',
         component: UserSettingsComponent
       },
+      {
+        path: 'daily-log/:taskId',
+        loadComponent: () => import('./features/task/daily-log-list/daily-log-list.component').then(m => m.DailyLogListComponent)
+      },
+      {
+        path: 'gantt-task-detail/:ganttTaskId',
+        loadComponent: () => import('./features/gantt/gantt-task-detail/gantt-task-detail.component').then(m => m.GanttTaskDetailComponent)
+      },
       // {
       //   path: 'projects/create', // 新規作成画面のパス
       //   loadComponent: () => import('./features/project/components/project-create/project-create.component').then(m => m.ProjectCreateComponent)

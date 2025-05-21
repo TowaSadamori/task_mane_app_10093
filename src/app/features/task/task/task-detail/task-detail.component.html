@@ -115,6 +115,11 @@
     </ng-template>
 </div>
 
+<button mat-stroked-button color="primary" (click)="navigateToGanttChart()" style="margin-bottom: 16px;">
+  <mat-icon>arrow_back</mat-icon>
+  ガントチャートに戻る
+</button>
+
 <ng-template #loadingOrNotFound>
     <div class="loading-container">
         <mat-spinner diameter="50"></mat-spinner>

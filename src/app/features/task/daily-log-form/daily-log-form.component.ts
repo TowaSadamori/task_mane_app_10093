@@ -3,7 +3,8 @@ import {
   OnInit,
   inject,
 //  Input,
-  Inject
+  Inject,
+  Optional
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -26,6 +27,7 @@ import { StorageService } from '../../../core/storage.service';
 import { Observable, BehaviorSubject, firstValueFrom, of } from 'rxjs'; // ★ firstValueFrom, of をインポート
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { catchError } from 'rxjs/operators'; // ★ catchError をインポート
+import { ActivatedRoute } from '@angular/router';
 
 export interface DailyLogData {
   taskId: string;
@@ -59,6 +61,8 @@ export class DailyLogFormComponent implements OnInit {
   private initialData: DailyLog | null = null;
   isEditMode = false;
 
+  projectId: string | null = null; // 戻るボタン用
+
   private storageService = inject(StorageService);
   selectedFileName: string | null = null;
   private progressSubject = new BehaviorSubject<number | undefined>(undefined);
@@ -67,8 +71,9 @@ export class DailyLogFormComponent implements OnInit {
   uploadedPhotos: PhotoEntry[] = [];
 
   constructor(
-    private dialogRef: MatDialogRef<DailyLogFormComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: DailyLogData
+    @Optional() private dialogRef: MatDialogRef<DailyLogFormComponent>,
+    @Optional() @Inject(MAT_DIALOG_DATA) public data: DailyLogData,
+    private route: ActivatedRoute
   ) {
     if(data?.taskId) {
       this.taskId = data.taskId;
@@ -80,6 +85,25 @@ export class DailyLogFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // ルーティング経由の場合はparamMapからtaskIdを取得
+    if (!this.taskId) {
+      this.route.paramMap.subscribe(params => {
+        const tid = params.get('taskId');
+        if (tid) {
+          this.taskId = tid;
+        }
+      });
+    }
+
+    // taskIdがセットされたらTask情報を取得しprojectIdをセット
+    if (this.taskId) {
+      this.taskService.getTask(this.taskId).subscribe(task => {
+        if (task && task.projectId) {
+          this.projectId = task.projectId;
+        }
+      });
+    }
+
     this.dailyLogForm = new FormGroup({
       'workDate': new FormControl<Date | null>(null, [Validators.required]), // ★ 型を Date | null に変更 (MatDatepickerはDateを返す)
       'actualStartTime': new FormControl('', [Validators.required]),
@@ -381,5 +405,15 @@ export class DailyLogFormComponent implements OnInit {
     if (dt instanceof Timestamp) return dt.toMillis();
     if (dt instanceof Date) return dt.getTime();
     return undefined;
+  }
+
+  navigateToGanttChart(): void {
+    if (this.projectId) {
+      // /app/gantt-chart/:projectId へ遷移
+      window.location.href = `/app/gantt-chart/${this.projectId}`;
+    } else {
+      // projectIdが取得できなければガントチャート一覧へ
+      window.location.href = '/app/gantt-chart';
+    }
   }
 }

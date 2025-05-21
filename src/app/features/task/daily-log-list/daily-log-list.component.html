@@ -1,0 +1,61 @@
+<h2>日次作業ログ一覧</h2>
+<button mat-stroked-button color="primary" (click)="navigateToGanttChart()" style="margin-bottom: 16px;">
+  <mat-icon>arrow_back</mat-icon>
+  ガントチャートに戻る
+</button>
+
+<button mat-raised-button color="accent" (click)="onAddLog()" style="margin-bottom: 16px;">
+  <mat-icon>add</mat-icon>
+  日次ログ追加
+</button>
+
+<ng-container *ngIf="dailyLogs$ | async as logs">
+  <table mat-table [dataSource]="logs || []" class="mat-table">
+    <ng-container matColumnDef="workDate">
+      <th mat-header-cell *matHeaderCellDef>作業日</th>
+      <td mat-cell *matCellDef="let log">{{ log.workDate.toDate() | date:'yyyy/MM/dd' }}</td>
+    </ng-container>
+    <ng-container matColumnDef="progressRate">
+      <th mat-header-cell *matHeaderCellDef>進捗(%)</th>
+      <td mat-cell *matCellDef="let log">{{ log.progressRate }}%</td>
+    </ng-container>
+    <ng-container matColumnDef="workerCount">
+      <th mat-header-cell *matHeaderCellDef>人数</th>
+      <td mat-cell *matCellDef="let log">{{ log.workerCount }}</td>
+    </ng-container>
+    <ng-container matColumnDef="supervisor">
+      <th mat-header-cell *matHeaderCellDef>指示者</th>
+      <td mat-cell *matCellDef="let log">{{ log.supervisor }}</td>
+    </ng-container>
+    <ng-container matColumnDef="comment">
+      <th mat-header-cell *matHeaderCellDef>コメント</th>
+      <td mat-cell *matCellDef="let log">{{ log.comment }}</td>
+    </ng-container>
+    <ng-container matColumnDef="photo">
+      <th mat-header-cell *matHeaderCellDef>写真</th>
+      <td mat-cell *matCellDef="let log">
+        <span *ngIf="!log.photos || log.photos.length === 0" style="color: grey; font-size: 0.9em;">写真なし</span>
+        <ng-container *ngIf="log.photos && log.photos.length > 0">
+          <img *ngFor="let photo of log.photos" [src]="photo.url" alt="" style="max-height: 50px; max-width: 50px; margin-right: 4px; border-radius: 4px;">
+        </ng-container>
+      </td>
+    </ng-container>
+    <ng-container matColumnDef="task">
+      <th mat-header-cell *matHeaderCellDef>タスク</th>
+      <td mat-cell *matCellDef="let task">
+        <span
+          class="task-link"
+          tabindex="0"
+          (click)="goToDailyLog(task)"
+          (keydown.enter)="goToDailyLog(task)"
+          (keydown.space)="goToDailyLog(task)"
+        >
+          {{ task.title }}
+        </span>
+      </td>
+    </ng-container>
+    <tr mat-header-row *matHeaderRowDef="columns"></tr>
+    <tr mat-row *matRowDef="let row; columns: columns;"></tr>
+  </table>
+  <div *ngIf="logs.length === 0" style="margin-top: 16px; color: grey;">日次作業ログはありません。</div>
+</ng-container> 

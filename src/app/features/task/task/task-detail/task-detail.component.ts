@@ -46,6 +46,7 @@ export class TaskDetailComponent implements OnInit {
   private router = inject(Router);
 
   task$!: Observable<TaskDisplay | undefined>;
+  projectId: string | null = null;
   // isEditing = false;
 
   openDailyLogForm(taskId: string, log?: DailyLog): void {
@@ -86,6 +87,11 @@ export class TaskDetailComponent implements OnInit {
       switchMap(params => {
         const taskId = params.get('taskId');
         if (taskId) {
+          this.taskService.getTask(taskId).subscribe(task => {
+            if (task && task.projectId) {
+              this.projectId = task.projectId;
+            }
+          });
           this._loadDailyLogs(taskId);
           return this.taskService.getTask(taskId);
         } else {
@@ -166,6 +172,12 @@ export class TaskDetailComponent implements OnInit {
     console.log('Attempting to open photo viewer for URL:', photoUrl);
     alert('写真表示機能は現在準備中です。\nURL: ' + photoUrl);}
 
-
+  navigateToGanttChart(): void {
+    if (this.projectId) {
+      this.router.navigate(['/app/gantt-chart', this.projectId]);
+    } else {
+      this.router.navigate(['/app/gantt-chart']);
+    }
+  }
 }
 

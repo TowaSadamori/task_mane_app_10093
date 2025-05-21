@@ -1,0 +1,53 @@
+h2 { margin-bottom: 16px; }
+p { margin: 4px 0; }
+
+.task-detail-card {
+  background: #fff;
+  border-radius: 32px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  padding: 32px 24px 24px 24px;
+  width: 100%;
+  max-width: 900px;
+  margin: 40px auto;
+  min-height: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.task-title {
+  color: #1976d2;
+  font-size: 2rem;
+  font-weight: bold;
+  text-align: center;
+  width: 100%;
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+
+.task-period {
+  font-weight: bold;
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+}
+
+.task-info {
+  margin-bottom: 24px;
+  width: 100%;
+  display: block;
+  > div {
+    margin-bottom: 8px;
+    font-size: 1rem;
+    word-break: break-all;
+    width: 100%;
+    display: block;
+  }
+}
+
+.task-actions {
+  margin-top: auto;
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+} 

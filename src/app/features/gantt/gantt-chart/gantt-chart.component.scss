@@ -372,4 +372,17 @@
   display: none !important;
 }
 
+// タスク名をリンク風に
+.task-link {
+  color: #1976d2;
+  text-decoration: underline;
+  cursor: pointer;
+  outline: none;
+  transition: color 0.2s;
+}
+.task-link:hover, .task-link:focus {
+  color: #0d47a1;
+  text-decoration: underline;
+}
+
   

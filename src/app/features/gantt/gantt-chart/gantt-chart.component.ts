@@ -532,6 +532,12 @@ selectTask(task: GanttChartTask | null): void {
   this.cdr.detectChanges();
 }
 
+// タスク詳細ページへ遷移する（GanttChartTasks用）
+goToGanttTaskDetail(task: GanttChartTask): void {
+  if (task && task.id) {
+    this.router.navigate(['/app/gantt-task-detail', task.id]);
+  }
+}
 
 //     // gantt-chart.component.ts
 
