@@ -15,7 +15,15 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideFirebaseApp(() => initializeApp({"projectId":"kensyu10093","appId":"1:820092389714:web:0e011056974fbcc5f5128b","storageBucket":"kensyu10093.appspot.com","apiKey":"AIzaSyB1zazw14ps7jBCkQRo2FwEZgXAawvaKto","authDomain":"kensyu10093.firebaseapp.com","messagingSenderId":"820092389714","measurementId":"G-2ERV947ZQD"})),
+    provideFirebaseApp(() => initializeApp({
+      "projectId":"kensyu10093",
+      "appId":"1:820092389714:web:0e011056974fbcc5f5128b",
+      "storageBucket":"kensyu10093.firebasestorage.app",
+      "apiKey":"AIzaSyB1zazw14ps7jBCkQRo2FwEZgXAawvaKto",
+      "authDomain":"kensyu10093.firebaseapp.com",
+      "messagingSenderId":"820092389714",
+      "measurementId":"G-2ERV947ZQD"
+    })),
     provideAuth(() => getAuth()),
     provideAnalytics(() => getAnalytics()),
     ScreenTrackingService,

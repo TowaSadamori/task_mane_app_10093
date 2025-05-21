@@ -11,6 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { GanttDailyLogService, GanttDailyLog } from './gantt-daily-log.service';
 import { Timestamp } from '@angular/fire/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
 
 @Component({
   selector: 'app-gantt-daily-log-form-dialog',
@@ -55,6 +56,17 @@ export class GanttDailyLogFormDialogComponent {
     if (this.form.valid && this.data?.ganttTaskId) {
       this.isSaving = true;
       const formValue = this.form.value;
+      let photoUrl: string | undefined = undefined;
+
+      // 画像ファイルが選択されている場合はアップロード
+      const photoFile = formValue.photo as File | null;
+      if (photoFile) {
+        const storage = getStorage();
+        const storageRef = ref(storage, `gantt-daily-logs/${this.data.ganttTaskId}/${Date.now()}_${photoFile.name}`);
+        await uploadBytes(storageRef, photoFile);
+        photoUrl = await getDownloadURL(storageRef);
+      }
+
       const log: GanttDailyLog = {
         workDate: Timestamp.fromDate(formValue.workDate!),
         actualStartTime: formValue.actualStartTime!,
@@ -63,8 +75,8 @@ export class GanttDailyLogFormDialogComponent {
         progressRate: formValue.progressRate!,
         workerCount: formValue.workerCount!,
         supervisor: formValue.supervisor!,
-        comment: formValue.comment || ''
-        // photoUrl, createdAtはaddDailyLog側で付与
+        comment: formValue.comment || '',
+        photoUrl // ここでURLをセット
       };
       // ここでganttTaskIdとlogを出力
       console.log('ganttTaskId:', this.data.ganttTaskId);
