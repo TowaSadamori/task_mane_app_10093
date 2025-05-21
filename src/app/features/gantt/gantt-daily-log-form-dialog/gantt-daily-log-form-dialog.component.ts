@@ -10,7 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { GanttDailyLogService, GanttDailyLog } from './gantt-daily-log.service';
-import { Timestamp, doc, updateDoc } from '@angular/fire/firestore';
+import { Timestamp, doc, updateDoc, serverTimestamp } from '@angular/fire/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
 
 @Component({
@@ -102,7 +102,9 @@ export class GanttDailyLogFormDialogComponent {
         if (this.data.log?.id) {
           // 編集時はupdate
           const logRef = doc(this.dailyLogService['firestore'], `GanttChartTasks/${this.data.ganttTaskId}/WorkLogs/${this.data.log.id}`);
-          await updateDoc(logRef, log as Partial<GanttDailyLog>);
+          const logWithoutUpdatedAt = { ...log };
+          delete logWithoutUpdatedAt.updatedAt;
+          await updateDoc(logRef, { ...logWithoutUpdatedAt, updatedAt: serverTimestamp() });
         } else {
           // 新規作成
           await this.dailyLogService.addDailyLog(this.data.ganttTaskId, log);

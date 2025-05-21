@@ -88,6 +88,8 @@ export class GanttChartComponent implements OnInit {
   readonly TASK_ROW_HEIGHT_PX = 40;
   public readonly DAY_CELL_WIDTH = 50; // 1日のセルの幅 (px) テンプレートから参照できるようにpublicに
 
+  readonly dummyDate = new Date(0);
+
   @HostBinding('style.--row-height') get cssRowHeight() { return this.TASK_ROW_HEIGHT_PX + 'px'; }
   @HostBinding('style.--day-cell-width') get cssDayCellWidth() { return this.DAY_CELL_WIDTH + 'px'; }
   @HostBinding('style.--task-count') get cssTaskCount() { return (this.ganttTasks?.length || 1).toString(); }
@@ -255,6 +257,29 @@ export class GanttChartComponent implements OnInit {
         this.ganttTasks = ganttTasks; // ★ 取得したタスクをそのまま代入
         this.isLoadingTasks = false;
   
+        // ここからガントバーの期間出力
+        console.log('--- ガントバー出力 ---');
+        ganttTasks.forEach(task => {
+          let start: Date | null = null;
+          let end: Date | null = null;
+          if (task.plannedStartDate && typeof task.plannedStartDate.toDate === 'function') {
+            start = task.plannedStartDate.toDate();
+          } else if (task.plannedStartDate instanceof Date) {
+            start = task.plannedStartDate;
+          }
+          if (task.plannedEndDate && typeof task.plannedEndDate.toDate === 'function') {
+            end = task.plannedEndDate.toDate();
+          } else if (task.plannedEndDate instanceof Date) {
+            end = task.plannedEndDate;
+          }
+          const left = start ? this.getBarLeftPosition(start) : 'N/A';
+          const width = (start && end) ? this.getBarWidth(start, end) : 'N/A';
+          console.log(
+            `タスク: ${task.title}, 開始: ${start ? start.toLocaleDateString() : 'N/A'}, 終了: ${end ? end.toLocaleDateString() : 'N/A'}, left: ${left}, width: ${width}`
+          );
+        });
+        // ここまで
+
         if (ganttTasks.length > 0) {
           // タイムラインヘッダーの生成ロジックは、タスクの日付範囲を使うように後で調整が必要かもしれません。
           // まずはタスクが表示されることを確認しましょう。
@@ -848,6 +873,17 @@ getTaskRowHeight(): number {
 
 getTaskRowTopPosition(index: number): number {
   return index * this.TASK_ROW_HEIGHT_PX;
+}
+
+getDate(val: unknown): Date | null {
+  if (!val) return null;
+  // 型ガードでtoDate関数の存在を判定
+  if (typeof val === 'object' && val !== null && 'toDate' in val && typeof (val as { toDate: unknown }).toDate === 'function') {
+    return (val as { toDate: () => Date }).toDate();
+  }
+  if (val instanceof Date) return val;
+  if (typeof val === 'string' && !isNaN(Date.parse(val))) return new Date(val);
+  return null;
 }
 
 }// GanttChartComponent クラスの閉じ括弧

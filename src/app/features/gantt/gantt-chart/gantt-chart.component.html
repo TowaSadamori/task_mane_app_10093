@@ -42,8 +42,8 @@
                             {{ taskItem.title }}
                         </span>
                     </div>
-                    <div class="gantt-details-cell cell-planned-start">{{ taskItem.plannedStartDate.toDate() | date:'yyyy/MM/dd' }}</div>
-                    <div class="gantt-details-cell cell-planned-end">{{ taskItem.plannedEndDate.toDate() | date:'yyyy/MM/dd' }}</div>
+                    <div class="gantt-details-cell cell-planned-start">{{ getDate(taskItem.plannedStartDate) | date:'yyyy/MM/dd' }}</div>
+                    <div class="gantt-details-cell cell-planned-end">{{ getDate(taskItem.plannedEndDate) | date:'yyyy/MM/dd' }}</div>
                     <div class="gantt-details-cell cell-status" matTooltip="編集ボタンで変更できます">
                         <span>
                             {{
@@ -88,11 +88,11 @@
                 <div *ngFor="let taskItem of ganttTasks; let i = index"
                      class="gantt-task-bar-row"
                      [style.height.px]="getTaskRowHeight()">
-                    <div *ngIf="taskItem.plannedStartDate && taskItem.plannedEndDate"
+                    <div *ngIf="getDate(taskItem.plannedStartDate) && getDate(taskItem.plannedEndDate)"
                          class="gantt-bar"
                          [ngClass]="{'completed': taskItem.status === 'done'}"
-                         [style.left.px]="getBarLeftPosition(taskItem.plannedStartDate.toDate())"
-                         [style.width.px]="getBarWidth(taskItem.plannedStartDate.toDate(), taskItem.plannedEndDate.toDate())"
+                         [style.left.px]="getBarLeftPosition(getDate(taskItem.plannedStartDate) || dummyDate)"
+                         [style.width.px]="getBarWidth(getDate(taskItem.plannedStartDate) || dummyDate, getDate(taskItem.plannedEndDate) || dummyDate)"
                          [title]="taskItem.title + ' (予定)'">
                         {{ taskItem.title }}
                     </div>

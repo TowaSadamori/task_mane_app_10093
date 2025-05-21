@@ -51,7 +51,7 @@
       </div>
       <div class="form-field">
         <label class="form-label" for="status">状況</label>
-        <select id="status" class="form-input" formControlName="status" required>
+        <select id="status" class="form-input" formControlName="status" required [disabled]="statusDisabled">
           <option value="todo">未着手</option>
           <option value="doing">進捗中</option>
           <option value="done">完了</option>

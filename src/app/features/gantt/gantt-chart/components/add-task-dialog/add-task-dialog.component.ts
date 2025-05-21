@@ -10,6 +10,8 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { ProjectService } from '../../../../../core/project.service';
 import { MatSelectModule } from '@angular/material/select';
 import { GanttChartTask } from '../../../../../core/models/gantt-chart-task.model';
+import { GanttDailyLogService } from '../../../gantt-daily-log-form-dialog/gantt-daily-log.service';
+import { Timestamp } from '@angular/fire/firestore';
 
 export interface TaskDialogData { 
   task?: GanttChartTask;  // 型をGanttChartTaskに変更
@@ -46,6 +48,8 @@ export class AddTaskDialogComponent implements OnInit {
   private projectService = inject(ProjectService); 
   public minDate: string | null = null;
   public maxDate: string | null = null;
+  statusDisabled = false;
+  private dailyLogService = inject(GanttDailyLogService);
 
   constructor(
     private fb: FormBuilder,
@@ -85,6 +89,7 @@ export class AddTaskDialogComponent implements OnInit {
         status: this.data.task.status || 'todo',
         memo: this.data.task.memo
       });
+      this.statusDisabled = false;
     }
   }
 
@@ -101,10 +106,10 @@ export class AddTaskDialogComponent implements OnInit {
       const formData = this.taskForm.value;
       const resultData: Partial<GanttChartTask> = {
         title: formData.title,
-        plannedStartDate: formData.plannedStartDate,
-        plannedEndDate: formData.plannedEndDate,
-        actualStartDate: formData.actualStartDate,
-        actualEndDate: formData.actualEndDate,
+        plannedStartDate: formData.plannedStartDate ? Timestamp.fromDate(new Date(formData.plannedStartDate)) : undefined,
+        plannedEndDate: formData.plannedEndDate ? Timestamp.fromDate(new Date(formData.plannedEndDate)) : undefined,
+        actualStartDate: formData.actualStartDate ? Timestamp.fromDate(new Date(formData.actualStartDate)) : undefined,
+        actualEndDate: formData.actualEndDate ? Timestamp.fromDate(new Date(formData.actualEndDate)) : undefined,
         status: formData.status,
         memo: formData.memo
       };

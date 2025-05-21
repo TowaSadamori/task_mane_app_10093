@@ -14,6 +14,7 @@ export interface GanttDailyLog {
   comment?: string;
   photoUrls?: string[];
   createdAt?: Timestamp;
+  updatedAt?: Timestamp;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -22,7 +23,7 @@ export class GanttDailyLogService {
 
   getDailyLogs(ganttTaskId: string): Observable<GanttDailyLog[]> {
     const logsRef = collection(this.firestore, `GanttChartTasks/${ganttTaskId}/WorkLogs`) as CollectionReference<GanttDailyLog>;
-    const logsQuery = query(logsRef, orderBy('workDate', 'desc'));
+    const logsQuery = query(logsRef, orderBy('workDate', 'desc'), orderBy('updatedAt', 'desc'));
     return collectionData(logsQuery, { idField: 'id' });
   }
 
@@ -31,6 +32,7 @@ export class GanttDailyLogService {
     return addDoc(logsRef, {
       ...log,
       createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     });
   }
 

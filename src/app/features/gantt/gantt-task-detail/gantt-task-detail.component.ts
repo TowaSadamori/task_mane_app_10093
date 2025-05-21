@@ -40,6 +40,7 @@ export class GanttTaskDetailComponent implements OnInit {
   ganttTaskId: string | null = null;
   ganttTask: GanttChartTask | null = null;
   dailyLogs$!: Observable<GanttDailyLog[]>;
+  latestDailyLog: GanttDailyLog | null = null;
   displayedColumns: string[] = [
     'actions',
     'workDate',
@@ -68,6 +69,16 @@ export class GanttTaskDetailComponent implements OnInit {
   loadDailyLogs() {
     if (this.ganttTaskId) {
       this.dailyLogs$ = this.dailyLogService.getDailyLogs(this.ganttTaskId);
+      this.dailyLogs$.subscribe(logs => {
+        if (logs.length > 0) {
+          // updatedAtが最大のものを取得
+          this.latestDailyLog = logs.reduce((a, b) =>
+            (a.updatedAt?.toMillis?.() || 0) > (b.updatedAt?.toMillis?.() || 0) ? a : b
+          );
+        } else {
+          this.latestDailyLog = null;
+        }
+      });
     }
   }
 
@@ -96,6 +107,7 @@ export class GanttTaskDetailComponent implements OnInit {
         try {
           const docRef = doc(this.firestore, 'GanttChartTasks', this.ganttTaskId);
           const cleanedResult = this.removeUndefinedFields(result);
+          // Firestoreのstatusをそのまま保存・表示する
           await updateDoc(docRef, cleanedResult as DocumentData);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
