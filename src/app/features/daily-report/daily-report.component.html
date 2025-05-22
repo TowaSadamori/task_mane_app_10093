@@ -1,0 +1,62 @@
+<div class="daily-report-header">
+  <button (click)="goHome()" class="action-btn">ホームに戻る</button>
+  <button (click)="openAddDialog()" class="action-btn">日報追加</button>
+</div>
+<div *ngIf="reports.length === 0" class="no-report">まだ日報がありません。</div>
+<div class="report-list">
+  <div *ngFor="let report of reports" class="report-card">
+    <div class="report-card-actions">
+      <button mat-icon-button type="button" title="編集">
+        <mat-icon>edit</mat-icon>
+      </button>
+      <button mat-icon-button type="button" title="削除" *ngIf="report.id" (click)="deleteReport(report.id)">
+        <mat-icon>delete</mat-icon>
+      </button>
+      <button mat-icon-button type="button" title="PDF出力">
+        <mat-icon>picture_as_pdf</mat-icon>
+      </button>
+    </div>
+    <div class="report-created">
+      作業日:
+      <ng-container *ngIf="report.workDate as workDate">
+        {{ workDate | date:'yyyy/MM/dd' }}
+      </ng-container>
+    </div>
+    <div class="report-content">
+      <div><strong>担当者:</strong> {{ report.person }}</div>
+      <div><strong>出勤:</strong> {{ report.startTime }} / <strong>退勤:</strong> {{ report.endTime }} / <strong>休憩:</strong> {{ report.breakTime }}分</div>
+      <div><strong>勤務時間:</strong> {{ calcWorkingTime(report.startTime, report.endTime, report.breakTime) }}</div>
+      <div><strong>報告事項:</strong> {{ report.hasReport === 'yes' ? 'あり' : 'なし' }}</div>
+      <div><strong>ケガ・事故:</strong> {{ report.hasAccident === 'yes' ? 'あり' : 'なし' }}</div>
+      <div><strong>体調不良:</strong> {{ report.hasHealthIssue === 'yes' ? 'あり' : 'なし' }}</div>
+      <div><strong>メモ:</strong> {{ report.memo ? report.memo : 'なし' }}</div>
+      <div><strong>写真:</strong>
+        <ng-container *ngIf="report.photoUrls?.length; else fallbackPhoto">
+          <span *ngFor="let url of report.photoUrls">
+            <button
+              type="button"
+              (click)="openImageDialog(url)"
+              (keyup.enter)="openImageDialog(url)"
+              style="padding:0; border:none; background:none; cursor:pointer;"
+              aria-label="画像を拡大表示"
+            >
+              <img
+                [src]="url"
+                alt="写真"
+                style="width: 60px; height: 60px; object-fit: cover; margin-right: 4px; border-radius: 4px; border: 1px solid #ccc;"
+              >
+            </button>
+          </span>
+        </ng-container>
+        <ng-template #fallbackPhoto>
+          <ng-container *ngIf="report.photoNames?.length; else noPhoto">
+            <span *ngFor="let name of report.photoNames ?? []; let i = index">
+              {{ name }}<span *ngIf="i < (report.photoNames?.length ?? 0) - 1">, </span>
+            </span>
+          </ng-container>
+          <ng-template #noPhoto>なし</ng-template>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+</div>

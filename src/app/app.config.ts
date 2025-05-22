@@ -1,6 +1,8 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, importProvidersFrom } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { provideAnimations } from '@angular/platform-browser/animations';
 
 import { routes } from './app.routes';
 import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
@@ -34,6 +36,7 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     provideAnimationsAsync(),
     provideAnimationsAsync(),
-    MatNativeDateModule
+    importProvidersFrom(MatDatepickerModule, MatNativeDateModule),
+    provideAnimations(),
   ]
 };

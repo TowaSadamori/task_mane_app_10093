@@ -1,18 +1,22 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { AddWeeklyReportDialogComponent } from './add-weekly-report-dialog.component';
 
 @Component({
   selector: 'app-weekly-report',
   standalone: true,
-  template: `
-    <button (click)="goHome()" style="margin-bottom: 16px;">HOMEに戻る</button>
-    <button (click)="addWeeklyReport()" style="margin-bottom: 24px; margin-left: 8px;">週報追加</button>
-    <h2>週報</h2>
-    <p>ここに週報の内容を表示します。</p>
-  `,
+  templateUrl: './weekly-report.component.html',
+  styleUrl: './weekly-report.component.scss'
 })
 export class WeeklyReportComponent {
-  constructor(private router: Router) {}
-  goHome() { this.router.navigate(['/app/dashboard']); }
-  addWeeklyReport() { alert('週報追加ダイアログ（仮）'); }
-} 
+  constructor(private router: Router, private dialog: MatDialog) {}
+
+  goHome() {
+    this.router.navigate(['/app/dashboard']);
+  }
+
+  openAddDialog() {
+    this.dialog.open(AddWeeklyReportDialogComponent, { width: '400px', maxHeight: '80vh' });
+  }
+}

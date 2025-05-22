@@ -1,18 +1,117 @@
 import { Component } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { AddDailyReportDialogComponent } from './add-daily-report-dialog.component';
+import { CommonModule } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { DailyReportService } from './daily-report.service';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { Router } from '@angular/router';
+import type { Timestamp } from 'firebase/firestore';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDialogModule } from '@angular/material/dialog';
+import { ImageViewDialogComponent } from './image-view-dialog.component';
+
+export interface DailyReport {
+  workDate: Date | string;
+  person: string;
+  startTime: string;
+  endTime: string;
+  breakTime: number;
+  hasReport: string;
+  hasAccident: string;
+  hasHealthIssue: string;
+  memo: string;
+  photos: File[];
+  id?: string;
+  photoNames?: string[];
+  photoUrls?: string[];
+  createdAt?: Timestamp | string;
+}
+
+@Component({
+  selector: 'app-confirm-dialog',
+  template: `
+    <h2 mat-dialog-title>本当に削除しますか？</h2>
+    <mat-dialog-actions align="center">
+      <button mat-button mat-dialog-close="no">いいえ</button>
+      <button mat-raised-button color="warn" [mat-dialog-close]="'yes'">はい</button>
+    </mat-dialog-actions>
+  `,
+  standalone: true,
+  imports: [MatButtonModule, MatDialogModule]
+})
+export class ConfirmDialogComponent {}
 
 @Component({
   selector: 'app-daily-report',
   standalone: true,
-  template: `
-    <button (click)="goHome()" style="margin-bottom: 16px;">HOMEに戻る</button>
-    <button (click)="addDailyReport()" style="margin-bottom: 24px; margin-left: 8px;">日報追加</button>
-    <h2>日報</h2>
-    <p>ここに日報の内容を表示します。</p>
-  `,
+  imports: [
+    CommonModule,
+    MatButtonModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatIconModule
+  ],
+  templateUrl: './daily-report.component.html',
+  styleUrls: ['./daily-report.component.scss']
 })
 export class DailyReportComponent {
-  constructor(private router: Router) {}
-  goHome() { this.router.navigate(['/app/dashboard']); }
-  addDailyReport() { alert('日報追加ダイアログ（仮）'); }
-} 
+  reports: DailyReport[] = [];
+  constructor(private dialog: MatDialog, private dailyReportService: DailyReportService, private router: Router) {
+    this.loadReports();
+  }
+  async loadReports() {
+    this.reports = await this.dailyReportService.getDailyReports();
+  }
+  openAddDialog() {
+    const ref = this.dialog.open(AddDailyReportDialogComponent, { width: '400px', maxHeight: '80vh' });
+    ref.afterClosed().subscribe(async (result: DailyReport | undefined) => {
+      if (result) {
+        await this.dailyReportService.addDailyReport(result);
+        await this.loadReports();
+      }
+    });
+  }
+  goHome() {
+    this.router.navigate(['/app/dashboard']);
+  }
+  getCreatedAtDate(createdAt: string | Timestamp | undefined | null): Date | null {
+    if (!createdAt) return null;
+    if (typeof createdAt === 'string') {
+      const d = new Date(createdAt);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    if (typeof createdAt === 'object' && 'toDate' in createdAt && typeof createdAt.toDate === 'function') {
+      return createdAt.toDate();
+    }
+    return null;
+  }
+  async deleteReport(id: string) {
+    const ref = this.dialog.open(ConfirmDialogComponent);
+    const result = await ref.afterClosed().toPromise();
+    if (result === 'yes') {
+      await this.dailyReportService.deleteDailyReport(id);
+      await this.loadReports();
+    }
+  }
+  calcWorkingTime(start: string, end: string, breakMin: number): string {
+    if (!start || !end || breakMin == null) return '不明';
+    const [sh, sm] = start.split(':').map(Number);
+    const [eh, em] = end.split(':').map(Number);
+    if ([sh, sm, eh, em].some(isNaN)) return '不明';
+    const startMin = sh * 60 + sm;
+    const endMin = eh * 60 + em;
+    let workMin = endMin - startMin - breakMin;
+    if (workMin < 0) workMin += 24 * 60; // 日をまたぐ場合
+    const h = Math.floor(workMin / 60);
+    const m = workMin % 60;
+    return `${h}時間${m}分`;
+  }
+  openImageDialog(url: string) {
+    this.dialog.open(ImageViewDialogComponent, {
+      data: { url },
+      panelClass: 'image-view-dialog-panel'
+    });
+  }
+}

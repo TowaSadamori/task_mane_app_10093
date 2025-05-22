@@ -1,18 +1,22 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { AddMonthlyReportDialogComponent } from './add-monthly-report-dialog.component';
 
 @Component({
   selector: 'app-monthly-report',
   standalone: true,
-  template: `
-    <button (click)="goHome()" style="margin-bottom: 16px;">HOMEに戻る</button>
-    <button (click)="addMonthlyReport()" style="margin-bottom: 24px; margin-left: 8px;">月報追加</button>
-    <h2>月報</h2>
-    <p>ここに月報の内容を表示します。</p>
-  `,
+  templateUrl: './monthly-report.component.html',
+  styleUrl: './monthly-report.component.scss'
 })
 export class MonthlyReportComponent {
-  constructor(private router: Router) {}
-  goHome() { this.router.navigate(['/app/dashboard']); }
-  addMonthlyReport() { alert('月報追加ダイアログ（仮）'); }
-} 
+  constructor(private router: Router, private dialog: MatDialog) {}
+
+  goHome() {
+    this.router.navigate(['/app/dashboard']);
+  }
+
+  openAddDialog() {
+    this.dialog.open(AddMonthlyReportDialogComponent, { width: '400px', maxHeight: '80vh' });
+  }
+}
