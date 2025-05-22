@@ -11,6 +11,7 @@ import type { Timestamp } from 'firebase/firestore';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialogModule } from '@angular/material/dialog';
 import { ImageViewDialogComponent } from './image-view-dialog.component';
+import { EditDailyReportDialogComponent } from './edit-daily-report-dialog.component';
 
 export interface DailyReport {
   workDate: Date | string;
@@ -125,5 +126,18 @@ export class DailyReportComponent {
         link.click();
         setTimeout(() => URL.revokeObjectURL(link.href), 1000);
       });
+  }
+  openEditDialog(report: DailyReport) {
+    const ref = this.dialog.open(EditDailyReportDialogComponent, {
+      width: '400px',
+      maxHeight: '80vh',
+      data: report
+    });
+    ref.afterClosed().subscribe(async (result: DailyReport | undefined) => {
+      if (result && result.id) {
+        await this.dailyReportService.updateDailyReport(result.id, result);
+        await this.loadReports();
+      }
+    });
   }
 }

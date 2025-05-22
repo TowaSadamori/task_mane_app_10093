@@ -1,0 +1,108 @@
+<div class="dialog-content">
+  <h2 style="font-size:2rem; font-weight:700; margin-bottom:28px; color:#222; text-align:left;">日報修正</h2>
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <mat-form-field appearance="outline">
+      <mat-label>作業日</mat-label>
+      <input matInput [matDatepicker]="picker" formControlName="workDate" required>
+      <button mat-icon-button matSuffix type="button" (click)="picker.open()">
+        <mat-icon>calendar_today</mat-icon>
+      </button>
+      <mat-datepicker #picker></mat-datepicker>
+      <mat-error *ngIf="form.get('workDate')?.hasError('required') && form.get('workDate')?.touched">
+        作業日は必須です。
+      </mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>担当者</mat-label>
+      <input matInput formControlName="person" required>
+      <mat-error *ngIf="form.get('person')?.hasError('required') && form.get('person')?.touched">
+        担当者は必須です。
+      </mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>出勤時間</mat-label>
+      <input matInput type="time" formControlName="startTime" required>
+      <mat-error *ngIf="form.get('startTime')?.hasError('required') && form.get('startTime')?.touched">
+        出勤時間は必須です。
+      </mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>退勤時間</mat-label>
+      <input matInput type="time" formControlName="endTime" required>
+      <mat-error *ngIf="form.get('endTime')?.hasError('required') && form.get('endTime')?.touched">
+        退勤時間は必須です。
+      </mat-error>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>休憩時間（分）</mat-label>
+      <input matInput type="number" min="0" formControlName="breakTime" required>
+      <mat-error *ngIf="form.get('breakTime')?.hasError('required') && form.get('breakTime')?.touched">
+        休憩時間は必須です。
+      </mat-error>
+      <mat-error *ngIf="form.get('breakTime')?.hasError('min') && form.get('breakTime')?.touched">
+        0以上の値を入力してください。
+      </mat-error>
+    </mat-form-field>
+    <div style="margin-bottom: 8px;">
+      <span>報告事項はあるか</span><br>
+      <mat-radio-group formControlName="hasReport">
+        <mat-radio-button value="yes">YES</mat-radio-button>
+        <mat-radio-button value="no">NO</mat-radio-button>
+      </mat-radio-group>
+    </div>
+    <div style="margin-bottom: 8px;">
+      <span>ケガや事故があったか</span><br>
+      <mat-radio-group formControlName="hasAccident">
+        <mat-radio-button value="yes">YES</mat-radio-button>
+        <mat-radio-button value="no">NO</mat-radio-button>
+      </mat-radio-group>
+    </div>
+    <div style="margin-bottom: 8px;">
+      <span>体調が悪くなったか</span><br>
+      <mat-radio-group formControlName="hasHealthIssue">
+        <mat-radio-button value="yes">YES</mat-radio-button>
+        <mat-radio-button value="no">NO</mat-radio-button>
+      </mat-radio-group>
+    </div>
+    <div class="photo-upload">
+      <label for="photoInput"><strong>写真追加（複数可）</strong></label><br>
+      <input id="photoInput" #photoInput type="file" (change)="onPhotoSelected($event)" accept="image/*" multiple>
+      <div *ngIf="existingPhotoUrls.length" class="selected-file" style="margin-bottom: 8px;">
+        <span style="color: #888; font-size: 0.97em;">既存写真:</span>
+        <span *ngFor="let url of existingPhotoUrls; let i = index" style="display: inline-flex; align-items: center; margin-right: 8px;">
+          <a [href]="url" target="_blank" style="color: #2563eb; text-decoration: underline; font-size: 0.97em;">画像{{i+1}}</a>
+          <button
+            type="button"
+            (click)="removeExistingPhoto(i)"
+            style="margin-left: 2px; background: none; border: none; cursor: pointer; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; padding: 0;"
+            aria-label="この写真を削除"
+          >
+            <span style="color: #888; font-size: 18px; line-height: 1;">×</span>
+          </button>
+        </span>
+      </div>
+      <div *ngIf="selectedPhotos.length" class="selected-file" style="margin-bottom: 8px;">
+        <span style="color: #888; font-size: 0.97em;">追加予定:</span>
+        <span *ngFor="let file of selectedPhotos; let i = index" style="display: inline-flex; align-items: center; margin-right: 8px;">
+          {{ file.name }}
+          <button
+            type="button"
+            (click)="removePhoto(i, photoInput)"
+            style="margin-left: 2px; background: none; border: none; cursor: pointer; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; padding: 0;"
+            aria-label="この写真を削除"
+          >
+            <span style="color: #888; font-size: 18px; line-height: 1;">×</span>
+          </button>
+        </span>
+      </div>
+    </div>
+    <mat-form-field appearance="outline">
+      <mat-label>メモ</mat-label>
+      <textarea matInput rows="2" formControlName="memo"></textarea>
+    </mat-form-field>
+    <div class="dialog-actions">
+      <button mat-stroked-button type="button" (click)="onCancel()">キャンセル</button>
+      <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">保存</button>
+    </div>
+  </form>
+</div> 

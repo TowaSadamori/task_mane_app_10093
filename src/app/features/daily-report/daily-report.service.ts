@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Firestore, collection, addDoc, getDocs, CollectionReference, DocumentData, Timestamp, query, orderBy, doc, deleteDoc } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, getDocs, CollectionReference, DocumentData, Timestamp, query, orderBy, doc, deleteDoc, updateDoc } from '@angular/fire/firestore';
 import { DailyReport } from './daily-report.component';
 
 @Injectable({ providedIn: 'root' })
@@ -43,5 +43,22 @@ export class DailyReportService {
   async deleteDailyReport(id: string) {
     const ref = doc(this.firestore, 'dailyReports', id);
     await deleteDoc(ref);
+  }
+
+  async updateDailyReport(id: string, report: DailyReport) {
+    const ref = doc(this.firestore, 'dailyReports', id);
+    const data: Record<string, unknown> = { ...report };
+    if (data['workDate'] instanceof Date) {
+      data['workDate'] = Timestamp.fromDate(data['workDate'] as Date);
+    }
+    if (Array.isArray(data['photos'])) {
+      data['photoNames'] = (data['photos'] as File[]).map((f: File) => f.name);
+      delete data['photos'];
+    }
+    if (report['photoUrls']) {
+      data['photoUrls'] = report['photoUrls'];
+    }
+    delete data['id'];
+    await updateDoc(ref, data as any);
   }
 } 

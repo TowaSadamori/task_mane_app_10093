@@ -1,0 +1,110 @@
+.dialog-content {
+    max-width: 440px;
+    max-height: 80vh;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    padding: 36px 32px 28px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  h2 {
+    margin: 0 0 28px 0;
+    color: #222;
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    text-align: left;
+  }
+  
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  
+  mat-form-field {
+    width: 100%;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  }
+  
+  mat-label {
+    color: #333;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  
+  .photo-upload {
+    margin-bottom: 8px;
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #444;
+      font-weight: 600;
+    }
+    input[type="file"] {
+      width: 100%;
+      padding: 7px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: #f8f8fa;
+    }
+    .selected-file {
+      margin-top: 6px;
+      font-size: 0.95em;
+      color: #666;
+    }
+  }
+  
+  .dialog-actions {
+    margin-top: 18px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 18px;
+    padding-top: 18px;
+    border-top: 1px solid #eee;
+  }
+  
+  .dialog-actions button {
+    min-width: 120px;
+    font-weight: 700;
+    font-size: 1.05em;
+    border-radius: 8px;
+    box-shadow: none;
+    letter-spacing: 0.01em;
+  }
+  
+  .dialog-actions button[mat-stroked-button] {
+    color: #444;
+    border: none;
+    background: #e5e7eb;
+  }
+  
+  .dialog-actions button[mat-raised-button] {
+    background: #a5b4fc;
+    color: #fff;
+  }
+  
+  /* ラジオボタンのグループを横並びに */
+  mat-radio-group {
+    display: flex;
+    flex-direction: row;
+    gap: 18px;
+    margin-top: 4px;
+  }
+  
+  /* ラベルとラジオグループの間隔 */
+  mat-radio-group + mat-radio-group {
+    margin-left: 16px;
+  }
+  
+  /* 入力欄の下余白を調整 */
+  mat-form-field, .photo-upload, mat-radio-group {
+    margin-bottom: 0;
+  }
+  
