@@ -114,4 +114,16 @@ export class DailyReportComponent {
       panelClass: 'image-view-dialog-panel'
     });
   }
+  downloadImage(url: string) {
+    const filename = url.split('/').pop()?.split('?')[0] || 'image.jpg';
+    fetch(url)
+      .then(response => response.blob())
+      .then(blob => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      });
+  }
 }
