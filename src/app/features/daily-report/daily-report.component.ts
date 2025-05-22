@@ -74,6 +74,8 @@ export class DailyReportComponent {
       }
     });
   }
+
+
   goHome() {
     this.router.navigate(['/app/dashboard']);
   }
@@ -88,6 +90,7 @@ export class DailyReportComponent {
     }
     return null;
   }
+
   async deleteReport(id: string) {
     const ref = this.dialog.open(ConfirmDialogComponent);
     const result = await ref.afterClosed().toPromise();

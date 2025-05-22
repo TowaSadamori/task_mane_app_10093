@@ -8,6 +8,10 @@ import { onObjectFinalized, StorageEvent } from "firebase-functions/v2/storage";
 import * as fs from 'fs/promises';
 //  import jimp, { read, loadFont, FONT_SANS_32_BLACK, AUTO } from 'jimp';
 import Jimp from 'jimp';
+import * as puppeteer from 'puppeteer';
+// import * as path from 'path'; // 未使用なので削除
+import * as functions from 'firebase-functions';
+import { Request, Response } from 'express';
 
 interface CreateUserData {
     email: string;
@@ -321,4 +325,58 @@ export const createUser = onCall<CreateUserData>(async (request) => {
             throw new HttpsError('internal', 'ユーザー作成中に不明なエラーが発生しました');
         }
     }
+});
+
+export const generatePdf = functions.https.onRequest(async (req: Request, res: Response) => {
+  // フォントファイルの絶対パス
+  const fontPath = `file://${process.cwd()}/fonts/NotoSansJP-VariableFont_wght.ttf`;
+
+  // HTMLテンプレート
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>請求書</title>
+      <style>
+        @font-face {
+          font-family: 'MyCustomFont';
+          src: url('${fontPath}') format('truetype');
+        }
+        body {
+          font-family: 'MyCustomFont', sans-serif;
+          font-weight: 400;
+        }
+        h1 {
+          font-family: 'MyCustomFont', sans-serif;
+          font-weight: 700;
+        }
+        .bold-text {
+          font-weight: 700;
+        }
+        .light-text {
+          font-weight: 200;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>請求書 (日本語)</h1>
+      <p>これは日本語のサンプルテキストです。(通常の太さ)</p>
+      <p class="bold-text">これは太字の日本語テキストです。</p>
+      <p class="light-text">これは細字の日本語テキストです。</p>
+    </body>
+    </html>
+  `;
+
+  // PuppeteerでPDF生成
+  const browser = await puppeteer.launch({
+    args: ['--no-sandbox', '--font-render-hinting=none'],
+  });
+  const page = await browser.newPage();
+  await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+  const pdfBuffer = await page.pdf({ format: 'A4' });
+  await browser.close();
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.send(pdfBuffer);
 });

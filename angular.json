@@ -35,7 +35,9 @@
               "@angular/material/prebuilt-themes/azure-blue.css",
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [
+              "src/assets/fonts/ipaexg.js"
+            ]
           },
           "configurations": {
             "production": {
@@ -110,6 +112,7 @@
       }
     }
   },
+
   "cli": {
     "analytics": false,
     "schematicCollections": [
