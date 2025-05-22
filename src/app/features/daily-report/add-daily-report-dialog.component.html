@@ -66,11 +66,19 @@
     </div>
     <div class="photo-upload">
       <label for="photoInput"><strong>写真追加（複数可）</strong></label><br>
-      <input id="photoInput" type="file" (change)="onPhotoSelected($event)" accept="image/*" multiple>
+      <input id="photoInput" #photoInput type="file" (change)="onPhotoSelected($event)" accept="image/*" multiple>
       <div *ngIf="selectedPhotos.length" class="selected-file">
         選択中:
-        <span *ngFor="let file of selectedPhotos; let i = index">
-          {{ file.name }}<span *ngIf="i < selectedPhotos.length - 1">, </span>
+        <span *ngFor="let file of selectedPhotos; let i = index" style="display: inline-flex; align-items: center; margin-right: 8px;">
+          {{ file.name }}
+          <button
+            type="button"
+            (click)="removePhoto(i, photoInput)"
+            style="margin-left: 4px; background: none; border: none; cursor: pointer; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;"
+            aria-label="この写真を削除"
+          >
+            <span style="color: #e53935; font-size: 24px;">×</span>
+          </button>
         </span>
       </div>
     </div>

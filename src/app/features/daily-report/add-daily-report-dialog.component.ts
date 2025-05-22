@@ -39,6 +39,10 @@ export class AddDailyReportDialogComponent {
     const input = event.target as HTMLInputElement;
     this.selectedPhotos = input.files ? Array.from(input.files) : [];
   }
+  removePhoto(index: number, photoInput: HTMLInputElement) {
+    this.selectedPhotos.splice(index, 1);
+    photoInput.value = '';
+  }
   async onSubmit() {
     if (this.form.valid) {
       const photoUrls: string[] = [];
