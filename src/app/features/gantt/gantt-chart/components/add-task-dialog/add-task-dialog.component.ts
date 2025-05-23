@@ -104,12 +104,27 @@ export class AddTaskDialogComponent implements OnInit {
   onSubmit(): void {
     if (this.taskForm.valid) {
       const formData = this.taskForm.value;
+      const toTimestampOrUndefined = (val: unknown) => {
+        if (!val) return undefined;
+        if (val instanceof Date) {
+          return isNaN(val.getTime()) ? undefined : Timestamp.fromDate(val);
+        }
+        if (typeof val === 'string' || typeof val === 'number') {
+          const date = new Date(val);
+          return isNaN(date.getTime()) ? undefined : Timestamp.fromDate(date);
+        }
+        if (typeof val === 'object' && val !== null && typeof (val as { toDate?: unknown }).toDate === 'function') {
+          const date = (val as { toDate: () => Date }).toDate();
+          return isNaN(date.getTime()) ? undefined : Timestamp.fromDate(date);
+        }
+        return undefined;
+      };
       const resultData: Partial<GanttChartTask> = {
         title: formData.title,
-        plannedStartDate: formData.plannedStartDate ? Timestamp.fromDate(new Date(formData.plannedStartDate)) : undefined,
-        plannedEndDate: formData.plannedEndDate ? Timestamp.fromDate(new Date(formData.plannedEndDate)) : undefined,
-        actualStartDate: formData.actualStartDate ? Timestamp.fromDate(new Date(formData.actualStartDate)) : undefined,
-        actualEndDate: formData.actualEndDate ? Timestamp.fromDate(new Date(formData.actualEndDate)) : undefined,
+        plannedStartDate: toTimestampOrUndefined(formData.plannedStartDate),
+        plannedEndDate: toTimestampOrUndefined(formData.plannedEndDate),
+        actualStartDate: toTimestampOrUndefined(formData.actualStartDate),
+        actualEndDate: toTimestampOrUndefined(formData.actualEndDate),
         status: formData.status,
         memo: formData.memo
       };
