@@ -29,15 +29,23 @@ export class DailyReportService {
 
   async getDailyReports(): Promise<DailyReport[]> {
     const q = query(this.col, orderBy('createdAt', 'desc'));
-    const snap = await getDocs(q);
-    return snap.docs.map(doc => {
-      const data = doc.data();
-      // workDateがTimestamp型ならDate型に変換
-      if (data['workDate'] && typeof data['workDate'] === 'object' && typeof data['workDate'].toDate === 'function') {
-        data['workDate'] = data['workDate'].toDate();
-      }
-      return { id: doc.id, ...data } as DailyReport;
-    });
+    console.log(`【Firestore】これからパス "dailyReports" からデータを取得します。`);
+    try {
+      const snap = await getDocs(q);
+      const reports = snap.docs.map(doc => {
+        const data = doc.data();
+        // workDateがTimestamp型ならDate型に変換
+        if (data['workDate'] && typeof data['workDate'] === 'object' && typeof data['workDate'].toDate === 'function') {
+          data['workDate'] = data['workDate'].toDate();
+        }
+        return { id: doc.id, ...data } as DailyReport;
+      });
+      console.log(`【Firestore】パス "dailyReports" からデータ受信:`, reports);
+      return reports;
+    } catch (error) {
+      console.error(`【Firestore】パス "dailyReports" のデータ取得エラー:`, error);
+      throw error;
+    }
   }
 
   async deleteDailyReport(id: string) {

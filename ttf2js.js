@@ -1,27 +1,20 @@
-// ttf2js.js
-const fs = require('fs');
-const fontkit = require('fontkit');
+// // ttf2js.js
+// const fs = require('fs');
+// const fontkit = require('fontkit');
 
-if (process.argv.length < 5) {
-  console.log('Usage: node ttf2js.js <input.ttf> <output.js> <fontName>');
-  process.exit(1);
-}
+// if (process.argv.length < 5) {
+//   console.log('Usage: node ttf2js.js <input.ttf> <output.js> <fontName>');
+//   process.exit(1);
+// }
 
-const input = process.argv[2];
-const output = process.argv[3];
-const fontName = process.argv[4];
+// const input = process.argv[2];
+// const output = process.argv[3];
+// const fontName = process.argv[4];
 
-const fontData = fs.readFileSync(input);
-const font = fontkit.create(fontData);
+// const fontData = fs.readFileSync(input);
+// const font = fontkit.create(fontData);
 
-const fontFile = fontData.toString('base64');
-const js = `
-(function(jsPDFAPI){
-  var font = '${fontFile}';
-  jsPDFAPI.addFileToVFS('${fontName}.ttf', font, true);
-  jsPDFAPI.addFont('${fontName}.ttf', '${fontName}', 'normal');
-})(jsPDF.API);
-`;
+// const fontFile = fontData.toString('base64');
 
-fs.writeFileSync(output, js);
-console.log('Font file generated:', output);
+// fs.writeFileSync(output, js);
+// console.log('Font file generated:', output);

@@ -115,3 +115,49 @@ h2 {
 .report-content strong {
   color: #374151;
 }
+
+.edit-btn {
+  background: #2563eb;
+  color: #fff;
+  border-radius: 6px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
+  transition: background 0.2s;
+}
+.edit-btn:hover {
+  background: #1d4ed8;
+}
+.edit-btn .mat-icon {
+  font-size: 24px;
+  color: #fff;
+}
+
+.delete-btn {
+  background: #f44336;
+  color: #fff;
+  border-radius: 6px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
+  transition: background 0.2s;
+}
+.delete-btn:hover {
+  background: #d32f2f;
+}
+.delete-btn .mat-icon {
+  font-size: 24px;
+  color: #fff;
+}
+
+.report-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

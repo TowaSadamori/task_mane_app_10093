@@ -23,10 +23,10 @@
     "@angular/platform-browser-dynamic": "^18.2.0",
     "@angular/router": "^18.2.0",
     "@tensorflow/tfjs": "^4.22.0",
+    "cors": "^2.8.5",
     "fontkit": "^2.0.4",
-    "jspdf": "^3.0.1",
-    "jspdf-autotable": "^5.0.2",
     "pdfmake": "^0.2.20",
+    "puppeteer": "^19.7.2",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.10"

@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideHttpClient } from '@angular/common/http';
 
 import { routes } from './app.routes';
 import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
@@ -38,5 +39,6 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     importProvidersFrom(MatDatepickerModule, MatNativeDateModule),
     provideAnimations(),
+    provideHttpClient(),
   ]
 };

@@ -1,0 +1,27 @@
+.pdf-export-btn {
+  background: #ff9800;
+  color: #fff;
+  border-radius: 6px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+  transition: background 0.2s;
+  padding: 0;
+  box-sizing: border-box;
+}
+.pdf-export-btn:hover {
+  background: #fb8c00;
+}
+.pdf-export-btn .mat-icon {
+  font-size: 32px;
+  color: #fff;
+  width: auto;
+  height: auto;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -8,10 +8,14 @@ import { onObjectFinalized, StorageEvent } from "firebase-functions/v2/storage";
 import * as fs from 'fs/promises';
 //  import jimp, { read, loadFont, FONT_SANS_32_BLACK, AUTO } from 'jimp';
 import Jimp from 'jimp';
-import * as puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core';
+import chromium from 'chrome-aws-lambda';
 // import * as path from 'path'; // 未使用なので削除
-import * as functions from 'firebase-functions';
+import * as functions from 'firebase-functions/v1';
 import { Request, Response } from 'express';
+import cors from 'cors';
+import QRCode from 'qrcode';
+import type { FileMetadata } from '@google-cloud/storage';
 
 interface CreateUserData {
     email: string;
@@ -58,6 +62,19 @@ function sleep(ms: number): Promise<void>{
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+const allowedOrigins = [
+  'https://kensyu10093.web.app'
+];
+const corsHandler = cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
+});
+
 export const processUploadedImage = onObjectFinalized(
     {
     bucket: "kensyu10093.firebasestorage.app",
@@ -69,7 +86,6 @@ export const processUploadedImage = onObjectFinalized(
                 admin.initializeApp();
             }
             const db =admin.firestore();
-            const storage = admin.storage();
         
         const fileBucket = event.data.bucket;
         const filePath = event.data.name;
@@ -164,7 +180,7 @@ export const processUploadedImage = onObjectFinalized(
         
         
 
-        const bucket = storage.bucket(fileBucket);
+        const bucket = admin.storage().bucket("kensyu10093.firebasestorage.app");
         const originalFile = bucket.file(filePath);
         const fileName = filePath.split("/").pop();
         if (!fileName) {
@@ -327,56 +343,242 @@ export const createUser = onCall<CreateUserData>(async (request) => {
     }
 });
 
-export const generatePdf = functions.https.onRequest(async (req: Request, res: Response) => {
-  // フォントファイルの絶対パス
-  const fontPath = `file://${process.cwd()}/fonts/NotoSansJP-VariableFont_wght.ttf`;
+interface ReportData {
+  reportDate?: string;
+  workDate?: string;
+  person?: string;
+  startTime?: string;
+  endTime?: string;
+  breakTime?: string;
+  workingTime?: string;
+  hasReport?: string;
+  hasAccident?: string;
+  hasHealthIssue?: string;
+  memo?: string;
+  photoPaths?: string[];
+  // 追加: Angularから送信されるキー名
+  staffName?: string;
+  checkInTime?: string;
+  checkOutTime?: string;
+  workDuration?: string;
+  reportDetails?: string;
+  injuriesOrAccidents?: string;
+  healthIssues?: string;
+}
 
-  // HTMLテンプレート
-  const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>請求書</title>
-      <style>
-        @font-face {
-          font-family: 'MyCustomFont';
-          src: url('${fontPath}') format('truetype');
+export const generatePdf = functions
+  .region('asia-northeast1')
+  .runWith({ memory: '1GB', timeoutSeconds: 300 })
+  .https.onRequest((req: Request, res: Response) => {
+    corsHandler(req, res, async () => {
+      try {
+        if (req.method !== 'POST') {
+          res.status(405).send('Method Not Allowed');
+          return;
         }
-        body {
-          font-family: 'MyCustomFont', sans-serif;
-          font-weight: 400;
-        }
-        h1 {
-          font-family: 'MyCustomFont', sans-serif;
-          font-weight: 700;
-        }
-        .bold-text {
-          font-weight: 700;
-        }
-        .light-text {
-          font-weight: 200;
-        }
-      </style>
-    </head>
-    <body>
-      <h1>請求書 (日本語)</h1>
-      <p>これは日本語のサンプルテキストです。(通常の太さ)</p>
-      <p class="bold-text">これは太字の日本語テキストです。</p>
-      <p class="light-text">これは細字の日本語テキストです。</p>
-    </body>
-    </html>
-  `;
 
-  // PuppeteerでPDF生成
-  const browser = await puppeteer.launch({
-    args: ['--no-sandbox', '--font-render-hinting=none'],
+        const reportData = req.body as ReportData;
+        logger.info('Functionsが受信したデータ:', JSON.stringify(reportData, null, 2));
+        const fontPath = `file://${process.cwd()}/fonts/NotoSansJP-VariableFont_wght.ttf`;
+        const bucket = admin.storage().bucket("kensyu10093.firebasestorage.app");
+
+        // 写真のHTML生成
+        const photoPaths = reportData.photoPaths || [];
+        let photosHtml = '';
+        if (photoPaths.length > 0) {
+          photosHtml += `<div style="margin-top: 15px;"><strong>写真:</strong><div style="display: flex; flex-wrap: wrap; gap: 10px;">`;
+          for (const path of photoPaths) {
+            try {
+              logger.info("写真パス:", path);
+              if (!path || typeof path !== 'string' || path.trim() === '') {
+                logger.error("無効な写真パス", { path });
+                photosHtml += `<div style="color: red;">写真パス不正</div>`;
+                continue;
+              }
+              const file = bucket.file(path);
+              const [exists] = await file.exists();
+              logger.info("ファイル存在確認:", { path, exists });
+              let metadata: FileMetadata | null = null;
+              try {
+                [metadata] = await file.getMetadata();
+                logger.info("ファイルメタデータ:", { path, metadata });
+              } catch (metaError) {
+                logger.error("getMetadataでエラー", { path, metaError });
+                photosHtml += `<div style="color: red;">メタデータ取得エラー (${path.split('/').pop()})</div>`;
+                photosHtml += `<div style="color: red;">写真なし (${path.split('/').pop()})</div>`;
+                photosHtml += `<div style="color: red;">ダウンロードトークンなし (${path.split('/').pop()})</div>`;
+                photosHtml += `<div style="color: red;">写真読込エラー (${path.split('/').pop()})</div>`;
+                continue;
+              }
+              if (!exists) {
+                photosHtml += `<div style="color: red;">写真なし (${path.split('/').pop()})</div>`;
+                continue;
+              }
+              // アクセストークン付きダウンロードURL生成
+              const token = metadata.metadata && metadata.metadata.firebaseStorageDownloadTokens;
+              if (!token) {
+                photosHtml += `<div style="color: red;">ダウンロードトークンなし (${path.split('/').pop()})</div>`;
+                continue;
+              }
+              const downloadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(file.name)}?alt=media&token=${token}`;
+              // QRコード生成
+              let qrDataUrl = '';
+              try {
+                qrDataUrl = await QRCode.toDataURL(downloadUrl);
+              } catch (qrError) {
+                logger.error("QRコード生成エラー", { path, qrError });
+              }
+              const fileName = path.split('/').pop();
+              photosHtml += `<div style="margin-bottom: 20px;">
+                <div><strong>写真名:</strong> ${fileName}</div>
+                <div><strong>ダウンロードURL:</strong> <a href="${downloadUrl}" target="_blank">${downloadUrl}</a></div>
+                <div><strong>QRコード:</strong><br><img src="${qrDataUrl}" alt="QRコード" style="width:120px;height:120px;"></div>
+              </div>`;
+            } catch (error) {
+              logger.error("写真処理エラー:", { path, error });
+              photosHtml += `<div style="color: red;">写真読込エラー (${path.split('/').pop()})</div>`;
+            }
+          }
+          photosHtml += `</div></div>`;
+        } else {
+          photosHtml += '<div style="margin-top: 15px;"><strong>写真:</strong> なし</div>';
+        }
+
+        // 日報データをHTMLに埋め込む
+        const htmlContent = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <title>日報</title>
+            <style>
+              @font-face {
+                font-family: 'MyCustomFont';
+                src: url('${fontPath}') format('truetype');
+              }
+              body {
+                font-family: 'MyCustomFont', sans-serif;
+                font-weight: 400;
+                margin: 30px;
+                font-size: 11px;
+                line-height: 1.6;
+              }
+              h1 {
+                font-weight: 700;
+                font-size: 18px;
+                text-align: center;
+                border-bottom: 2px solid #000;
+                padding-bottom: 10px;
+                margin-bottom: 25px;
+              }
+              .info-grid {
+                display: grid;
+                grid-template-columns: 120px auto;
+                gap: 8px 10px;
+                margin-bottom: 20px;
+              }
+              .info-grid strong {
+                font-weight: 700;
+              }
+              .section {
+                margin-top: 20px;
+                padding-top: 10px;
+                border-top: 1px dashed #ccc;
+              }
+              .section h2 {
+                font-size: 14px;
+                font-weight: 700;
+                margin-bottom: 8px;
+              }
+              .memo-box {
+                white-space: pre-wrap;
+                border: 1px solid #ddd;
+                padding: 10px;
+                min-height: 50px;
+                background-color: #f9f9f9;
+                max-width: 500px;
+              }
+              .photo-section {
+                margin-top: 20px;
+              }
+              .photo-section-title {
+                font-size: 14px;
+                font-weight: 700;
+                margin-bottom: 8px;
+              }
+              .photo-list {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+              }
+              .photo-list img {
+                max-width: 180px;
+                max-height: 180px;
+                display: block;
+                object-fit: cover;
+                border: 1px solid #eee;
+                padding: 5px;
+                margin: 5px;
+              }
+            </style>
+          </head>
+          <body>
+            <h1>日報</h1>
+            <div class="info-grid">
+              <strong>作業日:</strong>        <span>${reportData.reportDate || ''}</span>
+              <strong>担当者:</strong>        <span>${reportData.staffName || ''}</span>
+              <strong>出勤時間:</strong>      <span>${reportData.checkInTime || ''}</span>
+              <strong>退勤時間:</strong>      <span>${reportData.checkOutTime || ''}</span>
+              <strong>休憩時間:</strong>      <span>${reportData.breakTime ? reportData.breakTime + '分' : ''}</span>
+              <strong>実働時間:</strong>      <span>${reportData.workDuration || ''}</span>
+            </div>
+
+            <div class="section">
+              <span><strong>報告事項がありますか？</strong></span>
+              <span style="margin-left: 1em;">${reportData.reportDetails || 'なし'}</span>
+            </div>
+            <div class="section">
+              <span><strong>ケガや事故はありますか？</strong></span>
+              <span style="margin-left: 1em;">${reportData.injuriesOrAccidents || 'なし'}</span>
+            </div>
+            <div class="section">
+              <span><strong>体調不良になっていませんか？</strong></span>
+              <span style="margin-left: 1em;">${reportData.healthIssues || 'なし'}</span>
+            </div>
+            <div class="section">
+              <h2>その他・メモ</h2>
+              <div class="memo-box">${reportData.memo || 'なし'}</div>
+            </div>
+            <div class="photo-section">
+              <div class="photo-section-title">写真</div>
+              ${photosHtml}
+            </div>
+          </body>
+          </html>
+        `;
+
+        // PuppeteerでPDF生成（chrome-aws-lambda対応）
+        const browser = await puppeteer.launch({
+          args: chromium.args,
+          defaultViewport: chromium.defaultViewport,
+          executablePath: await chromium.executablePath,
+          headless: chromium.headless,
+        });
+        const page = await browser.newPage();
+        await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+        const pdfBuffer = await page.pdf({
+          format: 'a4',
+          printBackground: true,
+          margin: { top: '25mm', right: '20mm', bottom: '25mm', left: '20mm' }
+        });
+        await browser.close();
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `inline; filename="daily_report_${reportData.reportDate || 'unknown'}.pdf"`);
+        res.send(pdfBuffer);
+      } catch (error) {
+        logger.error("Critical error in generatePdf function:", error);
+        res.status(500).send('Internal Server Error while generating PDF.');
+      }
+    });
   });
-  const page = await browser.newPage();
-  await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-  const pdfBuffer = await page.pdf({ format: 'A4' });
-  await browser.close();
-
-  res.setHeader('Content-Type', 'application/pdf');
-  res.send(pdfBuffer);
-});

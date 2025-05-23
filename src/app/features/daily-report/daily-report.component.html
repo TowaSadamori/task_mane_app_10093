@@ -6,15 +6,13 @@
 <div class="report-list">
   <div *ngFor="let report of reports" class="report-card">
     <div class="report-card-actions">
-      <button mat-icon-button type="button" title="編集" (click)="openEditDialog(report)">
+      <button mat-icon-button type="button" title="編集" (click)="openEditDialog(report)" class="edit-btn">
         <mat-icon>edit</mat-icon>
       </button>
-      <button mat-icon-button type="button" title="削除" *ngIf="report.id" (click)="deleteReport(report.id)">
+      <button mat-icon-button type="button" title="削除" *ngIf="report.id" (click)="deleteReport(report.id)" class="delete-btn">
         <mat-icon>delete</mat-icon>
       </button>
-      <button mat-icon-button type="button" title="PDF出力">
-        <mat-icon>picture_as_pdf</mat-icon>
-      </button>
+      <app-pdf-export [reportData]="getReportDataForPdf(report)" [functionUrl]="'https://asia-northeast1-kensyu10093.cloudfunctions.net/generatePdf'"></app-pdf-export>
     </div>
     <div class="report-created">
       作業日:
