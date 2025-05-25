@@ -13,6 +13,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { ImageViewDialogComponent } from './image-view-dialog.component';
 import { EditDailyReportDialogComponent } from './edit-daily-report-dialog.component';
 import { PdfExportComponent, DailyReportData } from '../../pdf-export/pdf-export.component';
+import { CsvExportComponent } from '../../shared/csv-export.component';
 
 export interface DailyReport {
   workDate: Date | string;
@@ -54,7 +55,8 @@ export class ConfirmDialogComponent {}
     MatDatepickerModule,
     MatNativeDateModule,
     MatIconModule,
-    PdfExportComponent
+    PdfExportComponent,
+    CsvExportComponent
   ],
   templateUrl: './daily-report.component.html',
   styleUrls: ['./daily-report.component.scss']
@@ -146,15 +148,6 @@ export class DailyReportComponent {
     });
   }
   getReportDataForPdf(report: DailyReport): DailyReportData {
-    // photoUrlsがダウンロードURLの場合、Storageパスを抽出
-    function extractStoragePathFromUrl(url: string): string | null {
-      // 例: https://firebasestorage.googleapis.com/v0/b/xxx/o/dailyReports%2Fxxxx.png?alt=media...
-      const match = url.match(/\/o\/([^?]+)/);
-      if (match && match[1]) {
-        return decodeURIComponent(match[1]);
-      }
-      return null;
-    }
     return {
       reportDate: typeof report.workDate === 'string' ? report.workDate : (report.workDate instanceof Date ? report.workDate.toLocaleDateString() : ''),
       staffName: report.person,
@@ -166,9 +159,7 @@ export class DailyReportComponent {
       injuriesOrAccidents: report.hasAccident === 'yes' ? 'あり' : 'なし',
       healthIssues: report.hasHealthIssue === 'yes' ? 'あり' : 'なし',
       memo: report.memo,
-      photoPaths: report.photoUrls
-        ? report.photoUrls.map(url => extractStoragePathFromUrl(url)).filter((path): path is string => !!path)
-        : []
+      photoPaths: report.photoUrls ?? []
     };
   }
 }

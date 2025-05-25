@@ -13,6 +13,13 @@
         <mat-icon>delete</mat-icon>
       </button>
       <app-pdf-export [reportData]="getReportDataForPdf(report)" [functionUrl]="'https://asia-northeast1-kensyu10093.cloudfunctions.net/generatePdf'"></app-pdf-export>
+      <app-csv-export
+        [data]="getReportDataForPdf(report)"
+        [headers]="['作業日', '担当者', '出勤', '退勤', '休憩', '実働時間', '報告事項', 'ケガ・事故', '体調不良', 'メモ', '写真パス']"
+        [keys]="['reportDate', 'staffName', 'checkInTime', 'checkOutTime', 'breakTime', 'workDuration', 'reportDetails', 'injuriesOrAccidents', 'healthIssues', 'memo', 'photoPaths']"
+        [fileName]="'daily_report_' + getReportDataForPdf(report).reportDate + '.csv'"
+        [label]="'CSV出力'"
+      ></app-csv-export>
     </div>
     <div class="report-created">
       作業日:
