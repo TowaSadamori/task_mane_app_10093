@@ -1,0 +1,27 @@
+.csv-export-btn {
+  background: #1976d2;
+  color: #fff;
+  border-radius: 6px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+  transition: background 0.2s;
+  padding: 0;
+  box-sizing: border-box;
+}
+.csv-export-btn:hover {
+  background: #1565c0;
+}
+.csv-export-btn .mat-icon {
+  font-size: 32px;
+  color: #fff;
+  width: auto;
+  height: auto;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
