@@ -64,12 +64,32 @@
           <ng-template #noPhoto>なし</ng-template>
         </ng-template>
       </div>
-      <!-- ▼▼▼ 日次ログ表示プレースホルダー ▼▼▼ -->
+      <!-- ▼▼▼ 日次ログ表示 ▼▼▼ -->
       <div class="daily-log-section" style="margin-top: 18px; padding: 12px; background: #f4fcff; border: 1.5px solid #b3e5fc; border-radius: 8px;">
         <h4 style="color:#1976d2; margin:0 0 8px 0;">日次ログ</h4>
-        <div style="color:#888;">日次ログはまだありません。</div>
+        <div *ngIf="allWorkLogs.length === 0" style="color:#888;">日次ログはまだありません。</div>
+        <table *ngIf="allWorkLogs.length > 0" style="width:100%; border-collapse:collapse; background:#fff;">
+          <thead>
+            <tr style="background:#e3f2fd;">
+              <th style="padding:6px 8px; border:1px solid #b3e5fc;">作業日</th>
+              <th style="padding:6px 8px; border:1px solid #b3e5fc;">担当者</th>
+              <th style="padding:6px 8px; border:1px solid #b3e5fc;">コメント</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let log of allWorkLogs">
+              <td style="padding:6px 8px; border:1px solid #b3e5fc;">
+                <a [routerLink]="['/app/daily-report-detail', log.id]" style="color:#1976d2; text-decoration:underline; cursor:pointer;">
+                  {{ formatWorkLogDate(log.workDate) }}
+                </a>
+              </td>
+              <td style="padding:6px 8px; border:1px solid #b3e5fc;">{{ log.assigneeId }}</td>
+              <td style="padding:6px 8px; border:1px solid #b3e5fc;">{{ log.comment }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <!-- ▲▲▲ 日次ログ表示プレースホルダー ▲▲▲ -->
+      <!-- ▲▲▲ 日次ログ表示 ▲▲▲ -->
     </div>
   </div>
 </div>

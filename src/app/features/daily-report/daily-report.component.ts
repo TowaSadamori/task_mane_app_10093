@@ -15,6 +15,7 @@ import { EditDailyReportDialogComponent } from './edit-daily-report-dialog.compo
 import { PdfExportComponent, DailyReportData } from '../../pdf-export/pdf-export.component';
 import { UserService } from '../../core/user.service';
 import { User } from '../../core/models/user.model';
+import { Firestore, collectionGroup, getDocs } from '@angular/fire/firestore';
 
 export interface DailyReport {
   workDate: Date | string;
@@ -33,6 +34,24 @@ export interface DailyReport {
   createdAt?: Timestamp | string;
   managerUids?: string[];
   projectId?: string;
+}
+
+// WorkLog型（dashboard参照）
+interface WorkLogForDisplay {
+  id: string;
+  ganttTaskId: string;
+  assigneeId: string;
+  supervisor?: string;
+  workDate?: Date | { toDate: () => Date } | string;
+  taskName?: string;
+  projectName?: string;
+  actualStartTime?: string;
+  actualEndTime?: string;
+  actualBreakTime?: number;
+  progressRate?: number;
+  workerCount?: number;
+  comment?: string;
+  photoUrls?: string[];
 }
 
 @Component({
@@ -66,13 +85,16 @@ export class ConfirmDialogComponent {}
 export class DailyReportComponent {
   reports: DailyReport[] = [];
   users: User[] = [];
+  allWorkLogs: WorkLogForDisplay[] = [];
   constructor(
     private dialog: MatDialog,
     private dailyReportService: DailyReportService,
     private router: Router,
-    private userService: UserService
+    private userService: UserService,
+    private firestore: Firestore
   ) {
     this.loadUsersAndReports();
+    this.loadAllWorkLogs();
   }
   async loadUsersAndReports() {
     this.userService.getUsers().subscribe(users => {
@@ -190,5 +212,46 @@ export class DailyReportComponent {
         ? report.photoUrls.map(url => extractStoragePathFromUrl(url)).filter((path): path is string => !!path)
         : []
     };
+  }
+  async loadAllWorkLogs() {
+    const q = collectionGroup(this.firestore, 'WorkLogs');
+    const querySnapshot = await getDocs(q);
+    const logs: WorkLogForDisplay[] = [];
+    querySnapshot.forEach(docSnap => {
+      const pathSegments = docSnap.ref.path.split('/');
+      const ganttTaskId = pathSegments[1];
+      const data = docSnap.data();
+      logs.push({
+        ...data,
+        id: docSnap.id,
+        ganttTaskId: ganttTaskId,
+        assigneeId: data['supervisor'] || data['assigneeId'] || '',
+        workDate: data['workDate'],
+        actualStartTime: data['actualStartTime'],
+        actualEndTime: data['actualEndTime'],
+        actualBreakTime: data['actualBreakTime'],
+        progressRate: data['progressRate'],
+        workerCount: data['workerCount'],
+        comment: data['comment'],
+        photoUrls: data['photoUrls']
+      });
+    });
+    this.allWorkLogs = logs;
+  }
+  // WorkLogの日付を安全にyyyy/MM/ddで返す
+  formatWorkLogDate(date: Date | { toDate: () => Date } | string | undefined | null): string {
+    if (!date) return '';
+    if (date instanceof Date) {
+      return date.toLocaleDateString('ja-JP');
+    }
+    if (typeof date === 'object' && typeof date.toDate === 'function') {
+      const d = date.toDate();
+      return d instanceof Date ? d.toLocaleDateString('ja-JP') : '';
+    }
+    if (typeof date === 'string') {
+      const d = new Date(date);
+      return isNaN(d.getTime()) ? date : d.toLocaleDateString('ja-JP');
+    }
+    return '';
   }
 }
