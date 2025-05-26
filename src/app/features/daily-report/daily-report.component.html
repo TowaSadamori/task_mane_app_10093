@@ -70,6 +70,37 @@
           <ng-template #noPhoto>なし</ng-template>
         </ng-template>
       </div>
+      <!-- 日次ログ一覧表示 -->
+      <div style="margin-top: 12px;">
+        <strong>日次ログ一覧:</strong>
+        <ng-container *ngIf="getDailyLogsForReport(report) | async as logs">
+          <table *ngIf="logs.length > 0" class="daily-logs-table">
+            <thead>
+              <tr>
+                <th>開始時刻</th>
+                <th>終了時刻</th>
+                <th>休憩</th>
+                <th>進捗率</th>
+                <th>作業員数</th>
+                <th>作業指示者</th>
+                <th>コメント</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let log of logs">
+                <td>{{ log.startTime }}</td>
+                <td>{{ log.endTime }}</td>
+                <td>{{ log.breakTime }}</td>
+                <td>{{ log.progress }}</td>
+                <td>{{ log.staffCount }}</td>
+                <td>{{ log.supervisor }}</td>
+                <td>{{ log.comment }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div *ngIf="logs.length === 0">該当する日次ログはありません。</div>
+        </ng-container>
+      </div>
     </div>
   </div>
 </div>

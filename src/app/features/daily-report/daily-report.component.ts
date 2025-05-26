@@ -14,6 +14,7 @@ import { ImageViewDialogComponent } from './image-view-dialog.component';
 import { EditDailyReportDialogComponent } from './edit-daily-report-dialog.component';
 import { PdfExportComponent, DailyReportData } from '../../pdf-export/pdf-export.component';
 import { CsvExportComponent } from '../../shared/csv-export.component';
+import { Firestore, collectionGroup, query, where, getDocs } from '@angular/fire/firestore';
 
 export interface DailyReport {
   workDate: Date | string;
@@ -30,6 +31,19 @@ export interface DailyReport {
   photoNames?: string[];
   photoUrls?: string[];
   createdAt?: Timestamp | string;
+}
+
+export interface WorkLog {
+  workDate: string; // 例: '2025-05-22' など。型は保存形式に合わせて調整
+  startTime?: string;
+  endTime?: string;
+  breakTime?: number;
+  progress?: number;
+  staffCount?: number;
+  supervisor?: string;
+  comment?: string;
+  photos?: string[];
+  [key: string]: unknown;
 }
 
 @Component({
@@ -63,7 +77,8 @@ export class ConfirmDialogComponent {}
 })
 export class DailyReportComponent {
   reports: DailyReport[] = [];
-  constructor(private dialog: MatDialog, private dailyReportService: DailyReportService, private router: Router) {
+  dailyLogs: WorkLog[] = [];
+  constructor(private dialog: MatDialog, private dailyReportService: DailyReportService, private router: Router, private firestore: Firestore) {
     this.loadReports();
   }
   async loadReports() {
@@ -161,5 +176,29 @@ export class DailyReportComponent {
       memo: report.memo,
       photoPaths: report.photoUrls ?? []
     };
+  }
+  async loadDailyLogsByDate(workDate: string) {
+    // workDateは '2025-05-22' など。保存形式に合わせて調整
+    const q = query(
+      collectionGroup(this.firestore, 'WorkLogs'),
+      where('workDate', '==', workDate)
+    );
+    const snap = await getDocs(q);
+    this.dailyLogs = snap.docs.map(doc => doc.data() as WorkLog);
+  }
+  async getDailyLogsForReport(report: DailyReport): Promise<WorkLog[]> {
+    // workDateの型に応じて整形
+    let workDateStr = '';
+    if (report.workDate instanceof Date) {
+      workDateStr = report.workDate.toISOString().slice(0, 10); // 'YYYY-MM-DD'
+    } else if (typeof report.workDate === 'string') {
+      workDateStr = report.workDate.length > 10 ? report.workDate.slice(0, 10) : report.workDate;
+    }
+    const q = query(
+      collectionGroup(this.firestore, 'WorkLogs'),
+      where('workDate', '==', workDateStr)
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(doc => doc.data() as WorkLog);
   }
 }
