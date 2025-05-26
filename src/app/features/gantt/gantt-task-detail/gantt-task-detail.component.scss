@@ -65,4 +65,12 @@ p { margin: 4px 0; }
   display: flex;
   gap: 16px;
   justify-content: flex-start;
+}
+
+.task-admins, .task-assignees {
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  color: #333;
+  font-size: 1rem;
+  font-weight: normal;
+  margin-bottom: 4px;
 } 

@@ -1,6 +1,12 @@
 <div *ngIf="ganttTask; else loading">
   <div class="task-detail-card">
     <h2 class="task-title">{{ ganttTask.title }}</h2>
+    <div class="task-admins">
+      <span class="desc-label">管理者：</span><span class="admin-names"></span>
+    </div>
+    <div class="task-assignees">
+      <span class="desc-label">担当者：</span><span class="assignee-names"></span>
+    </div>
     <div class="task-period">
       <span>
         予定: 
