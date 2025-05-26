@@ -49,7 +49,11 @@
             <!-- 作業日 Column -->
             <ng-container matColumnDef="workDate">
               <th mat-header-cell *matHeaderCellDef>作業日</th>
-              <td mat-cell *matCellDef="let log">{{ log.workDate.toDate() | date:'yyyy/MM/dd' }}</td>
+              <td mat-cell *matCellDef="let log">
+                <a [routerLink]="['/app/daily-report-detail', log.id]" style="color:#1976d2; text-decoration:underline; cursor:pointer;">
+                  {{ log.workDate.toDate() | date:'yyyy/MM/dd' }}
+                </a>
+              </td>
             </ng-container>
             <!-- 担当者 Column（log.supervisorを表示） -->
             <ng-container matColumnDef="assignee">

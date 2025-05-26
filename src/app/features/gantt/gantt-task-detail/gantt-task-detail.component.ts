@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, ViewContainerRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Firestore, doc, getDoc, updateDoc, DocumentData, deleteDoc } from '@angular/fire/firestore';
 import { GanttChartTask } from '../../../core/models/gantt-chart-task.model';
 import { MatIconModule } from '@angular/material/icon';
@@ -26,7 +26,8 @@ import { ProjectService } from '../../../core/project.service';
     MatButtonModule,
     TimestampToDatePipe,
     MatTableModule,
-    StatusLabelPipe
+    StatusLabelPipe,
+    RouterModule
   ],
   templateUrl: './gantt-task-detail.component.html',
   styleUrls: ['./gantt-task-detail.component.scss']

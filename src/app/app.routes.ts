@@ -66,6 +66,10 @@ export const routes: Routes = [
         path: 'monthly-report',
         loadComponent: () => import('./features/monthly-report/monthly-report.component').then(m => m.MonthlyReportComponent)
       },
+      {
+        path: 'daily-report-detail/:dailyReportId',
+        loadComponent: () => import('./features/daily-report/daily-report-detail/daily-report-detail.component').then(m => m.DailyReportDetailComponent)
+      },
       // {
       //   path: 'projects/create', // 新規作成画面のパス
       //   loadComponent: () => import('./features/project/components/project-create/project-create.component').then(m => m.ProjectCreateComponent)
