@@ -25,6 +25,8 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { UserService } from '../../../core/user.service';
+import { User as AppUser } from '../../../core/models/user.model';
 
 interface TimelineDay {
   dayNumber: number; // 日 (1, 2, ..., 31)
@@ -72,6 +74,7 @@ export class GanttChartComponent implements OnInit {
   private taskService: TaskService = inject(TaskService); // ★ TaskService がインジェクトされているか確認
   private cdr: ChangeDetectorRef = inject(ChangeDetectorRef);
   private router: Router = inject(Router);  
+  private userService: UserService = inject(UserService);
 
   project$: Observable<Project | undefined> | undefined;
   tasks$: Observable<GanttChartTask[]> | undefined;
@@ -94,7 +97,7 @@ export class GanttChartComponent implements OnInit {
   @HostBinding('style.--day-cell-width') get cssDayCellWidth() { return this.DAY_CELL_WIDTH + 'px'; }
   @HostBinding('style.--task-count') get cssTaskCount() { return (this.ganttTasks?.length || 1).toString(); }
 
-  private _project: Project | undefined;
+  public _project: Project | undefined;
 
   get projectName(): string | undefined {
     return this._project?.name;
@@ -113,6 +116,8 @@ export class GanttChartComponent implements OnInit {
     if (this.isTimestamp(e)) return e.toDate();
     return null;
   }
+
+  userMap: Record<string, AppUser> = {};
 
   constructor(
     public dialog: MatDialog
@@ -204,7 +209,7 @@ export class GanttChartComponent implements OnInit {
         }
       })
     ).subscribe({
-      next: project => {
+      next: (project) => {
         this.project$ = of(project);
         this._project = project ?? undefined;
         this.isLoadingProject = false;
@@ -238,9 +243,22 @@ export class GanttChartComponent implements OnInit {
           this.generateTimelineHeaders();
           this.calculateTotalTimelineWidth();
         }
+
+        // 管理者・担当者IDを集めてユーザー情報を一括取得
+        const managerIds = project?.managerIds ?? (project?.managerId ? [project.managerId] : []);
+        const memberIds = project?.members ?? [];
+        const allUserIds = Array.from(new Set([...(managerIds ?? []), ...(memberIds ?? [])]));
+        if (allUserIds.length > 0) {
+          this.userService.getUsersByIds(allUserIds).subscribe(users => {
+            this.userMap = {};
+            users.forEach(u => { this.userMap[u.id] = u; });
+            this.cdr.markForCheck();
+          });
+        }
+
         this.cdr.detectChanges();
       },
-      error: err => {
+      error: (err) => {
         console.error('プロジェクト情報の取得エラー:', err);
         this.projectError = 'プロジェクト情報の取得中にエラーが発生しました。';
         this.isLoadingProject = false;
@@ -894,6 +912,11 @@ get overallProgressRate(): number | null {
 
 navigateToHome(): void {
   this.router.navigate(['/app/dashboard']);
+}
+
+getUserNamesByIds(ids: string[] | undefined): string[] {
+  if (!ids) return [];
+  return ids.map(id => this.userMap[id]?.displayName || id);
 }
 
 }// GanttChartComponent クラスの閉じ括弧
