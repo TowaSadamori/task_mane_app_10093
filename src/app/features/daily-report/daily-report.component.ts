@@ -29,6 +29,7 @@ export interface DailyReport {
   photoNames?: string[];
   photoUrls?: string[];
   createdAt?: Timestamp | string;
+  manager?: string;
 }
 
 @Component({
