@@ -82,8 +82,11 @@
         multiple>
       <div class="selected-file" *ngIf="form.get('photos')?.value?.length">
         選択中:
-        <span *ngFor="let file of form.get('photos')?.value; let i = index">
-          {{ file.name }}<span *ngIf="i < (form.get('photos')?.value?.length || 0) - 1">, </span>
+        <span *ngFor="let file of form.get('photos')?.value; let i = index" style="display: inline-block; margin-right: 8px;">
+          {{ file.name }}
+          <button mat-icon-button type="button" (click)="removeSelectedPhoto(i)" aria-label="削除">
+            <mat-icon>delete</mat-icon>
+          </button>
         </span>
       </div>
       <div *ngIf="data.log?.photoUrls?.length" class="existing-photos">

@@ -174,6 +174,14 @@ export class GanttDailyLogFormDialogComponent {
     }
   }
 
+  removeSelectedPhoto(i: number) {
+    const files = this.form.get('photos')?.value as File[];
+    if (Array.isArray(files)) {
+      files.splice(i, 1);
+      this.form.get('photos')?.setValue([...files]);
+    }
+  }
+
   removeExistingPhoto(i: number) {
     if (this.data.log && Array.isArray(this.data.log.photoUrls)) {
       this.data.log.photoUrls.splice(i, 1);
