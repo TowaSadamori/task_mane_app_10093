@@ -16,6 +16,7 @@ import { PdfExportComponent, DailyReportData } from '../../pdf-export/pdf-export
 import { UserService } from '../../core/user.service';
 import { User } from '../../core/models/user.model';
 import { Firestore, collectionGroup, getDocs } from '@angular/fire/firestore';
+import { RouterModule } from '@angular/router';
 
 export interface DailyReport {
   workDate: Date | string;
@@ -77,7 +78,8 @@ export class ConfirmDialogComponent {}
     MatDatepickerModule,
     MatNativeDateModule,
     MatIconModule,
-    PdfExportComponent
+    PdfExportComponent,
+    RouterModule
   ],
   templateUrl: './daily-report.component.html',
   styleUrls: ['./daily-report.component.scss']
