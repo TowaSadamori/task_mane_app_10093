@@ -9,7 +9,7 @@
   </div>
   <div *ngIf="projects$ | async as projects; else loadingOrError">
     <div class="project-list" *ngIf="projects.length > 0; else noProjects">
-      <div *ngFor="let project of projects" class="project-item">
+      <div *ngFor="let project of filteredProjects" class="project-item">
         <div class="project-info">
           <a [routerLink]="['/app/gantt-chart', project.id]" matTooltip="クリックしてタスク一覧へ">
             {{ project.name }}

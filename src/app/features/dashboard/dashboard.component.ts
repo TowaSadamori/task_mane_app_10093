@@ -15,6 +15,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { TaskService } from '../../core/task.service';
 import { UserService } from '../../core/user.service';
 import { User as AppUser } from '../../core/models/user.model';
+import { AuthService } from '../../core/auth.service';
 // import { GanttChartTask } from '../../core/models/gantt-chart-task.model';
 // import { AuthService } from '../../auth/auth.service'; // ユーザーに紐づくプロジェクトを取得する場合
 
@@ -34,12 +35,15 @@ import { User as AppUser } from '../../core/models/user.model';
 })
 export class DashboardComponent implements OnInit {
   projects$: Observable<Project[]> | undefined;
-  private projectService: ProjectService = inject(ProjectService); // inject を使用
+  filteredProjects: Project[] = [];
+  private projectService: ProjectService = inject(ProjectService);
   private dialog: MatDialog = inject(MatDialog);
   private taskService = inject(TaskService);
   private userService: UserService = inject(UserService);
+  private authService: AuthService = inject(AuthService);
   progressMap: Record<string, number> = {};
   userMap: Record<string, AppUser> = {};
+  currentUserUid: string | null = null;
   // private authService?: AuthService; // 必要に応じて
 
   constructor() {
@@ -50,7 +54,10 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadProjects();
+    this.authService.getCurrentUser().then(user => {
+      this.currentUserUid = user?.uid || null;
+      this.loadProjects();
+    });
 
     // 特定ユーザーのプロジェクトを取得する場合のロジック (必要であれば)
     // this.authService?.user$.subscribe(user => { // user$ が AuthService にあると仮定
@@ -65,6 +72,12 @@ export class DashboardComponent implements OnInit {
   loadProjects(): void {
     this.projects$ = this.projectService.getProjects();
     this.projects$?.subscribe(projects => {
+      // フィルタリング: 管理者または担当者に自分が含まれるプロジェクトのみ
+      this.filteredProjects = projects.filter(project => {
+        const managerIds = project.managerIds ?? (project.managerId ? [project.managerId] : []);
+        const memberIds = project.members ?? [];
+        return this.currentUserUid && (managerIds.includes(this.currentUserUid) || memberIds.includes(this.currentUserUid));
+      });
       projects.forEach(project => {
         this.taskService.getGanttChartTasksByProjectId(project.id).subscribe(tasks => {
           if (tasks.length === 0) {
@@ -76,7 +89,7 @@ export class DashboardComponent implements OnInit {
         });
       });
       const allUserIds = Array.from(new Set(projects.flatMap(p => [
-        ...(p.managerIds ?? []),
+        ...(p.managerIds ?? (p.managerId ? [p.managerId] : [])),
         ...(p.members ?? [])
       ])));
       if (allUserIds.length > 0) {
