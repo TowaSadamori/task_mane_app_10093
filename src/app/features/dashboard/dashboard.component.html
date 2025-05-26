@@ -7,68 +7,80 @@
       </button>
     </div>
   </div>
-  <div *ngIf="projects$ | async as projects; else loadingOrError">
-    <div class="project-list" *ngIf="projects.length > 0; else noProjects">
-      <div *ngFor="let project of filteredProjects" class="project-item">
-        <div class="project-info">
-          <a [routerLink]="['/app/gantt-chart', project.id]" matTooltip="クリックしてタスク一覧へ">
-            {{ project.name }}
-          </a>
-          <div class="project-period" *ngIf="project.startDate || project.endDate">
-            <ng-container *ngIf="project.startDate && project.endDate">
-              期間: {{ toDateSafe(project.startDate) | date:'yyyy/MM/dd' }} 〜 {{ toDateSafe(project.endDate) | date:'yyyy/MM/dd' }}
-            </ng-container>
-            <ng-container *ngIf="project.startDate && !project.endDate">
-              開始日: {{ toDateSafe(project.startDate) | date:'yyyy/MM/dd' }}
-            </ng-container>
-            <ng-container *ngIf="!project.startDate && project.endDate">
-              終了日: {{ toDateSafe(project.endDate) | date:'yyyy/MM/dd' }}
-            </ng-container>
-          </div>
-          <div class="project-users">
-            <div><span class="desc-label">管理者：</span>
-              <span>{{ getUserNamesByIds(project.managerIds ?? (project.managerId ? [project.managerId] : [])).join(', ') }}</span>
+  <div class="my-projects-section" style="margin-bottom: 40px; border: 2px solid #1976d2; border-radius: 16px; padding: 24px; background: #f8fbff;">
+    <h3 style="margin-top:0; color:#1976d2;">あなたのプロジェクト</h3>
+    <div *ngIf="projects$ | async as projects; else loadingOrError">
+      <div class="project-list" *ngIf="projects.length > 0; else noProjects">
+        <div *ngFor="let project of filteredProjects" class="project-item" style="margin-bottom: 24px; box-shadow: 0 2px 8px #e3eafc; border-radius: 12px; padding: 20px; background: #fff;">
+          <div class="project-info">
+            <a [routerLink]="['/app/gantt-chart', project.id]" matTooltip="クリックしてタスク一覧へ">
+              {{ project.name }}
+            </a>
+            <div class="project-period" *ngIf="project.startDate || project.endDate">
+              <ng-container *ngIf="project.startDate && project.endDate">
+                期間: {{ toDateSafe(project.startDate) | date:'yyyy/MM/dd' }} 〜 {{ toDateSafe(project.endDate) | date:'yyyy/MM/dd' }}
+              </ng-container>
+              <ng-container *ngIf="project.startDate && !project.endDate">
+                開始日: {{ toDateSafe(project.startDate) | date:'yyyy/MM/dd' }}
+              </ng-container>
+              <ng-container *ngIf="!project.startDate && project.endDate">
+                終了日: {{ toDateSafe(project.endDate) | date:'yyyy/MM/dd' }}
+              </ng-container>
             </div>
-            <div *ngIf="project.members && project.members.length > 0"><span class="desc-label">担当者：</span>
-              <span>{{ getUserNamesByIds(project.members).join(', ') }}</span>
+            <div class="project-users">
+              <div><span class="desc-label">管理者：</span>
+                <span>{{ getUserNamesByIds(project.managerIds ?? (project.managerId ? [project.managerId] : [])).join(', ') }}</span>
+              </div>
+              <div *ngIf="project.members && project.members.length > 0"><span class="desc-label">担当者：</span>
+                <span>{{ getUserNamesByIds(project.members).join(', ') }}</span>
+              </div>
+            </div>
+            <div class="project-description">
+              <div class="desc-label">説明：</div>
+              <div class="desc-content">{{ project.description }}</div>
+            </div>
+            <div class="progress-circle-large" style="display: flex; justify-content: center; width: 100%; margin: 16px 0;">
+              <svg width="160" height="160">
+                <circle cx="80" cy="80" r="64" stroke="#eee" stroke-width="24" fill="none"/>
+                <circle
+                  cx="80" cy="80" r="64"
+                  stroke="#1976d2"
+                  stroke-width="24"
+                  fill="none"
+                  [attr.stroke-dasharray]="2 * 3.1416 * 64"
+                  [attr.stroke-dashoffset]="2 * 3.1416 * 64 - (2 * 3.1416 * 64 * getProjectProgress(project.id) / 100)"
+                  stroke-linecap="round"
+                  style="transition: stroke-dashoffset 0.5s;"
+                />
+                <text x="80" y="100" text-anchor="middle" font-size="40" fill="#1976d2" font-weight="bold">
+                  {{ getProjectProgress(project.id) }}%
+                </text>
+              </svg>
             </div>
           </div>
-          <div class="project-description">
-            <div class="desc-label">説明：</div>
-            <div class="desc-content">{{ project.description }}</div>
+          <div class="project-actions">
+            <button mat-icon-button color="primary" aria-label="プロジェクトを編集" (click)="openEditProjectDialog(project)" matTooltip="編集します。">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" aria-label="プロジェクトを削除" (click)="confirmDeleteProject(project)" matTooltip="削除します。">
+              <mat-icon>delete</mat-icon>
+            </button>
           </div>
-          <div class="progress-circle-large" style="display: flex; justify-content: center; width: 100%; margin: 16px 0;">
-            <svg width="160" height="160">
-              <circle cx="80" cy="80" r="64" stroke="#eee" stroke-width="24" fill="none"/>
-              <circle
-                cx="80" cy="80" r="64"
-                stroke="#1976d2"
-                stroke-width="24"
-                fill="none"
-                [attr.stroke-dasharray]="2 * 3.1416 * 64"
-                [attr.stroke-dashoffset]="2 * 3.1416 * 64 - (2 * 3.1416 * 64 * getProjectProgress(project.id) / 100)"
-                stroke-linecap="round"
-                style="transition: stroke-dashoffset 0.5s;"
-              />
-              <text x="80" y="100" text-anchor="middle" font-size="40" fill="#1976d2" font-weight="bold">
-                {{ getProjectProgress(project.id) }}%
-              </text>
-            </svg>
-          </div>
-        </div>
-        <div class="project-actions">
-          <button mat-icon-button color="primary" aria-label="プロジェクトを編集" (click)="openEditProjectDialog(project)" matTooltip="編集します。">
-            <mat-icon>edit</mat-icon>
-          </button>
-          <button mat-icon-button color="warn" aria-label="プロジェクトを削除" (click)="confirmDeleteProject(project)" matTooltip="削除します。">
-            <mat-icon>delete</mat-icon>
-          </button>
         </div>
       </div>
+      <ng-template #noProjects>
+        <p>現在進行中のプロジェクトはありません。</p>
+      </ng-template>
     </div>
-    <ng-template #noProjects>
-      <p>現在進行中のプロジェクトはありません。</p>
-    </ng-template>
+  </div>
+  <div class="my-tasks-section" style="margin-bottom: 40px; border: 1.5px solid #90caf9; border-radius: 12px; padding: 20px; background: #f4faff;">
+    <h3 style="color:#1976d2;">あなたのタスク一覧</h3>
+    <div *ngIf="myTasks.length === 0">割り当てられたタスクはありません。</div>
+    <ul *ngIf="myTasks.length > 0" style="padding-left: 1.2em;">
+      <li *ngFor="let task of myTasks" style="margin-bottom: 8px;">
+        <span style="font-weight:500;">{{ task.title }}</span>（プロジェクト: <span style="color:#1976d2;">{{ getProjectName(task.projectId) }}</span>） 進捗: <span style="color:#1976d2;">{{ task.progress ?? '-' }}%</span>
+      </li>
+    </ul>
   </div>
   <ng-template #loadingOrError>
     <p>プロジェクトを読み込んでいます...</p>

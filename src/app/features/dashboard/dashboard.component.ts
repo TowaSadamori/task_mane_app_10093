@@ -16,7 +16,9 @@ import { TaskService } from '../../core/task.service';
 import { UserService } from '../../core/user.service';
 import { User as AppUser } from '../../core/models/user.model';
 import { AuthService } from '../../core/auth.service';
-// import { GanttChartTask } from '../../core/models/gantt-chart-task.model';
+import { GanttChartTask } from '../../core/models/gantt-chart-task.model';
+import { DailyReportService } from '../../features/daily-report/daily-report.service';
+import { DailyReport } from '../../features/daily-report/daily-report.component';
 // import { AuthService } from '../../auth/auth.service'; // ユーザーに紐づくプロジェクトを取得する場合
 
 @Component({
@@ -36,6 +38,7 @@ import { AuthService } from '../../core/auth.service';
 export class DashboardComponent implements OnInit {
   projects$: Observable<Project[]> | undefined;
   filteredProjects: Project[] = [];
+  myTasks: GanttChartTask[] = [];
   private projectService: ProjectService = inject(ProjectService);
   private dialog: MatDialog = inject(MatDialog);
   private taskService = inject(TaskService);
@@ -44,6 +47,9 @@ export class DashboardComponent implements OnInit {
   progressMap: Record<string, number> = {};
   userMap: Record<string, AppUser> = {};
   currentUserUid: string | null = null;
+  projectMap: Record<string, Project> = {};
+  myDailyReports: DailyReport[] = [];
+  private dailyReportService: DailyReportService = inject(DailyReportService);
   // private authService?: AuthService; // 必要に応じて
 
   constructor() {
@@ -57,6 +63,8 @@ export class DashboardComponent implements OnInit {
     this.authService.getCurrentUser().then(user => {
       this.currentUserUid = user?.uid || null;
       this.loadProjects();
+      this.loadMyTasks();
+      this.loadMyDailyReports();
     });
 
     // 特定ユーザーのプロジェクトを取得する場合のロジック (必要であれば)
@@ -72,12 +80,14 @@ export class DashboardComponent implements OnInit {
   loadProjects(): void {
     this.projects$ = this.projectService.getProjects();
     this.projects$?.subscribe(projects => {
-      // フィルタリング: 管理者または担当者に自分が含まれるプロジェクトのみ
       this.filteredProjects = projects.filter(project => {
         const managerIds = project.managerIds ?? (project.managerId ? [project.managerId] : []);
         const memberIds = project.members ?? [];
         return this.currentUserUid && (managerIds.includes(this.currentUserUid) || memberIds.includes(this.currentUserUid));
       });
+      // プロジェクトID→プロジェクト名用マップ
+      this.projectMap = {};
+      projects.forEach(p => { this.projectMap[p.id] = p; });
       projects.forEach(project => {
         this.taskService.getGanttChartTasksByProjectId(project.id).subscribe(tasks => {
           if (tasks.length === 0) {
@@ -98,6 +108,35 @@ export class DashboardComponent implements OnInit {
           users.forEach(u => { this.userMap[u.id] = u; });
         });
       }
+    });
+  }
+
+  loadMyTasks(): void {
+    if (!this.currentUserUid) return;
+    // 全プロジェクトのタスクを横断的に取得
+    this.projectService.getProjects().subscribe(projects => {
+      const allProjectIds = projects.map(p => p.id);
+      let allTasks: GanttChartTask[] = [];
+      let loadedCount = 0;
+      allProjectIds.forEach(projectId => {
+        this.taskService.getGanttChartTasksByProjectId(projectId).subscribe(tasks => {
+          // 自分が担当のタスクだけ抽出
+          const myTasks = tasks.filter(task => (task.assignees ?? []).includes(this.currentUserUid!));
+          allTasks = allTasks.concat(myTasks);
+          loadedCount++;
+          if (loadedCount === allProjectIds.length) {
+            this.myTasks = allTasks;
+          }
+        });
+      });
+    });
+  }
+
+  loadMyDailyReports(): void {
+    if (!this.currentUserUid) return;
+    this.dailyReportService.getDailyReports().then((reports: DailyReport[]) => {
+      // personUidが自分のUIDの日次ログのみ抽出
+      this.myDailyReports = reports.filter((r: DailyReport) => r.personUid === this.currentUserUid);
     });
   }
 
@@ -180,5 +219,14 @@ export class DashboardComponent implements OnInit {
   getUserNamesByIds(ids: string[] | undefined): string[] {
     if (!ids) return [];
     return ids.map(id => this.userMap[id]?.displayName || id);
+  }
+
+  getProjectName(projectId: string): string {
+    return this.projectMap[projectId]?.name || projectId;
+  }
+
+  getDisplayNameByUid(uid: string): string {
+    const user = this.userMap[uid];
+    return user ? user.displayName : uid;
   }
 }

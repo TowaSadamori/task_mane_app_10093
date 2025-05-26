@@ -32,6 +32,7 @@ export interface DailyReport {
   photoUrls?: string[];
   createdAt?: Timestamp | string;
   managerUids?: string[];
+  projectId?: string;
 }
 
 @Component({
