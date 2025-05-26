@@ -53,6 +53,7 @@ export class AddTaskDialogComponent implements OnInit {
   private dailyLogService = inject(GanttDailyLogService);
   private userService = inject(UserService);
   managerDisplayNames = '';
+  memberOptions: { id: string, displayName: string }[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -66,7 +67,8 @@ export class AddTaskDialogComponent implements OnInit {
       actualStartDate: [null],
       actualEndDate: [null],
       status: ['todo', Validators.required],
-      memo: ['']
+      memo: [''],
+      assignees: [[]],
     }, { validators: [plannedEndDateAfterOrEqualStartDateValidator, plannedDateWithinProjectPeriodValidator(this.minDate, this.maxDate)] });
 
     if (this.data) {
@@ -90,7 +92,8 @@ export class AddTaskDialogComponent implements OnInit {
         actualStartDate: this.toDateStringOrNull(this.data.task.actualStartDate),
         actualEndDate: this.toDateStringOrNull(this.data.task.actualEndDate),
         status: this.data.task.status || 'todo',
-        memo: this.data.task.memo
+        memo: this.data.task.memo,
+        assignees: this.data.task.assignees ?? [],
       });
       this.statusDisabled = false;
     }
@@ -106,6 +109,13 @@ export class AddTaskDialogComponent implements OnInit {
         if (managerIds.length > 0) {
           this.userService.getUsersByIds(managerIds).subscribe(users => {
             this.managerDisplayNames = users.map(u => u.displayName).join(', ');
+          });
+        }
+        // 担当者候補の取得
+        const memberIds = project.members ?? [];
+        if (memberIds.length > 0) {
+          this.userService.getUsersByIds(memberIds).subscribe(users => {
+            this.memberOptions = users.map(u => ({ id: u.id, displayName: u.displayName }));
           });
         }
       });
@@ -141,7 +151,8 @@ export class AddTaskDialogComponent implements OnInit {
         actualStartDate: toTimestampOrUndefined(formData.actualStartDate),
         actualEndDate: toTimestampOrUndefined(formData.actualEndDate),
         status: formData.status,
-        memo: formData.memo
+        memo: formData.memo,
+        assignees: formData.assignees,
       };
       this.dialogRef.close(resultData);
     }

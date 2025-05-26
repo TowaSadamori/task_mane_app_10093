@@ -15,4 +15,5 @@ export interface GanttChartTask extends Task {
   parentId?: string | null;
   level?: number;
   memo?: string | null;
+  assignees?: string[];
 }
