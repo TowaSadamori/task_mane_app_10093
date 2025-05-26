@@ -121,7 +121,7 @@ export class DashboardComponent implements OnInit {
       allProjectIds.forEach(projectId => {
         this.taskService.getGanttChartTasksByProjectId(projectId).subscribe(tasks => {
           // 自分が担当のタスクだけ抽出
-          const myTasks = tasks.filter(task => (task.assignees ?? []).includes(this.currentUserUid!));
+          const myTasks = tasks.filter(task => (task.assignees ?? []).includes(this.currentUserUid!) && task.status !== 'done');
           allTasks = allTasks.concat(myTasks);
           loadedCount++;
           if (loadedCount === allProjectIds.length) {
