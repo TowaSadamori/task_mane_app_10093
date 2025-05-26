@@ -256,4 +256,9 @@ export class DailyReportComponent {
     }
     return '';
   }
+  // 日報の作業日と一致する日次ログだけ返す
+  getLogsForReport(report: DailyReport): WorkLogForDisplay[] {
+    const reportDateStr = this.formatWorkLogDate(report.workDate);
+    return this.allWorkLogs.filter(log => this.formatWorkLogDate(log.workDate) === reportDateStr);
+  }
 }
