@@ -110,4 +110,16 @@ export class DailyReportDetailComponent implements OnInit {
       this.workLog = docSnap.data() as WorkLog;
     }
   }
+
+  async deleteDailyLog() {
+    if (!this.ganttTaskId || !this.dailyReportId) return;
+    const confirmed = window.confirm('この日次ログを削除しますか？');
+    if (!confirmed) return;
+    // Firestoreから削除
+    const logRefPath = `GanttChartTasks/${this.ganttTaskId}/WorkLogs/${this.dailyReportId}`;
+    const logRef = (await import('@angular/fire/firestore')).doc(this.firestore, logRefPath);
+    await (await import('@angular/fire/firestore')).deleteDoc(logRef);
+    // タスク詳細画面に戻る
+    this.navigateToTaskDetail();
+  }
 }

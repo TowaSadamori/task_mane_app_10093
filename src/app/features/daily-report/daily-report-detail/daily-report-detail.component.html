@@ -28,6 +28,9 @@
   <button *ngIf="workLog && ganttTaskId" (click)="editDailyLog()" mat-icon-button class="edit-btn" aria-label="編集">
     <mat-icon>edit</mat-icon>
   </button>
+  <button *ngIf="workLog && ganttTaskId" (click)="deleteDailyLog()" mat-icon-button color="warn" class="delete-btn" aria-label="削除">
+    <mat-icon>delete</mat-icon>
+  </button>
 </div>
 <ng-template #loading>
   <p>読み込み中...</p>
