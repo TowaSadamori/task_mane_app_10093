@@ -78,6 +78,17 @@
     <div *ngIf="myTasks.length === 0">割り当てられたタスクはありません。</div>
     <ul *ngIf="myTasks.length > 0" style="padding-left: 1.2em;">
       <li *ngFor="let task of myTasks" style="margin-bottom: 8px;">
+        <span style="margin-right: 8px; color:#1976d2; font-weight:500;">
+          <ng-container *ngIf="task.plannedStartDate && task.plannedEndDate">
+            {{ toDateSafe(task.plannedStartDate) | date:'yyyy/MM/dd' }}～{{ toDateSafe(task.plannedEndDate) | date:'yyyy/MM/dd' }}
+          </ng-container>
+          <ng-container *ngIf="task.plannedStartDate && !task.plannedEndDate">
+            {{ toDateSafe(task.plannedStartDate) | date:'yyyy/MM/dd' }}～
+          </ng-container>
+          <ng-container *ngIf="!task.plannedStartDate && task.plannedEndDate">
+            ～{{ toDateSafe(task.plannedEndDate) | date:'yyyy/MM/dd' }}
+          </ng-container>
+        </span>
         <a [routerLink]="['/app/gantt-task-detail', task.id]" style="font-weight:500; color:#1976d2; text-decoration:underline; cursor:pointer;">{{ task.title }}</a>（プロジェクト: <a [routerLink]="['/app/gantt-chart', task.projectId]" style="color:#1976d2; text-decoration:underline; cursor:pointer;">{{ getProjectName(task.projectId) }}</a>） ステータス: <span style="color:#1976d2;">
           {{
             (task.status + '') === 'todo' ? '未着手' :
