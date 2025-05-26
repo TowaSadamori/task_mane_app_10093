@@ -78,7 +78,7 @@
     <div *ngIf="myTasks.length === 0">割り当てられたタスクはありません。</div>
     <ul *ngIf="myTasks.length > 0" style="padding-left: 1.2em;">
       <li *ngFor="let task of myTasks" style="margin-bottom: 8px;">
-        <a [routerLink]="['/app/gantt-task-detail', task.id]" style="font-weight:500; color:#1976d2; text-decoration:underline; cursor:pointer;">{{ task.title }}</a>（プロジェクト: <span style="color:#1976d2;">{{ getProjectName(task.projectId) }}</span>） 進捗: <span style="color:#1976d2;">{{ task.progress ?? '-' }}%</span>
+        <a [routerLink]="['/app/gantt-task-detail', task.id]" style="font-weight:500; color:#1976d2; text-decoration:underline; cursor:pointer;">{{ task.title }}</a>（プロジェクト: <a [routerLink]="['/app/gantt-chart', task.projectId]" style="color:#1976d2; text-decoration:underline; cursor:pointer;">{{ getProjectName(task.projectId) }}</a>） 進捗: <span style="color:#1976d2;">{{ task.progress ?? '-' }}%</span>
       </li>
     </ul>
   </div>
