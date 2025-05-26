@@ -10,21 +10,24 @@ export class DailyReportService {
   }
 
   async addDailyReport(report: DailyReport) {
-    // Firestoreに保存するため、日付やファイル型を変換
-    const data: Record<string, unknown> = { ...report };
-    if (data['workDate'] instanceof Date) {
-      data['workDate'] = Timestamp.fromDate(data['workDate'] as Date);
+    try {
+      const data: Record<string, unknown> = { ...report };
+      if (data['workDate'] instanceof Date) {
+        data['workDate'] = Timestamp.fromDate(data['workDate'] as Date);
+      }
+      if (Array.isArray(data['photos'])) {
+        data['photoNames'] = (data['photos'] as File[]).map((f: File) => f.name);
+        delete data['photos'];
+      }
+      if (report['photoUrls']) {
+        data['photoUrls'] = report['photoUrls'];
+      }
+      data['createdAt'] = Timestamp.now();
+      await addDoc(this.col, data);
+    } catch (error) {
+      console.error('addDailyReport error:', error);
+      throw error;
     }
-    // 写真はファイル名だけ保存（Storage連携は後で）
-    if (Array.isArray(data['photos'])) {
-      data['photoNames'] = (data['photos'] as File[]).map((f: File) => f.name);
-      delete data['photos'];
-    }
-    if (report['photoUrls']) {
-      data['photoUrls'] = report['photoUrls'];
-    }
-    data['createdAt'] = Timestamp.now();
-    await addDoc(this.col, data);
   }
 
   async getDailyReports(): Promise<DailyReport[]> {
@@ -50,23 +53,34 @@ export class DailyReportService {
 
   async deleteDailyReport(id: string) {
     const ref = doc(this.firestore, 'dailyReports', id);
-    await deleteDoc(ref);
+    try {
+      await deleteDoc(ref);
+    } catch (error) {
+      console.error('deleteDailyReport error:', error);
+      throw error;
+    }
   }
 
   async updateDailyReport(id: string, report: DailyReport) {
     const ref = doc(this.firestore, 'dailyReports', id);
-    const data: Record<string, unknown> = { ...report };
-    if (data['workDate'] instanceof Date) {
-      data['workDate'] = Timestamp.fromDate(data['workDate'] as Date);
+    try {
+      const data: Record<string, unknown> = { ...report };
+      if (data['workDate'] instanceof Date) {
+        data['workDate'] = Timestamp.fromDate(data['workDate'] as Date);
+      }
+      if (Array.isArray(data['photos'])) {
+        data['photoNames'] = (data['photos'] as File[]).map((f: File) => f.name);
+        delete data['photos'];
+      }
+      if (report['photoUrls']) {
+        data['photoUrls'] = report['photoUrls'];
+      }
+      delete data['id'];
+      await updateDoc(ref, data as DocumentData);
+    } catch (error) {
+      console.error('updateDailyReport error:', error);
+      throw error;
     }
-    if (Array.isArray(data['photos'])) {
-      data['photoNames'] = (data['photos'] as File[]).map((f: File) => f.name);
-      delete data['photos'];
-    }
-    if (report['photoUrls']) {
-      data['photoUrls'] = report['photoUrls'];
-    }
-    delete data['id'];
-    await updateDoc(ref, data as any);
   }
+
 } 

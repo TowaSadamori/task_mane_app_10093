@@ -7,7 +7,7 @@ import { DailyReportService } from './daily-report.service';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { Router } from '@angular/router';
-import type { Timestamp } from 'firebase/firestore';
+import { Timestamp } from 'firebase/firestore';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialogModule } from '@angular/material/dialog';
 import { ImageViewDialogComponent } from './image-view-dialog.component';
@@ -15,6 +15,7 @@ import { EditDailyReportDialogComponent } from './edit-daily-report-dialog.compo
 import { PdfExportComponent, DailyReportData } from '../../pdf-export/pdf-export.component';
 import { CsvExportComponent } from '../../shared/csv-export.component';
 import { Firestore, collectionGroup, query, where, getDocs } from '@angular/fire/firestore';
+import { Observable, from } from 'rxjs';
 
 export interface DailyReport {
   workDate: Date | string;
@@ -34,7 +35,7 @@ export interface DailyReport {
 }
 
 export interface WorkLog {
-  workDate: string; // 例: '2025-05-22' など。型は保存形式に合わせて調整
+  workDate: Timestamp;
   startTime?: string;
   endTime?: string;
   breakTime?: number;
@@ -43,6 +44,8 @@ export interface WorkLog {
   supervisor?: string;
   comment?: string;
   photos?: string[];
+  _path?: string; // 追加: ドキュメントパス
+  _id?: string;   // 追加: ドキュメントID
   [key: string]: unknown;
 }
 
@@ -186,19 +189,26 @@ export class DailyReportComponent {
     const snap = await getDocs(q);
     this.dailyLogs = snap.docs.map(doc => doc.data() as WorkLog);
   }
-  async getDailyLogsForReport(report: DailyReport): Promise<WorkLog[]> {
-    // workDateの型に応じて整形
-    let workDateStr = '';
+  getDailyLogsForReport(report: DailyReport): Observable<WorkLog[]> {
+    let workDate: Date;
     if (report.workDate instanceof Date) {
-      workDateStr = report.workDate.toISOString().slice(0, 10); // 'YYYY-MM-DD'
+      workDate = new Date(report.workDate.getFullYear(), report.workDate.getMonth(), report.workDate.getDate());
     } else if (typeof report.workDate === 'string') {
-      workDateStr = report.workDate.length > 10 ? report.workDate.slice(0, 10) : report.workDate;
+      const [y, m, d] = report.workDate.slice(0, 10).split('-').map(Number);
+      workDate = new Date(y, m - 1, d);
+    } else {
+      return from(Promise.resolve([]));
     }
+    const workDateTimestamp = Timestamp.fromDate(workDate);
     const q = query(
       collectionGroup(this.firestore, 'WorkLogs'),
-      where('workDate', '==', workDateStr)
+      where('workDate', '==', workDateTimestamp)
     );
-    const snap = await getDocs(q);
-    return snap.docs.map(doc => doc.data() as WorkLog);
+    return from(getDocs(q).then(snap => snap.docs.map(doc => {
+      const data = doc.data() as WorkLog;
+      data._path = doc.ref.path;
+      data._id = doc.id;
+      return data;
+    })));
   }
 }
