@@ -18,7 +18,7 @@ import { User as AppUser } from '../../core/models/user.model';
 import { AuthService } from '../../core/auth.service';
 import { GanttChartTask } from '../../core/models/gantt-chart-task.model';
 import { DailyReportService } from '../../features/daily-report/daily-report.service';
-import { Firestore, collectionGroup, query, where, getDocs } from '@angular/fire/firestore';
+import { Firestore, collectionGroup, query, getDocs } from '@angular/fire/firestore';
 // import { AuthService } from '../../auth/auth.service'; // ユーザーに紐づくプロジェクトを取得する場合
 
 // WorkLog+タスク名・プロジェクト名用型
@@ -26,6 +26,7 @@ interface WorkLogWithTaskProject {
   id: string;
   ganttTaskId: string;
   assigneeId: string;
+  supervisor?: string;
   workDate?: Date | { toDate: () => Date } | string;
   taskName: string;
   projectName: string;
@@ -189,12 +190,21 @@ export class DashboardComponent implements OnInit {
         projectMap[projectId] = { name: data.name || '' };
       }
     }
-    // myDailyReportsに格納（タスク名・プロジェクト名も付与）
-    this.myDailyReports = reports.map(r => ({
-      ...r,
-      taskName: ganttTaskMap[r['ganttTaskId']]?.title || '-',
-      projectName: projectMap[ganttTaskMap[r['ganttTaskId']]?.projectId || '']?.name || '-'
-    }));
+    // displayName取得
+    const myDisplayName = this.userMap[this.currentUserUid || '']?.displayName;
+    this.myDailyReports = reports
+      .filter(r => {
+        // supervisorまたはassigneeIdがdisplayNameと一致するものだけ
+        return (
+          (r['supervisor'] && r['supervisor'] === myDisplayName) ||
+          (r['assigneeId'] && r['assigneeId'] === myDisplayName)
+        );
+      })
+      .map(r => ({
+        ...r,
+        taskName: ganttTaskMap[r['ganttTaskId']]?.title || '-',
+        projectName: projectMap[ganttTaskMap[r['ganttTaskId']]?.projectId || '']?.name || '-'
+      }));
   }
 
   getProjectProgress(projectId: string): number {
