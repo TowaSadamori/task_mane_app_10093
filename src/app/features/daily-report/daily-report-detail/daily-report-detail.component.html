@@ -1,1 +1,28 @@
 <p>daily-report-detail works!</p>
+
+<div *ngIf="workLog; else loading">
+  <h2>日次ログ詳細</h2>
+  <div><strong>作業日:</strong> {{ workLog.workDate?.toDate() | date:'yyyy/MM/dd' }}</div>
+  <div><strong>担当者:</strong> {{ workLog.supervisor }}</div>
+  <div><strong>開始時刻:</strong> {{ workLog.actualStartTime }}</div>
+  <div><strong>終了時刻:</strong> {{ workLog.actualEndTime }}</div>
+  <div><strong>休憩(分):</strong> {{ workLog.actualBreakTime }}</div>
+  <div><strong>進捗率:</strong> {{ workLog.progressRate }}%</div>
+  <div><strong>作業員数:</strong> {{ workLog.workerCount }}</div>
+  <div><strong>コメント:</strong> {{ workLog.comment }}</div>
+  <div><strong>写真:</strong>
+    <ng-container *ngIf="workLog.photoUrls?.length; else noPhoto">
+      <span *ngFor="let url of workLog.photoUrls" style="display: inline-block; margin-right: 8px;">
+        <img [src]="url" alt="作業写真" style="max-height: 50px;" />
+      </span>
+    </ng-container>
+    <ng-template #noPhoto>なし</ng-template>
+  </div>
+</div>
+<ng-template #loading>
+  <p>読み込み中...</p>
+</ng-template>
+
+<button *ngIf="ganttTaskId" (click)="navigateToTaskDetail()" style="margin-bottom: 16px;">
+  タスク詳細画面へ戻る
+</button>
