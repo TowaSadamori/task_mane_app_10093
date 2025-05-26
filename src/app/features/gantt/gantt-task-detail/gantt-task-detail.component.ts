@@ -48,6 +48,7 @@ export class GanttTaskDetailComponent implements OnInit {
   displayedColumns: string[] = [
     'actions',
     'workDate',
+    'assignee',
     'actualStartTime',
     'actualEndTime',
     'breakTime',

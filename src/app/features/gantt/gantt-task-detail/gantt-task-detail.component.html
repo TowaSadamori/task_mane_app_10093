@@ -51,49 +51,41 @@
               <th mat-header-cell *matHeaderCellDef>作業日</th>
               <td mat-cell *matCellDef="let log">{{ log.workDate.toDate() | date:'yyyy/MM/dd' }}</td>
             </ng-container>
-
+            <!-- 担当者 Column（supervisorを担当者として表示） -->
+            <ng-container matColumnDef="assignee">
+              <th mat-header-cell *matHeaderCellDef>担当者</th>
+              <td mat-cell *matCellDef="let log">{{ log.supervisor }}</td>
+            </ng-container>
             <!-- 開始時刻 Column -->
             <ng-container matColumnDef="actualStartTime">
               <th mat-header-cell *matHeaderCellDef>開始時刻</th>
               <td mat-cell *matCellDef="let log">{{ log.actualStartTime }}</td>
             </ng-container>
-
             <!-- 終了時刻 Column -->
             <ng-container matColumnDef="actualEndTime">
               <th mat-header-cell *matHeaderCellDef>終了時刻</th>
               <td mat-cell *matCellDef="let log">{{ log.actualEndTime }}</td>
             </ng-container>
-
             <!-- 休憩時間 Column -->
             <ng-container matColumnDef="breakTime">
               <th mat-header-cell *matHeaderCellDef>休憩(分)</th>
               <td mat-cell *matCellDef="let log">{{ log.actualBreakTime }}</td>
             </ng-container>
-
             <!-- 進捗率 Column -->
             <ng-container matColumnDef="progressRate">
               <th mat-header-cell *matHeaderCellDef>進捗率</th>
               <td mat-cell *matCellDef="let log">{{ log.progressRate }}%</td>
             </ng-container>
-
             <!-- 作業員数 Column -->
             <ng-container matColumnDef="workerCount">
               <th mat-header-cell *matHeaderCellDef>作業員数</th>
               <td mat-cell *matCellDef="let log">{{ log.workerCount }}</td>
             </ng-container>
-
-            <!-- 作業指示者 Column -->
-            <ng-container matColumnDef="supervisor">
-              <th mat-header-cell *matHeaderCellDef>作業指示者</th>
-              <td mat-cell *matCellDef="let log">{{ log.supervisor }}</td>
-            </ng-container>
-
             <!-- コメント Column -->
             <ng-container matColumnDef="comment">
               <th mat-header-cell *matHeaderCellDef>コメント</th>
               <td mat-cell *matCellDef="let log">{{ log.comment }}</td>
             </ng-container>
-
             <!-- 写真 Column -->
             <ng-container matColumnDef="photo">
               <th mat-header-cell *matHeaderCellDef>写真</th>
@@ -111,7 +103,11 @@
                 <ng-template #noPhoto>なし</ng-template>
               </td>
             </ng-container>
-
+            <!-- 作業指示者 Column -->
+            <ng-container matColumnDef="supervisor">
+              <th mat-header-cell *matHeaderCellDef>作業指示者</th>
+              <td mat-cell *matCellDef="let log">{{ log.supervisor }}</td>
+            </ng-container>
             <!-- Actions Column（先頭に移動） -->
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef></th>
@@ -124,7 +120,6 @@
                 </button>
               </td>
             </ng-container>
-
             <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
             <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
           </table>
