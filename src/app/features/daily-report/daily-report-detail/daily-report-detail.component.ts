@@ -38,6 +38,8 @@ export class DailyReportDetailComponent implements OnInit {
   dailyReportId: string | null = null;
   ganttTaskId: string | null = null;
   workLog: WorkLog | null = null;
+  taskName: string | null = null;
+  managerNames: string | null = null;
 
   async ngOnInit() {
     this.dailyReportId = this.route.snapshot.paramMap.get('dailyReportId');
@@ -54,6 +56,46 @@ export class DailyReportDetailComponent implements OnInit {
         const pathSegments = docSnap.ref.path.split('/');
         this.ganttTaskId = pathSegments[1];
         this.workLog = docSnap.data() as WorkLog;
+        // タスク名取得とプロジェクトID取得
+        const taskDocSnap = await (await import('@angular/fire/firestore')).getDoc(
+          (await import('@angular/fire/firestore')).doc(this.firestore, 'GanttChartTasks', this.ganttTaskId)
+        );
+        if (taskDocSnap.exists()) {
+          const taskData = taskDocSnap.data() as { title?: string, projectId?: string };
+          this.taskName = taskData.title || null;
+          // プロジェクトの管理者名取得
+          if (taskData.projectId) {
+            const projectDocSnap = await (await import('@angular/fire/firestore')).getDoc(
+              (await import('@angular/fire/firestore')).doc(this.firestore, 'Projects', taskData.projectId)
+            );
+            if (projectDocSnap.exists()) {
+              const projectData = projectDocSnap.data() as { managerIds?: string[], managerId?: string };
+              let managerIds: string[] = [];
+              if (Array.isArray(projectData.managerIds)) {
+                managerIds = projectData.managerIds;
+              } else if (projectData.managerId) {
+                managerIds = [projectData.managerId];
+              }
+              if (managerIds.length > 0) {
+                // UsersコレクションからdisplayName取得（idフィールドまたはドキュメントIDで比較）
+                const usersSnap = await (await import('@angular/fire/firestore')).getDocs(
+                  (await import('@angular/fire/firestore')).collection(this.firestore, 'Users')
+                );
+                const names: string[] = [];
+                usersSnap.forEach(doc => {
+                  const data = doc.data() as { displayName?: string, id?: string };
+                  if (
+                    (data.id && managerIds.includes(data.id)) ||
+                    managerIds.includes(doc.id)
+                  ) {
+                    if (data.displayName) names.push(data.displayName);
+                  }
+                });
+                this.managerNames = names.join(', ');
+              }
+            }
+          }
+        }
       }
     }
   }

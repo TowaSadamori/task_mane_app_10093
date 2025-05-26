@@ -1,6 +1,14 @@
 <div class="daily-report-detail-card" *ngIf="workLog; else loading">
   <h2>日次ログ詳細</h2>
+  <div *ngIf="taskName" class="task-name-row">
+    <span class="label">タスク名:</span>
+    <span>{{ taskName }}</span>
+  </div>
   <div class="detail-row"><span class="label">作業日:</span><span>{{ workLog.workDate?.toDate() | date:'yyyy/MM/dd' }}</span></div>
+  <div *ngIf="managerNames" class="manager-names-row">
+    <span class="label">管理者:</span>
+    <span>{{ managerNames }}</span>
+  </div>
   <div class="detail-row"><span class="label">担当者:</span><span>{{ workLog.supervisor }}</span></div>
   <div class="detail-row"><span class="label">開始時刻:</span><span>{{ workLog.actualStartTime }}</span></div>
   <div class="detail-row"><span class="label">終了時刻:</span><span>{{ workLog.actualEndTime }}</span></div>
