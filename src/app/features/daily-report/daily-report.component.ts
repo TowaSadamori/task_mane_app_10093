@@ -199,6 +199,12 @@ export class DailyReportComponent {
       }
       return null;
     }
+    // 日次ログ（画面表示と同じフィルタ）
+    const dailyLogs = this.getLogsForReport(report).map(log => ({
+      workDate: this.formatWorkLogDate(log.workDate),
+      assignee: this.getDisplayNameByUid(log.assigneeId),
+      comment: log.comment || ''
+    }));
     return {
       reportDate: typeof report.workDate === 'string' ? report.workDate : (report.workDate instanceof Date ? report.workDate.toLocaleDateString() : ''),
       staffName: report.personUid,
@@ -212,7 +218,8 @@ export class DailyReportComponent {
       memo: report.memo,
       photoPaths: report.photoUrls
         ? report.photoUrls.map(url => extractStoragePathFromUrl(url)).filter((path): path is string => !!path)
-        : []
+        : [],
+      dailyLogs
     };
   }
   async loadAllWorkLogs() {

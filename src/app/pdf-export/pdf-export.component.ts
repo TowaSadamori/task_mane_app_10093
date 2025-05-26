@@ -15,6 +15,7 @@ export interface DailyReportData {
   healthIssues?: string;
   memo?: string;
   photoPaths?: string[];
+  dailyLogs?: { workDate: string; assignee: string; comment: string }[];
   // ...他の項目も必要に応じて追加
 }
 

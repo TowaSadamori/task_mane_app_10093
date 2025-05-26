@@ -364,6 +364,7 @@ interface ReportData {
   reportDetails?: string;
   injuriesOrAccidents?: string;
   healthIssues?: string;
+  dailyLogs?: { workDate: string; assignee: string; comment: string }[];
 }
 
 export const generatePdf = functions
@@ -442,6 +443,34 @@ export const generatePdf = functions
           photosHtml += `</div></div>`;
         } else {
           photosHtml += '<div style="margin-top: 15px;"><strong>写真:</strong> なし</div>';
+        }
+
+        // 日次ログテーブルHTML生成
+        let dailyLogsHtml = '';
+        if (Array.isArray(reportData.dailyLogs) && reportData.dailyLogs.length > 0) {
+          dailyLogsHtml += `
+            <div class="section">
+              <h2>日次ログ</h2>
+              <table style="width:100%; border-collapse:collapse; background:#fff; margin-top:8px;">
+                <thead>
+                  <tr style="background:#e3f2fd;">
+                    <th style="padding:6px 8px; border:1px solid #b3e5fc;">作業日</th>
+                    <th style="padding:6px 8px; border:1px solid #b3e5fc;">担当者</th>
+                    <th style="padding:6px 8px; border:1px solid #b3e5fc;">コメント</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${reportData.dailyLogs.map(log => `
+                    <tr>
+                      <td style="padding:6px 8px; border:1px solid #b3e5fc;">${log.workDate || ''}</td>
+                      <td style="padding:6px 8px; border:1px solid #b3e5fc;">${log.assignee || ''}</td>
+                      <td style="padding:6px 8px; border:1px solid #b3e5fc;">${log.comment || ''}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
         }
 
         // 日報データをHTMLに埋め込む
@@ -549,6 +578,7 @@ export const generatePdf = functions
               <h2>その他・メモ</h2>
               <div class="memo-box">${reportData.memo || 'なし'}</div>
             </div>
+            ${dailyLogsHtml}
             <div class="photo-section">
               <div class="photo-section-title">写真</div>
               ${photosHtml}
