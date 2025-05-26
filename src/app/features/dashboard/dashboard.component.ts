@@ -161,7 +161,7 @@ export class DashboardComponent implements OnInit {
         ...data,
         id: docSnap.id,
         ganttTaskId: ganttTaskId,
-        assigneeId: data['assigneeId'] || '',
+        assigneeId: data['supervisor'] || data['assigneeId'] || '',
         taskName: '',
         projectName: ''
       });
