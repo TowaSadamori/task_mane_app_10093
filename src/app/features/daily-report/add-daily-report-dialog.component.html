@@ -14,17 +14,19 @@
     </mat-form-field>
     <mat-form-field appearance="outline">
       <mat-label>担当者</mat-label>
-      <input matInput formControlName="person" required readonly>
-      <mat-error *ngIf="form.get('person')?.hasError('required') && form.get('person')?.touched">
+      <mat-select formControlName="personUid" required [disabled]="true">
+        <mat-option *ngFor="let user of userOptions" [value]="user.id">{{ user.displayName }}</mat-option>
+      </mat-select>
+      <mat-error *ngIf="form.get('personUid')?.hasError('required') && form.get('personUid')?.touched">
         担当者は必須です。
       </mat-error>
     </mat-form-field>
     <mat-form-field appearance="outline">
       <mat-label>管理者</mat-label>
-      <mat-select formControlName="manager" required multiple>
-        <mat-option *ngFor="let user of userOptions" [value]="user.displayName">{{ user.displayName }}</mat-option>
+      <mat-select formControlName="managerUids" required multiple>
+        <mat-option *ngFor="let user of userOptions" [value]="user.id">{{ user.displayName }}</mat-option>
       </mat-select>
-      <mat-error *ngIf="form.get('manager')?.hasError('required') && form.get('manager')?.touched">
+      <mat-error *ngIf="form.get('managerUids')?.hasError('required') && form.get('managerUids')?.touched">
         管理者は必須です。
       </mat-error>
     </mat-form-field>

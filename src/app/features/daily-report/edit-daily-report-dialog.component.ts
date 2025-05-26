@@ -18,8 +18,8 @@ import { AuthService } from '../../core/auth.service';
 
 export interface EditDailyReportData {
   workDate: Date | string;
-  person: string;
-  manager: string[];
+  personUid: string;
+  managerUids: string[];
   startTime: string;
   endTime: string;
   breakTime: number;
@@ -54,8 +54,8 @@ export class EditDailyReportDialogComponent {
   ) {
     this.form = new FormGroup({
       workDate: new FormControl(data.workDate ? new Date(data.workDate) : null, Validators.required),
-      person: new FormControl(data.person, Validators.required),
-      manager: new FormControl(data.manager || [], Validators.required),
+      personUid: new FormControl(data.personUid, Validators.required),
+      managerUids: new FormControl(data.managerUids || [], Validators.required),
       startTime: new FormControl(data.startTime, Validators.required),
       endTime: new FormControl(data.endTime, Validators.required),
       breakTime: new FormControl<number | null>(data.breakTime, [Validators.required, Validators.min(0)]),
@@ -68,14 +68,14 @@ export class EditDailyReportDialogComponent {
     this.userService.getUsers().subscribe(users => {
       this.userOptions = users;
     });
-    if (!data.person) {
+    if (!data.personUid) {
       this.setCurrentUserAsPerson();
     }
   }
   async setCurrentUserAsPerson() {
     const user = await this.authService.getCurrentUser();
-    if (user && user.displayName) {
-      this.form.get('person')?.setValue(user.displayName);
+    if (user && user.uid) {
+      this.form.get('personUid')?.setValue(user.uid);
     }
   }
   onCancel() { this.dialogRef.close(); }

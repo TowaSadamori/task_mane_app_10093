@@ -15,6 +15,8 @@ import {
    reauthenticateWithCredential
   } from '@angular/fire/auth';
 import { Observable } from 'rxjs';
+import { doc, updateDoc } from '@angular/fire/firestore';
+import { Firestore } from '@angular/fire/firestore';
 
 
 @Injectable({
@@ -23,6 +25,7 @@ import { Observable } from 'rxjs';
 export class AuthService {
 
   private auth: Auth = inject(Auth);
+  private firestore: Firestore = inject(Firestore);
 
   public readonly authState$: Observable<User | null> = authState(this.auth);
 
@@ -38,8 +41,14 @@ export class AuthService {
     return firebaseCreateUserWithEmailAndPassword(this.auth, email, password);
   }
 
-  updateUserProfile(user: User, profileData: { displayName?: string | null, photoURL?: string | null }): Promise<void> {
-    return updateProfile(user, profileData);
+  async updateUserProfile(user: User, profileData: { displayName?: string | null, photoURL?: string | null }): Promise<void> {
+    // 1. Firebase Authのプロフィールを更新
+    await updateProfile(user, profileData);
+    // 2. FirestoreのUsersコレクションも更新
+    if (profileData.displayName) {
+      const userDocRef = doc(this.firestore, 'Users', user.uid);
+      await updateDoc(userDocRef, { displayName: profileData.displayName });
+    }
   }
 
   getCurrentUser(): Promise<User | null> {

@@ -13,10 +13,12 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { ImageViewDialogComponent } from './image-view-dialog.component';
 import { EditDailyReportDialogComponent } from './edit-daily-report-dialog.component';
 import { PdfExportComponent, DailyReportData } from '../../pdf-export/pdf-export.component';
+import { UserService } from '../../core/user.service';
+import { User } from '../../core/models/user.model';
 
 export interface DailyReport {
   workDate: Date | string;
-  person: string;
+  personUid: string;
   startTime: string;
   endTime: string;
   breakTime: number;
@@ -29,7 +31,7 @@ export interface DailyReport {
   photoNames?: string[];
   photoUrls?: string[];
   createdAt?: Timestamp | string;
-  manager?: string;
+  managerUids?: string[];
 }
 
 @Component({
@@ -62,18 +64,34 @@ export class ConfirmDialogComponent {}
 })
 export class DailyReportComponent {
   reports: DailyReport[] = [];
-  constructor(private dialog: MatDialog, private dailyReportService: DailyReportService, private router: Router) {
-    this.loadReports();
+  users: User[] = [];
+  constructor(
+    private dialog: MatDialog,
+    private dailyReportService: DailyReportService,
+    private router: Router,
+    private userService: UserService
+  ) {
+    this.loadUsersAndReports();
   }
-  async loadReports() {
+  async loadUsersAndReports() {
+    this.userService.getUsers().subscribe(users => {
+      this.users = users;
+    });
     this.reports = await this.dailyReportService.getDailyReports();
+  }
+  getDisplayNameByUid(uid: string): string {
+    const user = this.users.find(u => u.id === uid);
+    return user ? user.displayName : uid;
+  }
+  getManagerNamesByUids(uids: string[] = []): string {
+    return uids.map(uid => this.getDisplayNameByUid(uid)).join(', ');
   }
   openAddDialog() {
     const ref = this.dialog.open(AddDailyReportDialogComponent, { width: '400px', maxHeight: '80vh' });
     ref.afterClosed().subscribe(async (result: DailyReport | undefined) => {
       if (result) {
         await this.dailyReportService.addDailyReport(result);
-        await this.loadReports();
+        await this.loadUsersAndReports();
       }
     });
   }
@@ -99,7 +117,7 @@ export class DailyReportComponent {
     const result = await ref.afterClosed().toPromise();
     if (result === 'yes') {
       await this.dailyReportService.deleteDailyReport(id);
-      await this.loadReports();
+      await this.loadUsersAndReports();
     }
   }
   calcWorkingTime(start: string, end: string, breakMin: number): string {
@@ -142,7 +160,7 @@ export class DailyReportComponent {
     ref.afterClosed().subscribe(async (result: DailyReport | undefined) => {
       if (result && result.id) {
         await this.dailyReportService.updateDailyReport(result.id, result);
-        await this.loadReports();
+        await this.loadUsersAndReports();
       }
     });
   }
@@ -158,7 +176,7 @@ export class DailyReportComponent {
     }
     return {
       reportDate: typeof report.workDate === 'string' ? report.workDate : (report.workDate instanceof Date ? report.workDate.toLocaleDateString() : ''),
-      staffName: report.person,
+      staffName: report.personUid,
       checkInTime: report.startTime,
       checkOutTime: report.endTime,
       breakTime: report.breakTime ? report.breakTime.toString() : '',

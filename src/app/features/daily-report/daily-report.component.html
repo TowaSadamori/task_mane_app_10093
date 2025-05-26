@@ -21,8 +21,8 @@
       </ng-container>
     </div>
     <div class="report-content">
-      <div><strong>担当者:</strong> {{ report.person }}</div>
-      <div><strong>管理者:</strong> {{ report.manager }}</div>
+      <div><strong>担当者:</strong> {{ getDisplayNameByUid(report.personUid) }}</div>
+      <div><strong>管理者:</strong> {{ getManagerNamesByUids(report.managerUids) }}</div>
       <div><strong>出勤:</strong> {{ report.startTime }} / <strong>退勤:</strong> {{ report.endTime }} / <strong>休憩:</strong> {{ report.breakTime }}分</div>
       <div><strong>勤務時間:</strong> {{ calcWorkingTime(report.startTime, report.endTime, report.breakTime) }}</div>
       <div><strong>報告事項:</strong> {{ report.hasReport === 'yes' ? 'あり' : 'なし' }}</div>

@@ -28,8 +28,8 @@ import { AuthService } from '../../core/auth.service';
 export class AddDailyReportDialogComponent {
   form = new FormGroup({
     workDate: new FormControl<Date | null>(null, Validators.required),
-    person: new FormControl('', Validators.required),
-    manager: new FormControl<string[]>([], Validators.required),
+    personUid: new FormControl('', Validators.required),
+    managerUids: new FormControl<string[]>([], Validators.required),
     startTime: new FormControl('', Validators.required),
     endTime: new FormControl('', Validators.required),
     breakTime: new FormControl<number | null>(null, [Validators.required, Validators.min(0)]),
@@ -53,8 +53,8 @@ export class AddDailyReportDialogComponent {
   }
   async setCurrentUserAsPerson() {
     const user = await this.authService.getCurrentUser();
-    if (user && user.displayName) {
-      this.form.get('person')?.setValue(user.displayName);
+    if (user && user.uid) {
+      this.form.get('personUid')?.setValue(user.uid);
     }
   }
   onCancel() { this.dialogRef.close(); }
