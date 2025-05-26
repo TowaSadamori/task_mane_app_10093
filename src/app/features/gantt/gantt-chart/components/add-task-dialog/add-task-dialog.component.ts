@@ -12,6 +12,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { GanttChartTask } from '../../../../../core/models/gantt-chart-task.model';
 import { GanttDailyLogService } from '../../../gantt-daily-log-form-dialog/gantt-daily-log.service';
 import { Timestamp } from '@angular/fire/firestore';
+import { UserService } from '../../../../../core/user.service';
 
 export interface TaskDialogData { 
   task?: GanttChartTask;  // 型をGanttChartTaskに変更
@@ -50,6 +51,8 @@ export class AddTaskDialogComponent implements OnInit {
   public maxDate: string | null = null;
   statusDisabled = false;
   private dailyLogService = inject(GanttDailyLogService);
+  private userService = inject(UserService);
+  managerDisplayNames = '';
 
   constructor(
     private fb: FormBuilder,
@@ -95,6 +98,18 @@ export class AddTaskDialogComponent implements OnInit {
 
   ngOnInit(): void {
     console.log('AddTaskDialogComponent initialized. isEditMode:', this.isEditMode, 'TaskData:', this.data?.task, 'ProjectID:', this.projectId);
+    // 管理者名の取得
+    if (this.projectId) {
+      this.projectService.getProject(this.projectId).subscribe(project => {
+        if (!project) return;
+        const managerIds = project.managerIds ?? (project.managerId ? [project.managerId] : []);
+        if (managerIds.length > 0) {
+          this.userService.getUsersByIds(managerIds).subscribe(users => {
+            this.managerDisplayNames = users.map(u => u.displayName).join(', ');
+          });
+        }
+      });
+    }
   }
 
   onNoClick(): void {
