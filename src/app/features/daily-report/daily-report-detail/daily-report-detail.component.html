@@ -25,6 +25,9 @@
   <button *ngIf="ganttTaskId" (click)="navigateToTaskDetail()" class="back-btn">
     タスク詳細画面へ戻る
   </button>
+  <button *ngIf="workLog && ganttTaskId" (click)="editDailyLog()" mat-icon-button class="edit-btn" aria-label="編集">
+    <mat-icon>edit</mat-icon>
+  </button>
 </div>
 <ng-template #loading>
   <p>読み込み中...</p>
