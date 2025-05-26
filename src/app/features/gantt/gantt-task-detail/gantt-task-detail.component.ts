@@ -55,7 +55,6 @@ export class GanttTaskDetailComponent implements OnInit {
     'breakTime',
     'progressRate',
     'workerCount',
-    'supervisor',
     'comment',
     'photo'
   ];

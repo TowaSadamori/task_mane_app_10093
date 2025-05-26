@@ -10,8 +10,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { GanttDailyLogService, GanttDailyLog } from './gantt-daily-log.service';
-import { Timestamp, doc, updateDoc, serverTimestamp } from '@angular/fire/firestore';
+import { Timestamp, doc, updateDoc, serverTimestamp, Firestore, getDoc } from '@angular/fire/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
+import { UserService } from '../../../core/user.service';
+import { ProjectService } from '../../../core/project.service';
+import { GanttChartTask } from '../../../core/models/gantt-chart-task.model';
+import { AuthService } from '../../../core/auth.service';
 
 @Component({
   selector: 'app-gantt-daily-log-form-dialog',
@@ -38,7 +42,6 @@ export class GanttDailyLogFormDialogComponent {
     actualBreakTime: new FormControl<number | null>(null, [Validators.required, Validators.min(0)]),
     progressRate: new FormControl<number | null>(null, [Validators.required, Validators.min(0), Validators.max(100)]),
     workerCount: new FormControl<number | null>(null, [Validators.required, Validators.min(1)]),
-    supervisor: new FormControl('', Validators.required),
     comment: new FormControl(''),
     photos: new FormControl<File[]>([]),
   });
@@ -46,6 +49,13 @@ export class GanttDailyLogFormDialogComponent {
   isSaving = false;
 
   private dailyLogService = inject(GanttDailyLogService);
+  private firestore = inject(Firestore);
+  private userService = inject(UserService);
+  private projectService = inject(ProjectService);
+  private authService = inject(AuthService);
+
+  managerNames = '';
+  assigneeNames = '';
 
   constructor(
     private dialogRef: MatDialogRef<GanttDailyLogFormDialogComponent>,
@@ -62,8 +72,34 @@ export class GanttDailyLogFormDialogComponent {
         actualBreakTime: data.log.actualBreakTime,
         progressRate: data.log.progressRate,
         workerCount: data.log.workerCount,
-        supervisor: data.log.supervisor,
         comment: data.log.comment || '',
+      });
+    }
+    this.setCurrentUserAsAssignee();
+    this.fetchManagerNames();
+  }
+
+  private async setCurrentUserAsAssignee() {
+    const user = await this.authService.getCurrentUser();
+    this.assigneeNames = user?.displayName || '';
+  }
+
+  private async fetchManagerNames() {
+    if (!this.data?.ganttTaskId) return;
+    const taskDocRef = doc(this.firestore, 'GanttChartTasks', this.data.ganttTaskId);
+    const taskSnap = await getDoc(taskDocRef);
+    if (!taskSnap.exists()) return;
+    const task = taskSnap.data() as GanttChartTask;
+    // プロジェクトの管理者名取得
+    if (task.projectId) {
+      this.projectService.getProject(task.projectId).subscribe(project => {
+        if (!project) return;
+        const managerIds = project.managerIds ?? (project.managerId ? [project.managerId] : []);
+        if (managerIds.length > 0) {
+          this.userService.getUsersByIds(managerIds).subscribe(users => {
+            this.managerNames = users.map(u => u.displayName).join(', ');
+          });
+        }
       });
     }
   }
@@ -94,7 +130,7 @@ export class GanttDailyLogFormDialogComponent {
         actualBreakTime: formValue.actualBreakTime!,
         progressRate: formValue.progressRate!,
         workerCount: formValue.workerCount!,
-        supervisor: formValue.supervisor!,
+        supervisor: this.assigneeNames,
         comment: formValue.comment || '',
         photoUrls: [...existingPhotoUrls, ...photoUrls]
       };

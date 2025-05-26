@@ -11,6 +11,13 @@
       </mat-error>
     </mat-form-field>
 
+    <!-- 管理者・担当者表示領域 ここから -->
+    <div style="margin: 8px 0 8px 0;">
+      <span class="desc-label">管理者：</span><span>{{ managerNames }}</span><br>
+      <span class="desc-label">担当者：</span><span>{{ assigneeNames }}</span>
+    </div>
+    <!-- 管理者・担当者表示領域 ここまで -->
+
     <mat-form-field appearance="outline">
       <mat-label>実績開始時刻</mat-label>
       <input matInput type="time" formControlName="actualStartTime" required>
@@ -57,14 +64,6 @@
       </mat-error>
       <mat-error *ngIf="form.get('workerCount')?.hasError('min') && form.get('workerCount')?.touched">
         1以上の値を入力してください。
-      </mat-error>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>作業指示者</mat-label>
-      <input matInput type="text" formControlName="supervisor" required>
-      <mat-error *ngIf="form.get('supervisor')?.hasError('required') && form.get('supervisor')?.touched">
-        作業指示者は必須です。
       </mat-error>
     </mat-form-field>
 
