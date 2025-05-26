@@ -18,8 +18,18 @@ import { User as AppUser } from '../../core/models/user.model';
 import { AuthService } from '../../core/auth.service';
 import { GanttChartTask } from '../../core/models/gantt-chart-task.model';
 import { DailyReportService } from '../../features/daily-report/daily-report.service';
-import { DailyReport } from '../../features/daily-report/daily-report.component';
+import { Firestore, collectionGroup, query, where, getDocs } from '@angular/fire/firestore';
 // import { AuthService } from '../../auth/auth.service'; // ユーザーに紐づくプロジェクトを取得する場合
+
+// WorkLog+タスク名・プロジェクト名用型
+interface WorkLogWithTaskProject {
+  id: string;
+  ganttTaskId: string;
+  assigneeId: string;
+  workDate?: Date | { toDate: () => Date } | string;
+  taskName: string;
+  projectName: string;
+}
 
 @Component({
   selector: 'app-dashboard',
@@ -48,8 +58,9 @@ export class DashboardComponent implements OnInit {
   userMap: Record<string, AppUser> = {};
   currentUserUid: string | null = null;
   projectMap: Record<string, Project> = {};
-  myDailyReports: DailyReport[] = [];
+  myDailyReports: WorkLogWithTaskProject[] = [];
   private dailyReportService: DailyReportService = inject(DailyReportService);
+  private firestore: Firestore = inject(Firestore);
   // private authService?: AuthService; // 必要に応じて
 
   constructor() {
@@ -62,7 +73,7 @@ export class DashboardComponent implements OnInit {
   ngOnInit(): void {
     this.authService.getCurrentUser().then(user => {
       this.currentUserUid = user?.uid || null;
-      this.loadProjects();
+    this.loadProjects();
       this.loadMyTasks();
       this.loadMyDailyReports();
     });
@@ -132,12 +143,58 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  loadMyDailyReports(): void {
-    if (!this.currentUserUid) return;
-    this.dailyReportService.getDailyReports().then((reports: DailyReport[]) => {
-      // personUidが自分のUIDの日次ログのみ抽出
-      this.myDailyReports = reports.filter((r: DailyReport) => r.personUid === this.currentUserUid);
+  async loadMyDailyReports(): Promise<void> {
+    // ユーザーで絞り込まず、全てのWorkLogを取得
+    const q = query(
+      collectionGroup(this.firestore, 'WorkLogs')
+      // where句を外すことで全件取得
+    );
+    const querySnapshot = await getDocs(q);
+    const reports: WorkLogWithTaskProject[] = [];
+    const ganttTaskIdSet = new Set<string>();
+    querySnapshot.forEach(docSnap => {
+      const pathSegments = docSnap.ref.path.split('/');
+      const ganttTaskId = pathSegments[1];
+      ganttTaskIdSet.add(ganttTaskId);
+      const data = docSnap.data();
+      reports.push({
+        ...data,
+        id: docSnap.id,
+        ganttTaskId: ganttTaskId,
+        assigneeId: data['assigneeId'] || '',
+        taskName: '',
+        projectName: ''
+      });
     });
+    // タスク名・プロジェクトIDをまとめて取得
+    const ganttTaskIdArr = Array.from(ganttTaskIdSet);
+    const ganttTaskMap: Record<string, { title: string; projectId: string }> = {};
+    for (const ganttTaskId of ganttTaskIdArr) {
+      const taskDocRef = (await import('@angular/fire/firestore')).doc(this.firestore, 'GanttChartTasks', ganttTaskId);
+      const taskDocSnap = await (await import('@angular/fire/firestore')).getDoc(taskDocRef);
+      if (taskDocSnap.exists()) {
+        const data = taskDocSnap.data() as { title?: string; projectId?: string };
+        ganttTaskMap[ganttTaskId] = { title: data.title || '', projectId: data.projectId || '' };
+      }
+    }
+    // プロジェクト名もまとめて取得
+    const projectIdSet = new Set<string>(Object.values(ganttTaskMap).map(t => t.projectId).filter(Boolean));
+    const projectIdArr = Array.from(projectIdSet);
+    const projectMap: Record<string, { name: string }> = {};
+    for (const projectId of projectIdArr) {
+      const projectDocRef = (await import('@angular/fire/firestore')).doc(this.firestore, 'Projects', projectId);
+      const projectDocSnap = await (await import('@angular/fire/firestore')).getDoc(projectDocRef);
+      if (projectDocSnap.exists()) {
+        const data = projectDocSnap.data() as { name?: string };
+        projectMap[projectId] = { name: data.name || '' };
+      }
+    }
+    // myDailyReportsに格納（タスク名・プロジェクト名も付与）
+    this.myDailyReports = reports.map(r => ({
+      ...r,
+      taskName: ganttTaskMap[r['ganttTaskId']]?.title || '-',
+      projectName: projectMap[ganttTaskMap[r['ganttTaskId']]?.projectId || '']?.name || '-'
+    }));
   }
 
   getProjectProgress(projectId: string): number {
@@ -205,10 +262,17 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  toDateSafe(value: Date | Timestamp | null | undefined): Date | null {
+  toDateSafe(value: Date | Timestamp | string | { toDate: () => Date } | null | undefined): Date | null {
     if (!value) return null;
     if (value instanceof Date) return value;
     if (this.isTimestamp(value)) return value.toDate();
+    if (typeof value === 'object' && value !== null && typeof (value as unknown as { toDate?: () => Date }).toDate === 'function') {
+      return (value as unknown as { toDate: () => Date }).toDate();
+    }
+    if (typeof value === 'string') {
+      const d = new Date(value);
+      return isNaN(d.getTime()) ? null : d;
+    }
     return null;
   }
 

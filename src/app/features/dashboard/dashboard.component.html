@@ -102,7 +102,23 @@
   </div>
   <div class="my-dailyreports-section" style="margin-bottom: 40px; border: 1.5px solid #b3e5fc; border-radius: 12px; padding: 20px; background: #f4fcff;">
     <h3 style="color:#1976d2;">あなたの日次ログ一覧</h3>
-    <div>日次ログはまだ表示されていません。</div>
+    <div *ngIf="myDailyReports.length === 0">日次ログはまだありません。</div>
+    <table *ngIf="myDailyReports.length > 0" class="dailyreport-table" style="width:100%; border-collapse:collapse; background:#fff;">
+      <thead>
+        <tr style="background:#e3f2fd;">
+          <th style="padding:6px 8px; border:1px solid #b3e5fc;">作業日</th>
+          <th style="padding:6px 8px; border:1px solid #b3e5fc;">担当者</th>
+          <th style="padding:6px 8px; border:1px solid #b3e5fc;">タスク名/プロジェクト名</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let report of myDailyReports">
+          <td style="padding:6px 8px; border:1px solid #b3e5fc;">{{ toDateSafe(report.workDate) | date:'yyyy/MM/dd' }}</td>
+          <td style="padding:6px 8px; border:1px solid #b3e5fc;">{{ getDisplayNameByUid(report['assigneeId']) }}</td>
+          <td style="padding:6px 8px; border:1px solid #b3e5fc;">{{ report.taskName }} / {{ report.projectName }}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
   <ng-template #loadingOrError>
     <p>プロジェクトを読み込んでいます...</p>
