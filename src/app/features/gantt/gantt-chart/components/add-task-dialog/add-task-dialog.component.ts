@@ -171,6 +171,16 @@ export class AddTaskDialogComponent implements OnInit {
   private isTimestamp(value: unknown): value is { toDate: () => Date } {
     return !!value && typeof (value as { toDate?: unknown }).toDate === 'function';
   }
+
+  getSelectedAssigneeNames(): string {
+    if (!this.taskForm) return '';
+    const selectedIds: string[] = this.taskForm.get('assignees')?.value || [];
+    if (!selectedIds.length) return '';
+    return this.memberOptions
+      .filter(m => selectedIds.includes(m.id))
+      .map(m => m.displayName)
+      .join(', ');
+  }
 }
 
 function plannedEndDateAfterOrEqualStartDateValidator(group: FormGroup) {

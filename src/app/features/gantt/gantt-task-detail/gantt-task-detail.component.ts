@@ -14,6 +14,8 @@ import { GanttDailyLogService, GanttDailyLog } from '../gantt-daily-log-form-dia
 import { Observable } from 'rxjs';
 import { MatTableModule } from '@angular/material/table';
 import { StatusLabelPipe } from '../../../shared/pipes/status-label.pipe';
+import { UserService } from '../../../core/user.service';
+import { ProjectService } from '../../../core/project.service';
 
 @Component({
   selector: 'app-gantt-task-detail',
@@ -36,6 +38,8 @@ export class GanttTaskDetailComponent implements OnInit {
   private dialog = inject(MatDialog);
   private viewContainerRef = inject(ViewContainerRef);
   private dailyLogService = inject(GanttDailyLogService);
+  private userService = inject(UserService);
+  private projectService = inject(ProjectService);
 
   ganttTaskId: string | null = null;
   ganttTask: GanttChartTask | null = null;
@@ -53,6 +57,8 @@ export class GanttTaskDetailComponent implements OnInit {
     'comment',
     'photo'
   ];
+  managerNames = '';
+  assigneeNames = '';
 
   async ngOnInit() {
     this.ganttTaskId = this.route.snapshot.paramMap.get('ganttTaskId');
@@ -61,6 +67,25 @@ export class GanttTaskDetailComponent implements OnInit {
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         this.ganttTask = docSnap.data() as GanttChartTask;
+        // プロジェクトの管理者名取得
+        if (this.ganttTask.projectId) {
+          this.projectService.getProject(this.ganttTask.projectId).subscribe(project => {
+            if (!project) return;
+            const managerIds = project.managerIds ?? (project.managerId ? [project.managerId] : []);
+            if (managerIds.length > 0) {
+              this.userService.getUsersByIds(managerIds).subscribe(users => {
+                this.managerNames = users.map(u => u.displayName).join(', ');
+              });
+            }
+          });
+        }
+        // 担当者名取得（otherAssigneeIds or assignees）
+        const assigneeIds = (this.ganttTask as GanttChartTask).otherAssigneeIds ?? this.ganttTask.assignees ?? [];
+        if (assigneeIds.length > 0) {
+          this.userService.getUsersByIds(assigneeIds).subscribe(users => {
+            this.assigneeNames = users.map(u => u.displayName).join(', ');
+          });
+        }
       }
       this.loadDailyLogs();
     }
