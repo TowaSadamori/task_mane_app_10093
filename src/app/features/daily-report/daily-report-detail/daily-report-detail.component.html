@@ -14,6 +14,9 @@
       <ng-container *ngIf="workLog.photoUrls?.length; else noPhoto">
         <span *ngFor="let url of workLog.photoUrls" class="photo-thumb">
           <img [src]="url" alt="作業写真" />
+          <button class="download-btn" type="button" (click)="downloadPhoto(url)" aria-label="ダウンロード">
+            ⬇️
+          </button>
         </span>
       </ng-container>
       <ng-template #noPhoto>なし</ng-template>

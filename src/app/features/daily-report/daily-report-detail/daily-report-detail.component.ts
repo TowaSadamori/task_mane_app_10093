@@ -56,4 +56,21 @@ export class DailyReportDetailComponent implements OnInit {
       this.router.navigate(['/app/gantt-task-detail', this.ganttTaskId]);
     }
   }
+
+  downloadPhoto(url: string) {
+    fetch(url)
+      .then(response => response.blob())
+      .then(blob => {
+        const fileName = url.split('?')[0].split('/').pop() || 'downloaded-file';
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(blobUrl);
+      })
+      .catch(() => alert('ダウンロードに失敗しました'));
+  }
 }
