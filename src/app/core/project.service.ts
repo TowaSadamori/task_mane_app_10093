@@ -35,6 +35,7 @@ export interface Project {
   members?: string[];
   status?: 'active' | 'completed' | 'on-hold';
   createdAt: Date | Timestamp;
+  managerIds?: string[]; // 複数管理者対応
 }
 
 export type NewProjectData = Omit<Project, 'id' | 'createdAt'>;

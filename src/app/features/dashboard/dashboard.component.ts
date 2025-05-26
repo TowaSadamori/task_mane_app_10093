@@ -13,6 +13,8 @@ import { filter, switchMap } from 'rxjs/operators';
 import { Timestamp } from '@angular/fire/firestore';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TaskService } from '../../core/task.service';
+import { UserService } from '../../core/user.service';
+import { User as AppUser } from '../../core/models/user.model';
 // import { GanttChartTask } from '../../core/models/gantt-chart-task.model';
 // import { AuthService } from '../../auth/auth.service'; // ユーザーに紐づくプロジェクトを取得する場合
 
@@ -35,7 +37,9 @@ export class DashboardComponent implements OnInit {
   private projectService: ProjectService = inject(ProjectService); // inject を使用
   private dialog: MatDialog = inject(MatDialog);
   private taskService = inject(TaskService);
+  private userService: UserService = inject(UserService);
   progressMap: Record<string, number> = {};
+  userMap: Record<string, AppUser> = {};
   // private authService?: AuthService; // 必要に応じて
 
   constructor() {
@@ -71,6 +75,16 @@ export class DashboardComponent implements OnInit {
           }
         });
       });
+      const allUserIds = Array.from(new Set(projects.flatMap(p => [
+        ...(p.managerIds ?? []),
+        ...(p.members ?? [])
+      ])));
+      if (allUserIds.length > 0) {
+        this.userService.getUsersByIds(allUserIds).subscribe(users => {
+          this.userMap = {};
+          users.forEach(u => { this.userMap[u.id] = u; });
+        });
+      }
     });
   }
 
@@ -148,5 +162,10 @@ export class DashboardComponent implements OnInit {
 
   private isTimestamp(obj: unknown): obj is Timestamp {
     return !!obj && typeof (obj as Timestamp).toDate === 'function';
+  }
+
+  getUserNamesByIds(ids: string[] | undefined): string[] {
+    if (!ids) return [];
+    return ids.map(id => this.userMap[id]?.displayName || id);
   }
 }

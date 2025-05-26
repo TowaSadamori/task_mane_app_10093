@@ -67,6 +67,6 @@ export class DailyReportService {
       data['photoUrls'] = report['photoUrls'];
     }
     delete data['id'];
-    await updateDoc(ref, data as any);
+    await updateDoc(ref, data as DocumentData);
   }
 } 

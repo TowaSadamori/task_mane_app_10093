@@ -12,6 +12,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { Timestamp } from '@angular/fire/firestore';
+import { UserService } from '../../../../core/user.service';
+import { Observable } from 'rxjs';
+import { User as AppUser } from '../../../../core/models/user.model';
+import { MatSelectModule } from '@angular/material/select';
 
 export interface ProjectDialogData {
   project?: Project | null;
@@ -45,7 +49,8 @@ function toDateInputValue(date: Date | null | undefined): string | null {
     MatInputModule,
     MatButtonModule,
     MatDatepickerModule,
-    MatNativeDateModule
+    MatNativeDateModule,
+    MatSelectModule
   ],
   templateUrl: './project-create.component.html',
   styleUrls: ['./project-create.component.scss']
@@ -58,11 +63,13 @@ export class ProjectCreateComponent implements OnInit {
   dialogTitle = '新規プロジェクトを作成';
   submitButtonText = '作成する';
   private editingProjectId: string | null = null;
+  users$: Observable<AppUser[]>;
 
   private fb: FormBuilder = inject(FormBuilder);
   private projectService: ProjectService = inject(ProjectService);
   private authService: AuthService = inject(AuthService);
   private router: Router = inject(Router);
+  private userService: UserService = inject(UserService);
 
   constructor(
     @Optional() public dialogRef?: MatDialogRef<ProjectCreateComponent>,
@@ -72,8 +79,12 @@ export class ProjectCreateComponent implements OnInit {
       name: ['', [Validators.required, Validators.minLength(3)]],
       description: [''],
       startDate: [null, Validators.required],
-      endDate: [null, Validators.required]
+      endDate: [null, Validators.required],
+      members: [[]],
+      managerIds: [[]]
     }, { validators: endDateAfterOrEqualStartDateValidator });
+
+    this.users$ = this.userService.getUsers();
 
     if (this.data && this.data.project) {
       this.isEditMode = true;
@@ -93,6 +104,8 @@ export class ProjectCreateComponent implements OnInit {
             ? this.data.project.endDate.toDate()
             : this.data.project.endDate
         ),
+        members: this.data.project.members ?? [],
+        managerIds: this.data.project.managerIds ?? []
       });
     }
   }
@@ -128,6 +141,8 @@ export class ProjectCreateComponent implements OnInit {
         description: formValue.description,
         startDate: formValue.startDate ? Timestamp.fromDate(new Date(formValue.startDate)) : null,
         endDate: formValue.endDate ? Timestamp.fromDate(new Date(formValue.endDate)) : null,
+        members: formValue.members,
+        managerIds: formValue.managerIds
       };
       try {
         await this.projectService.updateProject(this.editingProjectId, updatedProjectData);
@@ -152,6 +167,8 @@ export class ProjectCreateComponent implements OnInit {
         status: 'active',
         startDate: formValue.startDate ? Timestamp.fromDate(new Date(formValue.startDate)) : null,
         endDate: formValue.endDate ? Timestamp.fromDate(new Date(formValue.endDate)) : null,
+        members: formValue.members,
+        managerIds: formValue.managerIds
       };
       try {
         const docRef = await this.projectService.createProject(newProjectData);

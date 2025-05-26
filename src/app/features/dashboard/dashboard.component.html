@@ -25,6 +25,14 @@
               終了日: {{ toDateSafe(project.endDate) | date:'yyyy/MM/dd' }}
             </ng-container>
           </div>
+          <div class="project-users">
+            <div><span class="desc-label">管理者：</span>
+              <span>{{ getUserNamesByIds(project.managerIds ?? (project.managerId ? [project.managerId] : []))?.join(', ') }}</span>
+            </div>
+            <div *ngIf="project.members && project.members.length > 0"><span class="desc-label">担当者：</span>
+              <span>{{ getUserNamesByIds(project.members)?.join(', ') }}</span>
+            </div>
+          </div>
           <div class="project-description">
             <div class="desc-label">説明：</div>
             <div class="desc-content">{{ project.description }}</div>

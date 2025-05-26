@@ -10,10 +10,6 @@
           <span *ngIf="name?.errors?.['minlength']">プロジェクト名は3文字以上で入力してください。</span>
         </div>
       </div>
-      <div class="form-field">
-        <label class="form-label" for="project-description">説明</label>
-        <textarea id="project-description" class="form-input" formControlName="description" rows="4" placeholder="プロジェクトの目的や概要を入力"></textarea>
-      </div>
       <div class="form-field date-range-fields">
         <div class="half-width">
           <label class="form-label" for="start-date">予定開始日</label>
@@ -32,6 +28,26 @@
             終了日は開始日以降に設定してください。
           </div>
         </div>
+      </div>
+      <div class="form-field">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>管理者（複数選択可）</mat-label>
+          <mat-select formControlName="managerIds" multiple>
+            <mat-option *ngFor="let user of users$ | async" [value]="user.id">{{ user.displayName }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="form-field">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>担当者（複数選択可）</mat-label>
+          <mat-select formControlName="members" multiple>
+            <mat-option *ngFor="let user of users$ | async" [value]="user.id">{{ user.displayName }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="project-description">説明</label>
+        <textarea id="project-description" class="form-input" formControlName="description" rows="4" placeholder="プロジェクトの目的や概要を入力"></textarea>
       </div>
       <div class="form-actions">
         <button class="submit-button" type="submit" [disabled]="isLoading || projectForm.invalid || (!isEditMode && !currentUser)">
