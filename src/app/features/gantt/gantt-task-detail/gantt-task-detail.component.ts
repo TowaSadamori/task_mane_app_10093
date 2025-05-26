@@ -49,6 +49,7 @@ export class GanttTaskDetailComponent implements OnInit {
     'actions',
     'workDate',
     'assignee',
+    'manager',
     'actualStartTime',
     'actualEndTime',
     'breakTime',
