@@ -113,7 +113,11 @@
       </thead>
       <tbody>
         <tr *ngFor="let report of myDailyReports">
-          <td style="padding:6px 8px; border:1px solid #b3e5fc;">{{ toDateSafe(report.workDate) | date:'yyyy/MM/dd' }}</td>
+          <td style="padding:6px 8px; border:1px solid #b3e5fc;">
+            <a [routerLink]="['/app/daily-report-detail', report.id]" style="color:#1976d2; text-decoration:underline; cursor:pointer;">
+              {{ toDateSafe(report.workDate) | date:'yyyy/MM/dd' }}
+            </a>
+          </td>
           <td style="padding:6px 8px; border:1px solid #b3e5fc;">{{ getDisplayNameByUid(report['assigneeId']) }}</td>
           <td style="padding:6px 8px; border:1px solid #b3e5fc;">{{ report.taskName }} / {{ report.projectName }}</td>
         </tr>
