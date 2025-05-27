@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Firestore, doc, getDoc } from '@angular/fire/firestore';
-import { CommonModule, DatePipe } from '@angular/common';
+import { Firestore, doc, getDoc, Timestamp } from '@angular/fire/firestore';
+import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 
 interface WorkLog {
@@ -13,13 +13,13 @@ interface WorkLog {
   assignees?: string[];
   blockerStatus?: string;
   comment?: string;
-  createdAt?: any;
+  createdAt?: Date | Timestamp | string | undefined;
   photoUrls?: string[];
   progressRate?: number;
   supervisor?: string;
-  workDate?: any;
+  workDate?: Date | Timestamp | string | undefined;
   workerCount?: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 @Component({
@@ -46,6 +46,11 @@ export class GanttDailyLogDetailComponent implements OnInit {
       const logSnap = await getDoc(logRef);
       if (logSnap.exists()) {
         this.workLog = { id: logSnap.id, ...logSnap.data() };
+        const taskRef = doc(this.firestore, 'GanttChartTasks', this.ganttTaskId);
+        const taskSnap = await getDoc(taskRef);
+        if (taskSnap.exists()) {
+          this.workLog['taskName'] = taskSnap.data()['title'] || '';
+        }
       }
     }
   }
@@ -54,5 +59,21 @@ export class GanttDailyLogDetailComponent implements OnInit {
     if (this.ganttTaskId) {
       this.router.navigate(['/app/gantt-task-detail', this.ganttTaskId]);
     }
+  }
+
+  get formattedWorkDate(): string {
+    if (!this.workLog || !this.workLog.workDate) return '-';
+    const wd: string | Date | { toDate?: () => Date } = this.workLog.workDate;
+    if (typeof wd === 'string') {
+      const d = new Date(wd);
+      return isNaN(d.getTime()) ? wd : d.toLocaleDateString('ja-JP');
+    }
+    if (typeof wd === 'object' && wd !== null && 'toDate' in wd && typeof wd.toDate === 'function') {
+      return wd.toDate().toLocaleDateString('ja-JP');
+    }
+    if (wd instanceof Date) {
+      return wd.toLocaleDateString('ja-JP');
+    }
+    return '-';
   }
 }

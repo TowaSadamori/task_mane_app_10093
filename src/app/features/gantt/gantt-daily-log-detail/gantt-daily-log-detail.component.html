@@ -10,7 +10,7 @@
       </tr>
       <tr>
         <td style="color: #1976d2; font-weight: bold; padding: 6px 0;">作業日:</td>
-        <td>{{ workLog.workDate?.toDate ? (workLog.workDate.toDate() | date:'yyyy/MM/dd') : (workLog.workDate | date:'yyyy/MM/dd') }}</td>
+        <td>{{ formattedWorkDate }}</td>
       </tr>
       <tr>
         <td style="color: #1976d2; font-weight: bold; padding: 6px 0;">管理者:</td>
