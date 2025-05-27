@@ -65,7 +65,7 @@
       <button mat-raised-button color="primary" (click)="goBack()">
         <mat-icon>arrow_back</mat-icon> タスク詳細画面へ戻る
       </button>
-      <button mat-icon-button color="primary" aria-label="編集" disabled>
+      <button mat-icon-button color="primary" aria-label="編集" (click)="openEditDailyLogDialog()">
         <mat-icon>edit</mat-icon>
       </button>
       <button mat-icon-button aria-label="削除" (click)="confirmDelete()" style="color: #f44336; background: none; border: none; box-shadow: none;">

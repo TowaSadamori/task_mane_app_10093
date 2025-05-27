@@ -3,6 +3,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Firestore, doc, getDoc, Timestamp } from '@angular/fire/firestore';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
+import { ViewContainerRef } from '@angular/core';
+import { GanttDailyLogFormDialogComponent } from '../gantt-daily-log-form-dialog/gantt-daily-log-form-dialog.component';
 
 interface WorkLog {
   id?: string;
@@ -37,6 +40,8 @@ export class GanttDailyLogDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private firestore = inject(Firestore);
+  private dialog = inject(MatDialog);
+  private viewContainerRef = inject(ViewContainerRef);
 
   async ngOnInit() {
     this.ganttTaskId = this.route.snapshot.paramMap.get('ganttTaskId');
@@ -145,5 +150,21 @@ export class GanttDailyLogDetailComponent implements OnInit {
     }
     // タスク詳細画面に戻る
     this.goBack();
+  }
+
+  openEditDailyLogDialog(): void {
+    if (!this.ganttTaskId || !this.workLog) return;
+    const dialogRef = this.dialog.open(GanttDailyLogFormDialogComponent, {
+      width: '500px',
+      maxHeight: '90vh',
+      viewContainerRef: this.viewContainerRef,
+      data: { ganttTaskId: this.ganttTaskId, log: { ...this.workLog } }
+    });
+    dialogRef.afterClosed().subscribe(async (result: unknown) => {
+      if (result && this.workLog && this.workLog.id) {
+        // 編集後は画面をリロード
+        window.location.reload();
+      }
+    });
   }
 }
