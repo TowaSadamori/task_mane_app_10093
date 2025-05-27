@@ -95,8 +95,17 @@ export class WeeklyReportComponent {
     return diff + 1;
   }
 
-  onEdit(report: Record<string, unknown>) {
-    alert('編集（仮）\n' + JSON.stringify(report, null, 2));
+  async onEdit(report: Record<string, unknown>) {
+    const dialogRef = this.dialog.open(AddWeeklyReportDialogComponent, {
+      width: '500px',
+      maxHeight: '90vh',
+      data: { ...report }
+    });
+    dialogRef.afterClosed().subscribe(async (result: Record<string, unknown> | undefined) => {
+      if (result) {
+        await this.loadReports();
+      }
+    });
   }
 
   async onDelete(report: Record<string, unknown>) {

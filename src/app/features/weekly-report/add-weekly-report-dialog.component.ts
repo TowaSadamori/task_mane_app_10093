@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { FormControl, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -14,7 +14,9 @@ import { MatOptionModule } from '@angular/material/core';
 import { UserService } from '../../core/user.service';
 import { AuthService } from '../../core/auth.service';
 import { User } from '../../core/models/user.model';
-import { Firestore, collection, addDoc, Timestamp } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, Timestamp, doc, updateDoc } from '@angular/fire/firestore';
+import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { getStorage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
 
 @Component({
   selector: 'app-add-weekly-report-dialog',
@@ -42,12 +44,16 @@ export class AddWeeklyReportDialogComponent {
     private dialogRef: MatDialogRef<AddWeeklyReportDialogComponent>,
     private userService: UserService,
     private authService: AuthService,
-    private firestore: Firestore
+    private firestore: Firestore,
+    @Inject(MAT_DIALOG_DATA) public data?: Record<string, unknown>
   ) {
     this.userService.getUsers().subscribe(users => {
       this.users = users;
     });
     this.setCurrentUserAsPerson();
+    if (data) {
+      this.patchFormWithData(data);
+    }
   }
   async setCurrentUserAsPerson() {
     const user = await this.authService.getCurrentUser();
@@ -62,13 +68,36 @@ export class AddWeeklyReportDialogComponent {
   }
   async onSubmit() {
     if (this.form.valid) {
-      const value: Record<string, unknown> = { ...this.form.getRawValue(), photos: this.selectedPhotos };
-      const col = collection(this.firestore, 'weeklyReports');
+      const value: Record<string, unknown> = { ...this.form.getRawValue() };
+      // 日付変換
       if (value['periodStart'] instanceof Date) value['periodStart'] = Timestamp.fromDate(value['periodStart'] as Date);
       if (value['periodEnd'] instanceof Date) value['periodEnd'] = Timestamp.fromDate(value['periodEnd'] as Date);
       value['createdAt'] = Timestamp.now();
-      await addDoc(col, value);
-      this.dialogRef.close(value);
+
+      // 写真アップロード
+      const storage = getStorage();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const photoUrls = Array.isArray((this.data as any)?.['photoUrls']) ? [...((this.data as any)['photoUrls'])] : [];
+      for (const file of this.selectedPhotos) {
+        const storageRef = ref(storage, `weeklyReports/${Date.now()}_${file.name}`);
+        await uploadBytes(storageRef, file);
+        const url = await getDownloadURL(storageRef);
+        photoUrls.push(url);
+      }
+      value['photoUrls'] = photoUrls;
+
+      if (this.data && this.data['id']) {
+        // 更新
+        const refDoc = doc(this.firestore, 'weeklyReports', this.data['id'] as string);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await updateDoc(refDoc, value as any);
+        this.dialogRef.close({ ...value, id: this.data['id'] });
+      } else {
+        // 新規作成
+        const col = collection(this.firestore, 'weeklyReports');
+        await addDoc(col, value);
+        this.dialogRef.close(value);
+      }
     }
   }
   removePhoto(i: number) {
@@ -91,5 +120,21 @@ export class AddWeeklyReportDialogComponent {
       return { periodMax: true };
     }
     return null;
+  }
+
+  patchFormWithData(data: Record<string, unknown>) {
+    // 日付型や配列型の変換も考慮
+    const patch: Record<string, unknown> = { ...data };
+    if (patch['periodStart'] && typeof patch['periodStart'] === 'object' && 'toDate' in patch['periodStart'] && typeof (patch['periodStart'] as { toDate: () => Date }).toDate === 'function') {
+      patch['periodStart'] = (patch['periodStart'] as { toDate: () => Date }).toDate();
+    }
+    if (patch['periodEnd'] && typeof patch['periodEnd'] === 'object' && 'toDate' in patch['periodEnd'] && typeof (patch['periodEnd'] as { toDate: () => Date }).toDate === 'function') {
+      patch['periodEnd'] = (patch['periodEnd'] as { toDate: () => Date }).toDate();
+    }
+    // personフィールドが存在する場合はセット
+    if (patch['person']) {
+      this.form.get('person')?.setValue(patch['person'] as string);
+    }
+    this.form.patchValue(patch);
   }
 }
