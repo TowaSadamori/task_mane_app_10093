@@ -631,3 +631,227 @@ export const generatePdf = functions
       }
     });
   });
+
+export const generateWeeklyPdf = functions
+  .region('asia-northeast1')
+  .runWith({ memory: '1GB', timeoutSeconds: 300 })
+  .https.onRequest((req: Request, res: Response) => {
+    corsHandler(req, res, async () => {
+      try {
+        if (req.method !== 'POST') {
+          res.status(405).send('Method Not Allowed');
+          return;
+        }
+
+        // 週報用データ構造
+        const reportData = req.body as {
+          period: string;
+          staffName: string;
+          managerNames: string;
+          memo: string;
+          workDays: number;
+          workTimeTotal: string;
+          photoUrls?: string[];
+          dailyLogs?: { workDate: string; assignee: string; workTime: string }[];
+        };
+        logger.info('週報PDF用データ:', JSON.stringify(reportData, null, 2));
+        const fontPath = `file://${process.cwd()}/fonts/NotoSansJP-VariableFont_wght.ttf`;
+        const bucket = admin.storage().bucket("kensyu10093.firebasestorage.app");
+
+        // 写真のHTML生成（QRコード＋URL）
+        const photoUrls = reportData.photoUrls || [];
+        let photosHtml = '';
+        if (photoUrls.length > 0) {
+          photosHtml += `<div style="margin-top: 15px;"><strong>写真:</strong><div style="display: flex; flex-wrap: wrap; gap: 10px;">`;
+          for (const url of photoUrls) {
+            try {
+              let qrDataUrl = '';
+              try {
+                qrDataUrl = await QRCode.toDataURL(url);
+              } catch (qrError) {
+                logger.error("QRコード生成エラー", { url, qrError });
+              }
+              photosHtml += `<div style="margin-bottom: 20px;">
+                <div><strong>URL:</strong> <a href="${url}" target="_blank">${url}</a></div>
+                <div><strong>QRコード:</strong><br><img src="${qrDataUrl}" alt="QRコード" style="width:120px;height:120px;"></div>
+              </div>`;
+            } catch (error) {
+              logger.error("写真処理エラー:", { url, error });
+              photosHtml += `<div style="color: red;">写真読込エラー</div>`;
+            }
+          }
+          photosHtml += `</div></div>`;
+        } else {
+          photosHtml += '<div style="margin-top: 15px;"><strong>写真:</strong> なし</div>';
+        }
+
+        // 日報一覧テーブルHTML生成
+        let dailyLogsHtml = '';
+        if (Array.isArray(reportData.dailyLogs) && reportData.dailyLogs.length > 0) {
+          dailyLogsHtml += `
+            <div class="section">
+              <h2>日報一覧</h2>
+              <table style="width:100%; border-collapse:collapse; background:#fff; margin-top:8px;">
+                <thead>
+                  <tr style="background:#e3f2fd;">
+                    <th style="padding:6px 8px; border:1px solid #b3e5fc;">作業日</th>
+                    <th style="padding:6px 8px; border:1px solid #b3e5fc;">担当者</th>
+                    <th style="padding:6px 8px; border:1px solid #b3e5fc;">勤務時間</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${reportData.dailyLogs.map(log => `
+                    <tr>
+                      <td style="padding:6px 8px; border:1px solid #b3e5fc;">${log.workDate || ''}</td>
+                      <td style="padding:6px 8px; border:1px solid #b3e5fc;">${log.assignee || ''}</td>
+                      <td style="padding:6px 8px; border:1px solid #b3e5fc;">${log.workTime || ''}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        } else {
+          dailyLogsHtml += `
+            <div class="section">
+              <h2>日報一覧</h2>
+              <table style="width:100%; border-collapse:collapse; background:#fff; margin-top:8px;">
+                <thead>
+                  <tr style="background:#e3f2fd;">
+                    <th style="padding:6px 8px; border:1px solid #b3e5fc;">作業日</th>
+                    <th style="padding:6px 8px; border:1px solid #b3e5fc;">担当者</th>
+                    <th style="padding:6px 8px; border:1px solid #b3e5fc;">勤務時間</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="3" style="padding:6px 8px; border:1px solid #b3e5fc; text-align:center; color:#888;">日報データなし</td></tr>
+                </tbody>
+              </table>
+            </div>
+          `;
+        }
+
+        // 週報データをHTMLに埋め込む
+        const htmlContent = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <title>週報</title>
+            <style>
+              @font-face {
+                font-family: 'MyCustomFont';
+                src: url('${fontPath}') format('truetype');
+              }
+              body {
+                font-family: 'MyCustomFont', sans-serif;
+                font-weight: 400;
+                margin: 30px;
+                font-size: 12px;
+                line-height: 1.6;
+              }
+              h1 {
+                font-weight: 700;
+                font-size: 20px;
+                text-align: center;
+                border-bottom: 2px solid #1976d2;
+                padding-bottom: 10px;
+                margin-bottom: 25px;
+                color: #1976d2;
+              }
+              .info-grid {
+                display: grid;
+                grid-template-columns: 120px auto;
+                gap: 8px 10px;
+                margin-bottom: 20px;
+              }
+              .info-grid strong {
+                font-weight: 700;
+              }
+              .section {
+                margin-top: 20px;
+                padding-top: 10px;
+                border-top: 1px dashed #ccc;
+              }
+              .section h2 {
+                font-size: 14px;
+                font-weight: 700;
+                margin-bottom: 8px;
+                color: #1976d2;
+              }
+              .memo-box {
+                white-space: pre-wrap;
+                border: 1px solid #ddd;
+                padding: 10px;
+                min-height: 50px;
+                background-color: #f9f9f9;
+                max-width: 500px;
+              }
+              .photo-section {
+                margin-top: 20px;
+              }
+              .photo-section-title {
+                font-size: 14px;
+                font-weight: 700;
+                margin-bottom: 8px;
+              }
+              .photo-list {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+              }
+              .photo-list img {
+                max-width: 180px;
+                max-height: 180px;
+                display: block;
+                object-fit: cover;
+                border: 1px solid #eee;
+                padding: 5px;
+                margin: 5px;
+              }
+            </style>
+          </head>
+          <body>
+            <h1>週報</h1>
+            <div class="info-grid">
+              <strong>期間:</strong>        <span>${reportData.period || ''}</span>
+              <strong>担当者:</strong>      <span>${reportData.staffName || ''}</span>
+              <strong>管理者:</strong>      <span>${reportData.managerNames || ''}</span>
+              <strong>メモ:</strong>        <span>${reportData.memo || ''}</span>
+              <strong>勤務日数:</strong>    <span>${reportData.workDays || ''}</span>
+              <strong>勤務時間合計:</strong><span>${reportData.workTimeTotal || ''}</span>
+            </div>
+            <div class="photo-section">
+              <div class="photo-section-title">写真</div>
+              ${photosHtml}
+            </div>
+            ${dailyLogsHtml}
+          </body>
+          </html>
+        `;
+
+        // PuppeteerでPDF生成（chrome-aws-lambda対応）
+        const browser = await puppeteer.launch({
+          args: chromium.args,
+          defaultViewport: chromium.defaultViewport,
+          executablePath: await chromium.executablePath,
+          headless: chromium.headless,
+        });
+        const page = await browser.newPage();
+        await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+        const pdfBuffer = await page.pdf({
+          format: 'a4',
+          printBackground: true,
+          margin: { top: '25mm', right: '20mm', bottom: '25mm', left: '20mm' }
+        });
+        await browser.close();
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `inline; filename="weekly_report.pdf"`);
+        res.send(pdfBuffer);
+      } catch (error) {
+        logger.error("Critical error in generateWeeklyPdf function:", error);
+        res.status(500).send('Internal Server Error while generating PDF.');
+      }
+    });
+  });
