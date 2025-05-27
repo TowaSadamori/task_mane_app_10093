@@ -62,6 +62,18 @@ export class WeeklyReportComponent {
           workDate <= end
         );
       })
+      .sort((a, b) => {
+        let dateA: Date | null = null;
+        let dateB: Date | null = null;
+        if (a['workDate'] instanceof Date) dateA = a['workDate'] as Date;
+        else if (typeof a['workDate'] === 'string') dateA = new Date(a['workDate'] as string);
+        else if (typeof a['workDate'] === 'object' && a['workDate'] !== null && typeof (a['workDate'] as { toDate?: unknown }).toDate === 'function') dateA = (a['workDate'] as { toDate: () => Date }).toDate();
+        if (b['workDate'] instanceof Date) dateB = b['workDate'] as Date;
+        else if (typeof b['workDate'] === 'string') dateB = new Date(b['workDate'] as string);
+        else if (typeof b['workDate'] === 'object' && b['workDate'] !== null && typeof (b['workDate'] as { toDate?: unknown }).toDate === 'function') dateB = (b['workDate'] as { toDate: () => Date }).toDate();
+        if (!dateA || !dateB) return 0;
+        return dateA.getTime() - dateB.getTime();
+      })
       .map(dr => {
         let workDateDisplay = '';
         if (dr['workDate'] instanceof Date) {
