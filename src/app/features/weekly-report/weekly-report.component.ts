@@ -8,11 +8,12 @@ import { UserService } from '../../core/user.service';
 import { User } from '../../core/models/user.model';
 import { MatIconModule } from '@angular/material/icon';
 import { DailyReportService } from '../daily-report/daily-report.service';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-weekly-report',
   standalone: true,
-  imports: [CommonModule, AddWeeklyReportDialogComponent, MatIconModule],
+  imports: [CommonModule, AddWeeklyReportDialogComponent, MatIconModule, RouterModule],
   templateUrl: './weekly-report.component.html',
   styleUrl: './weekly-report.component.scss'
 })
@@ -76,6 +77,7 @@ export class WeeklyReportComponent {
         const endTime = typeof dr['endTime'] === 'string' ? dr['endTime'] : '';
         const breakTime = typeof dr['breakTime'] === 'number' ? dr['breakTime'] : '';
         return {
+          id: dr['id'] ?? '',
           workDateDisplay,
           personUidDisplay,
           startTime,

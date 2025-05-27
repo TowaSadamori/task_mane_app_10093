@@ -48,7 +48,11 @@
           </thead>
           <tbody>
             <tr *ngFor="let dr of weeklyDailyReports[getReportId(report)]">
-              <td>{{ dr['workDateDisplay'] }}</td>
+              <td>
+                <a [routerLink]="['/app/daily-report-detail', dr['id']]" style="cursor:pointer; color:#1976d2; text-decoration:underline;">
+                  {{ dr['workDateDisplay'] }}
+                </a>
+              </td>
               <td>{{ getUserName(dr['personUidDisplay']) }}</td>
               <td>{{ dr['startTime'] }} - {{ dr['endTime'] }}（休憩: {{ dr['breakTime'] }}分）</td>
             </tr>
