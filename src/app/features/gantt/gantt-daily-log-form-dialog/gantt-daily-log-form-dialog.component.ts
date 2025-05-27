@@ -56,12 +56,14 @@ export class GanttDailyLogFormDialogComponent {
 
   managerNames = '';
   assigneeNames = '';
+  existingPhotoUrls: string[] = [];
 
   constructor(
     private dialogRef: MatDialogRef<GanttDailyLogFormDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { ganttTaskId: string, log?: GanttDailyLog }
   ) {
     if (data.log) {
+      this.existingPhotoUrls = data.log?.photoUrls ? [...data.log.photoUrls] : [];
       this.form.patchValue({
         workDate:
           data.log.workDate && typeof data.log.workDate.toDate === 'function'
@@ -109,7 +111,7 @@ export class GanttDailyLogFormDialogComponent {
       this.isSaving = true;
       const formValue = this.form.value;
       const photoUrls: string[] = [];
-      const existingPhotoUrls: string[] = this.data.log?.photoUrls || [];
+      const existingPhotoUrls: string[] = this.existingPhotoUrls;
 
       const photoFiles = formValue.photos as File[];
       if (photoFiles && photoFiles.length > 0) {
@@ -183,8 +185,6 @@ export class GanttDailyLogFormDialogComponent {
   }
 
   removeExistingPhoto(i: number) {
-    if (this.data.log && Array.isArray(this.data.log.photoUrls)) {
-      this.data.log.photoUrls.splice(i, 1);
-    }
+    this.existingPhotoUrls.splice(i, 1);
   }
 } 
