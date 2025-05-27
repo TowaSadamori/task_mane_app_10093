@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { AddWeeklyReportDialogComponent } from './add-weekly-report-dialog.component';
-import { Firestore, collection, getDocs, query, orderBy } from '@angular/fire/firestore';
+import { Firestore, collection, getDocs, query, orderBy, doc, deleteDoc } from '@angular/fire/firestore';
 import { CommonModule } from '@angular/common';
 import { UserService } from '../../core/user.service';
 import { User } from '../../core/models/user.model';
@@ -99,8 +99,13 @@ export class WeeklyReportComponent {
     alert('編集（仮）\n' + JSON.stringify(report, null, 2));
   }
 
-  onDelete(report: Record<string, unknown>) {
-    alert('削除（仮）\n' + JSON.stringify(report, null, 2));
+  async onDelete(report: Record<string, unknown>) {
+    if (!report['id']) return;
+    const ok = window.confirm('本当に削除しますか？');
+    if (!ok) return;
+    const ref = doc(this.firestore, 'weeklyReports', report['id'] as string);
+    await deleteDoc(ref);
+    await this.loadReports();
   }
 
   onPdf(report: Record<string, unknown>) {
