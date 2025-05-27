@@ -199,10 +199,11 @@ export class MonthlyReportComponent {
   }
 
   async onEdit(report: Record<string, unknown>) {
+    const data = { ...report, photoUrls: Array.isArray(report['photoUrls']) ? [...report['photoUrls']] : [] };
     const dialogRef = this.dialog.open(AddMonthlyReportDialogComponent, {
       width: '500px',
       maxHeight: '90vh',
-      data: { ...report }
+      data
     });
     dialogRef.afterClosed().subscribe(async (result: Record<string, unknown> | undefined) => {
       if (result) {
