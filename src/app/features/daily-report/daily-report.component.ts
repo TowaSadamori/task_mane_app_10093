@@ -208,7 +208,7 @@ export class DailyReportComponent {
     }));
     return {
       reportDate: typeof report.workDate === 'string' ? report.workDate : (report.workDate instanceof Date ? report.workDate.toLocaleDateString() : ''),
-      staffName: report.personUid,
+      staffName: this.getDisplayNameByUid(report.personUid),
       checkInTime: report.startTime,
       checkOutTime: report.endTime,
       breakTime: report.breakTime ? report.breakTime.toString() : '',
