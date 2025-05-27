@@ -1,126 +1,74 @@
-.weekly-report-card-list {
+.monthly-report-card-list {
   display: flex;
-  flex-direction: column;
-  gap: 28px;
-  align-items: center;
+  flex-wrap: wrap;
+  gap: 32px;
+  margin-top: 24px;
 }
 
-.report-card.weekly-report-card {
+.monthly-report-card {
   background: #fff;
-  border-radius: 14px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
-  padding: 24px 28px 18px 28px;
-  min-width: 320px;
-  max-width: 380px;
-  flex: 1 1 340px;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  padding: 24px 28px 20px 28px;
+  min-width: 340px;
+  max-width: 420px;
+  margin-bottom: 24px;
+  flex: 1 1 380px;
   display: flex;
   flex-direction: column;
-  margin-bottom: 12px;
-  border-left: 6px solid #2563eb;
-  position: relative;
-  gap: 12px;
 }
 
-.report-created {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #2563eb;
+.report-period {
+  font-size: 1.15em;
+  font-weight: bold;
+  color: #1976d2;
   margin-bottom: 10px;
 }
 
+.period-label {
+  background: #e3f2fd;
+  border-radius: 6px;
+  padding: 4px 12px;
+  display: inline-block;
+}
+
 .report-content > div {
-  margin-bottom: 6px;
-  color: #222;
-  font-size: 1rem;
+  margin-bottom: 8px;
 }
 
-.report-content strong {
-  color: #374151;
+.workdays {
+  font-weight: bold;
+  color: #1976d2;
 }
 
-.report-card-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.edit-btn {
-  background: #2563eb;
-  color: #fff;
-  border-radius: 6px;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 4px;
-  transition: background 0.2s;
-}
-.edit-btn:hover {
-  background: #1d4ed8;
-}
-.edit-btn .mat-icon {
-  font-size: 24px;
-  color: #fff;
-}
-.delete-btn {
-  background: #f44336;
-  color: #fff;
-  border-radius: 6px;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 4px;
-  transition: background 0.2s;
-}
-.delete-btn:hover {
-  background: #d32f2f;
-}
-.delete-btn .mat-icon {
-  font-size: 24px;
-  color: #fff;
-}
-.pdf-btn {
-  background: #ff9800;
-  color: #fff;
-  border-radius: 6px;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 4px;
-  transition: background 0.2s;
-}
-.pdf-btn:hover {
-  background: #f57c00;
-}
-.pdf-btn .mat-icon {
-  font-size: 24px;
-  color: #fff;
+.worktime-total {
+  font-weight: bold;
+  color: #d32f2f;
 }
 
 .photo-section {
-  margin-top: 8px;
+  margin: 12px 0 8px 0;
 }
+
 .photo-thumbnails {
   display: flex;
   gap: 8px;
-  margin-top: 4px;
+  margin-top: 6px;
 }
+
 .thumbnail {
   width: 60px;
   height: 60px;
   object-fit: cover;
-  border-radius: 4px;
-  border: 1px solid #ccc;
+  border-radius: 6px;
+  border: 1px solid #b3e5fc;
   cursor: pointer;
   transition: box-shadow 0.2s;
 }
 .thumbnail:hover {
   box-shadow: 0 0 0 2px #1976d2;
 }
+
 .no-photo {
   color: #888;
   font-size: 0.95em;
@@ -134,16 +82,67 @@
   border: 1.5px solid #b3e5fc;
   border-radius: 8px;
 }
-.daily-log-section h4 {
+
+.daily-log-title {
   color: #1976d2;
   margin: 0 0 8px 0;
+  font-size: 1.08em;
 }
-.daily-log-section table {
+
+.daily-log-table {
   width: 100%;
   border-collapse: collapse;
   background: #fff;
 }
-.daily-log-section th, .daily-log-section td {
+.daily-log-table th, .daily-log-table td {
   padding: 6px 8px;
   border: 1px solid #b3e5fc;
+  text-align: left;
+}
+.daily-log-table th {
+  background: #e3f2fd;
+}
+.no-daily {
+  text-align: center;
+  color: #888;
+}
+.daily-link {
+  color: #1976d2;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.download-btn {
+  background: none;
+  border: none;
+  padding: 0 0 0 4px;
+  margin-left: 2px;
+  cursor: pointer;
+  vertical-align: middle;
+  color: #1976d2;
+  font-size: 22px;
+  transition: color 0.2s;
+}
+.download-btn:hover {
+  color: #d32f2f;
+}
+.material-icons {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: normal;
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+.delete-btn {
+  color: #d32f2f !important;
+}
+.delete-btn:hover {
+  color: #b71c1c !important;
 }

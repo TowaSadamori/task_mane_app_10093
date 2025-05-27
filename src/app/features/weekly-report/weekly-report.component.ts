@@ -151,6 +151,24 @@ export class WeeklyReportComponent {
     window.open(url, '_blank');
   }
 
+  async downloadImage(url: string) {
+    try {
+      const downloadUrl = url.includes('?') ? url + '&alt=media' : url + '?alt=media';
+      const response = await fetch(downloadUrl);
+      const blob = await response.blob();
+      const a = document.createElement('a');
+      const objectUrl = URL.createObjectURL(blob);
+      a.href = objectUrl;
+      a.download = url.split('/').pop()?.split('?')[0] || 'image.jpg';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      alert('ダウンロードに失敗しました');
+    }
+  }
+
   getWorkDays(report: Record<string, unknown>): number {
     const id = this.getReportId(report);
     return this.weeklyDailyReports[id]?.length ?? 0;

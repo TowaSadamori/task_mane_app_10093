@@ -3,53 +3,54 @@
   <button (click)="openAddDialog()" class="action-btn">週報追加</button>
 </div>
 
-<p>weekly-report works!</p>
-
-<div *ngIf="reports.length > 0" class="weekly-report-card-list">
-  <div *ngFor="let report of reports" class="report-card weekly-report-card">
+<div *ngIf="reports.length > 0" class="monthly-report-card-list">
+  <div *ngFor="let report of reports" class="monthly-report-card">
     <div class="report-card-actions">
       <button mat-icon-button type="button" title="編集" (click)="onEdit(report)" class="edit-btn">
-        <mat-icon>edit</mat-icon>
+        <span class="material-icons">edit</span>
       </button>
       <button mat-icon-button type="button" title="削除" (click)="onDelete(report)" class="delete-btn">
-        <mat-icon>delete</mat-icon>
+        <span class="material-icons">delete</span>
       </button>
       <button mat-icon-button type="button" title="PDF出力" (click)="onPdf(report)" class="pdf-btn">
-        <mat-icon>picture_as_pdf</mat-icon>
+        <span class="material-icons">picture_as_pdf</span>
       </button>
     </div>
-    <div class="report-created">
-      {{ getPeriodDate(report, 'periodStart') }} ～ {{ getPeriodDate(report, 'periodEnd') }}
+    <div class="report-period">
+      <span class="period-label">{{ getPeriodDate(report, 'periodStart') }} ～ {{ getPeriodDate(report, 'periodEnd') }}</span>
     </div>
     <div class="report-content">
       <div><strong>担当者:</strong> {{ getUserName(report['person'] ? report['person'].toString() : '') }}</div>
       <div><strong>管理者:</strong> {{ getManagerNames(report) }}</div>
       <div><strong>メモ:</strong> {{ report['memo'] }}</div>
-      <div><strong>勤務日数:</strong> {{ getWorkDays(report) }}日</div>
+      <div><strong>勤務日数:</strong> <span class="workdays">{{ getWorkDays(report) }}日</span></div>
       <div><strong>一週間の勤務時間合計:</strong> <span class="worktime-total">{{ getWeeklyWorkTimeTotal(report) }}</span></div>
       <div class="photo-section">
         <div><strong>写真:</strong></div>
         <div *ngIf="getPhotoUrls(report).length > 0" class="photo-thumbnails">
           <span *ngFor="let url of getPhotoUrls(report)">
             <img [src]="url" alt="photo" class="thumbnail" (click)="openImageDialog(url)" tabindex="0" (keyup.enter)="openImageDialog(url)">
+            <button class="download-btn" type="button" (click)="downloadImage(url)" title="ダウンロード">
+              <span class="material-icons">download</span>
+            </button>
           </span>
         </div>
         <div *ngIf="getPhotoUrls(report).length === 0" class="no-photo">写真はありません</div>
       </div>
-      <div class="daily-log-section" style="margin-top: 18px; padding: 12px; background: #f4fcff; border: 1.5px solid #b3e5fc; border-radius: 8px;">
-        <h4 style="color:#1976d2; margin:0 0 8px 0;">日報</h4>
-        <table style="width:100%; border-collapse:collapse; background:#fff;">
+      <div class="daily-log-section">
+        <h4 class="daily-log-title">日報</h4>
+        <table class="daily-log-table">
           <thead>
-            <tr style="background:#e3f2fd;">
-              <th style="padding:6px 8px; border:1px solid #b3e5fc;">作業日</th>
-              <th style="padding:6px 8px; border:1px solid #b3e5fc;">担当者</th>
-              <th style="padding:6px 8px; border:1px solid #b3e5fc;">勤務時間</th>
+            <tr>
+              <th>作業日</th>
+              <th>担当者</th>
+              <th>勤務時間</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let dr of weeklyDailyReports[getReportId(report)]">
               <td>
-                <a [routerLink]="['/app/daily-report-detail', dr['id']]" style="cursor:pointer; color:#1976d2; text-decoration:underline;">
+                <a [routerLink]="['/app/daily-report-detail', dr['id']]" class="daily-link">
                   {{ dr['workDateDisplay'] }}
                 </a>
               </td>
@@ -57,7 +58,7 @@
               <td>{{ dr['startTime'] }} - {{ dr['endTime'] }}（休憩: {{ dr['breakTime'] }}分）</td>
             </tr>
             <tr *ngIf="!weeklyDailyReports[getReportId(report)] || weeklyDailyReports[getReportId(report)].length === 0">
-              <td colspan="3" style="text-align:center; color:#888;">（ここに日報データが入ります）</td>
+              <td colspan="3" class="no-daily">（ここに日報データが入ります）</td>
             </tr>
           </tbody>
         </table>
