@@ -2,45 +2,43 @@
   <h2>週報追加</h2>
   <form [formGroup]="form" (ngSubmit)="onSubmit()">
     <mat-form-field appearance="outline">
-      <mat-label>作業日</mat-label>
-      <input matInput [matDatepicker]="picker" formControlName="workDate" required>
-      <button mat-icon-button matSuffix type="button" (click)="picker.open()">
+      <mat-label>開始日</mat-label>
+      <input matInput [matDatepicker]="pickerStart" formControlName="periodStart" required>
+      <button mat-icon-button matSuffix type="button" (click)="pickerStart.open()">
         <mat-icon>calendar_today</mat-icon>
       </button>
-      <mat-datepicker #picker></mat-datepicker>
-      <mat-error *ngIf="form.get('workDate')?.hasError('required') && form.get('workDate')?.touched">
-        作業日は必須です。
+      <mat-datepicker #pickerStart></mat-datepicker>
+      <mat-error *ngIf="form.get('periodStart')?.hasError('required') && form.get('periodStart')?.touched">
+        開始日は必須です。
       </mat-error>
     </mat-form-field>
     <mat-form-field appearance="outline">
+      <mat-label>終了日</mat-label>
+      <input matInput [matDatepicker]="pickerEnd" formControlName="periodEnd" required>
+      <button mat-icon-button matSuffix type="button" (click)="pickerEnd.open()">
+        <mat-icon>calendar_today</mat-icon>
+      </button>
+      <mat-datepicker #pickerEnd></mat-datepicker>
+      <mat-error *ngIf="form.get('periodEnd')?.hasError('required') && form.get('periodEnd')?.touched">
+        終了日は必須です。
+      </mat-error>
+    </mat-form-field>
+    <div *ngIf="form.hasError('periodOrder')" style="color: #d32f2f; margin-bottom: 8px;">開始日は終了日以前にしてください。</div>
+    <div *ngIf="form.hasError('periodMax')" style="color: #d32f2f; margin-bottom: 8px;">最大7日間まで選択できます。</div>
+    <mat-form-field appearance="outline">
       <mat-label>担当者</mat-label>
-      <input matInput formControlName="person" required>
+      <input matInput formControlName="person" [readonly]="true">
       <mat-error *ngIf="form.get('person')?.hasError('required') && form.get('person')?.touched">
         担当者は必須です。
       </mat-error>
     </mat-form-field>
     <mat-form-field appearance="outline">
-      <mat-label>出勤時間</mat-label>
-      <input matInput type="time" formControlName="startTime" required>
-      <mat-error *ngIf="form.get('startTime')?.hasError('required') && form.get('startTime')?.touched">
-        出勤時間は必須です。
-      </mat-error>
-    </mat-form-field>
-    <mat-form-field appearance="outline">
-      <mat-label>退勤時間</mat-label>
-      <input matInput type="time" formControlName="endTime" required>
-      <mat-error *ngIf="form.get('endTime')?.hasError('required') && form.get('endTime')?.touched">
-        退勤時間は必須です。
-      </mat-error>
-    </mat-form-field>
-    <mat-form-field appearance="outline">
-      <mat-label>休憩時間（分）</mat-label>
-      <input matInput type="number" min="0" formControlName="breakTime" required>
-      <mat-error *ngIf="form.get('breakTime')?.hasError('required') && form.get('breakTime')?.touched">
-        休憩時間は必須です。
-      </mat-error>
-      <mat-error *ngIf="form.get('breakTime')?.hasError('min') && form.get('breakTime')?.touched">
-        0以上の値を入力してください。
+      <mat-label>管理者</mat-label>
+      <mat-select formControlName="manager" multiple>
+        <mat-option *ngFor="let user of users" [value]="user.id">{{ user.displayName }}</mat-option>
+      </mat-select>
+      <mat-error *ngIf="form.get('manager')?.hasError('required') && form.get('manager')?.touched">
+        管理者は必須です。
       </mat-error>
     </mat-form-field>
     <div style="margin-bottom: 8px;">

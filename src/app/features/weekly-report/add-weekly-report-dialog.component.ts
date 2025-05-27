@@ -9,30 +9,50 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
+import { MatOptionModule } from '@angular/material/core';
+import { UserService } from '../../core/user.service';
+import { AuthService } from '../../core/auth.service';
+import { User } from '../../core/models/user.model';
 
 @Component({
   selector: 'app-add-weekly-report-dialog',
   standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatDatepickerModule, MatButtonModule, MatNativeDateModule, MatRadioModule, MatIconModule
+    CommonModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatDatepickerModule, MatButtonModule, MatNativeDateModule, MatRadioModule, MatIconModule, MatSelectModule, MatOptionModule
   ],
   styleUrls: ['./add-weekly-report-dialog.component.scss'],
   templateUrl: './add-weekly-report-dialog.component.html',
 })
 export class AddWeeklyReportDialogComponent {
   form = new FormGroup({
-    workDate: new FormControl<Date | null>(null, Validators.required),
-    person: new FormControl('', Validators.required),
-    startTime: new FormControl('', Validators.required),
-    endTime: new FormControl('', Validators.required),
-    breakTime: new FormControl<number | null>(null, [Validators.required, Validators.min(0)]),
+    periodStart: new FormControl<Date | null>(null, Validators.required),
+    periodEnd: new FormControl<Date | null>(null, Validators.required),
+    person: new FormControl({ value: '', disabled: true }, Validators.required),
+    manager: new FormControl<string[]>([], Validators.required),
     hasReport: new FormControl('no', Validators.required),
     hasAccident: new FormControl('no', Validators.required),
     hasHealthIssue: new FormControl('no', Validators.required),
     memo: new FormControl(''),
-  });
+  }, AddWeeklyReportDialogComponent.periodRangeValidator);
   selectedPhotos: File[] = [];
-  constructor(private dialogRef: MatDialogRef<AddWeeklyReportDialogComponent>) {}
+  users: User[] = [];
+  constructor(
+    private dialogRef: MatDialogRef<AddWeeklyReportDialogComponent>,
+    private userService: UserService,
+    private authService: AuthService
+  ) {
+    this.userService.getUsers().subscribe(users => {
+      this.users = users;
+    });
+    this.setCurrentUserAsPerson();
+  }
+  async setCurrentUserAsPerson() {
+    const user = await this.authService.getCurrentUser();
+    if (user && user.displayName) {
+      this.form.get('person')?.setValue(user.displayName);
+    }
+  }
   onCancel() { this.dialogRef.close(); }
   onPhotoSelected(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -40,7 +60,25 @@ export class AddWeeklyReportDialogComponent {
   }
   onSubmit() {
     if (this.form.valid) {
-      this.dialogRef.close({ ...this.form.value, photos: this.selectedPhotos });
+      this.dialogRef.close({ ...this.form.getRawValue(), photos: this.selectedPhotos });
     }
+  }
+
+  // 期間バリデーション: 開始日<=終了日、かつ最大7日間
+  static periodRangeValidator(control: import('@angular/forms').AbstractControl) {
+    const group = control as FormGroup;
+    const start = group.get('periodStart')?.value;
+    const end = group.get('periodEnd')?.value;
+    if (!start || !end) return null;
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const diff = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+    if (startDate > endDate) {
+      return { periodOrder: true };
+    }
+    if (diff > 6) {
+      return { periodMax: true };
+    }
+    return null;
   }
 }
