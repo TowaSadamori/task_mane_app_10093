@@ -19,6 +19,9 @@
         <div *ngIf="getPhotoUrls(report).length > 0" class="photo-thumbnails">
           <span *ngFor="let url of getPhotoUrls(report)">
             <img [src]="url" alt="photo" class="thumbnail" (click)="openImageDialog(url)" tabindex="0" (keyup.enter)="openImageDialog(url)">
+            <button class="download-btn" type="button" (click)="downloadImage(url)" title="ダウンロード">
+              <span class="material-icons">download</span>
+            </button>
           </span>
         </div>
         <div *ngIf="getPhotoUrls(report).length === 0" class="no-photo">写真はありません</div>

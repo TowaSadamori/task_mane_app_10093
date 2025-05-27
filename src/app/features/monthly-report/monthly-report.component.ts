@@ -179,4 +179,22 @@ export class MonthlyReportComponent {
     const totalMin = dailyReports.reduce((sum, dr) => sum + (typeof dr['workMinutes'] === 'number' ? dr['workMinutes'] : 0), 0);
     return this.formatMinutes(totalMin);
   }
+
+  async downloadImage(url: string) {
+    try {
+      const downloadUrl = url.includes('?') ? url + '&alt=media' : url + '?alt=media';
+      const response = await fetch(downloadUrl);
+      const blob = await response.blob();
+      const a = document.createElement('a');
+      const objectUrl = URL.createObjectURL(blob);
+      a.href = objectUrl;
+      a.download = url.split('/').pop()?.split('?')[0] || 'image.jpg';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objectUrl);
+    } catch (e) {
+      alert('ダウンロードに失敗しました');
+    }
+  }
 }
