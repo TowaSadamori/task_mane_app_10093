@@ -9,11 +9,12 @@ import { User } from '../../core/models/user.model';
 import { MatIconModule } from '@angular/material/icon';
 import { DailyReportService } from '../daily-report/daily-report.service';
 import { RouterModule } from '@angular/router';
+import { MonthlyReportPdfExportComponent, MonthlyReportPdfData } from '../../pdf-export/monthly-report-pdf-export.component';
 
 @Component({
   selector: 'app-monthly-report',
   standalone: true,
-  imports: [CommonModule, AddMonthlyReportDialogComponent, MatIconModule, RouterModule],
+  imports: [CommonModule, AddMonthlyReportDialogComponent, MatIconModule, RouterModule, MonthlyReportPdfExportComponent],
   templateUrl: './monthly-report.component.html',
   styleUrl: './monthly-report.component.scss'
 })
@@ -21,6 +22,7 @@ export class MonthlyReportComponent {
   reports: Record<string, unknown>[] = [];
   users: User[] = [];
   monthlyDailyReports: Record<string, Record<string, unknown>[]> = {};
+  monthlyPdfFunctionUrl = 'https://asia-northeast1-kensyu10093.cloudfunctions.net/generateMonthlyPdf'; // 本番用URLに変更
   constructor(private router: Router, private dialog: MatDialog, private firestore: Firestore, private userService: UserService, private dailyReportService: DailyReportService) {
     this.userService.getUsers().subscribe(users => {
       this.users = users;
@@ -233,7 +235,23 @@ export class MonthlyReportComponent {
     await this.loadReports();
   }
 
-  onPdf(report: Record<string, unknown>) {
-    alert('PDF出力（仮）\n' + JSON.stringify(report, null, 2));
+  /**
+   * 月報データをMonthlyReportPdfData型に整形
+   */
+  buildMonthlyPdfData(report: Record<string, unknown>): MonthlyReportPdfData {
+    const period = `${this.getPeriodDate(report, 'periodStart')} ～ ${this.getPeriodDate(report, 'periodEnd')}`;
+    const staffName = this.getUserName(report['person'] ? report['person'].toString() : '');
+    const managerNames = this.getManagerNames(report);
+    const memo = report['memo'] as string || '';
+    const workDays = this.getWorkDays(report);
+    const workTimeTotal = this.getMonthlyWorkTimeTotal(report);
+    const photoUrls = this.getPhotoUrls(report);
+    const id = this.getReportId(report);
+    const dailyLogs = (this.monthlyDailyReports[id] || []).map(dr => ({
+      workDate: String(dr['workDateDisplay'] || ''),
+      assignee: this.getUserName(dr['personUidDisplay'] || ''),
+      workTime: String(dr['workDuration'] || '')
+    }));
+    return { period, staffName, managerNames, memo, workDays, workTimeTotal, photoUrls, dailyLogs };
   }
 }
