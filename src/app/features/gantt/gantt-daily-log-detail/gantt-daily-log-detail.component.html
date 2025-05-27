@@ -1,6 +1,81 @@
-<div style="margin-bottom: 16px;">
-  <button mat-stroked-button color="primary" (click)="goBack()">
-    タスク詳細画面へ戻る
-  </button>
+<div style="margin-bottom: 16px;"></div>
+
+<div *ngIf="workLog; else loading">
+  <div class="log-detail-card" style="max-width: 500px; margin: 32px auto; background: #fff; border-radius: 24px; box-shadow: 0 2px 16px #e3eafc; padding: 36px 40px;">
+    <h2 style="text-align: center; font-size: 2.4rem; font-weight: 500; margin-bottom: 32px;">日次ログ詳細</h2>
+    <table style="width: 100%; border-collapse: collapse;">
+      <tr>
+        <td style="color: #1976d2; font-weight: bold; padding: 6px 0; width: 120px;">タスク名:</td>
+        <td>{{ workLog['taskName'] || '-' }}</td>
+      </tr>
+      <tr>
+        <td style="color: #1976d2; font-weight: bold; padding: 6px 0;">作業日:</td>
+        <td>{{ workLog.workDate?.toDate ? (workLog.workDate.toDate() | date:'yyyy/MM/dd') : (workLog.workDate | date:'yyyy/MM/dd') }}</td>
+      </tr>
+      <tr>
+        <td style="color: #1976d2; font-weight: bold; padding: 6px 0;">管理者:</td>
+        <td>{{ workLog['managerNames'] || '-' }}</td>
+      </tr>
+      <tr>
+        <td style="color: #1976d2; font-weight: bold; padding: 6px 0;">担当者:</td>
+        <td>{{ workLog.supervisor || workLog.assigneeId || '-' }}</td>
+      </tr>
+      <tr>
+        <td style="color: #1976d2; font-weight: bold; padding: 6px 0;">開始時刻:</td>
+        <td>{{ workLog.actualStartTime || '-' }}</td>
+      </tr>
+      <tr>
+        <td style="color: #1976d2; font-weight: bold; padding: 6px 0;">終了時刻:</td>
+        <td>{{ workLog.actualEndTime || '-' }}</td>
+      </tr>
+      <tr>
+        <td style="color: #1976d2; font-weight: bold; padding: 6px 0;">休憩(分):</td>
+        <td>{{ workLog.actualBreakTime || '-' }}</td>
+      </tr>
+      <tr>
+        <td style="color: #1976d2; font-weight: bold; padding: 6px 0;">進捗率:</td>
+        <td>{{ workLog.progressRate !== null ? workLog.progressRate + '%' : '-' }}</td>
+      </tr>
+      <tr>
+        <td style="color: #1976d2; font-weight: bold; padding: 6px 0;">作業員数:</td>
+        <td>{{ workLog.workerCount || '-' }}</td>
+      </tr>
+      <tr>
+        <td style="color: #1976d2; font-weight: bold; padding: 6px 0; vertical-align: top;">コメント:</td>
+        <td>{{ workLog.comment || '-' }}</td>
+      </tr>
+      <tr>
+        <td style="color: #1976d2; font-weight: bold; padding: 6px 0; vertical-align: top;">写真:</td>
+        <td>
+          <ng-container *ngIf="workLog.photoUrls?.length; else noPhoto">
+            <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px;">
+              <span *ngFor="let url of workLog.photoUrls" style="display: flex; flex-direction: column; align-items: center;">
+                <img [src]="url" alt="作業写真" style="max-height: 70px; border-radius: 6px; box-shadow: 0 1px 4px #e3eafc; margin-bottom: 4px;" />
+                <a [href]="url" download target="_blank">
+                  <button mat-icon-button type="button" aria-label="ダウンロード">
+                    <mat-icon>download</mat-icon>
+                  </button>
+                </a>
+              </span>
+            </div>
+          </ng-container>
+          <ng-template #noPhoto>なし</ng-template>
+        </td>
+      </tr>
+    </table>
+    <div style="display: flex; justify-content: center; gap: 16px; margin-top: 32px;">
+      <button mat-raised-button color="primary" (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon> タスク詳細画面へ戻る
+      </button>
+      <button mat-icon-button color="primary" aria-label="編集" disabled>
+        <mat-icon>edit</mat-icon>
+      </button>
+      <button mat-icon-button color="warn" aria-label="削除" disabled>
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+  </div>
 </div>
-<!-- ここに詳細情報を今後追加予定 -->
+<ng-template #loading>
+  <div>読み込み中...</div>
+</ng-template>
