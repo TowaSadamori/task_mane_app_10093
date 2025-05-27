@@ -148,17 +148,8 @@ export class WeeklyReportComponent {
   }
 
   getWorkDays(report: Record<string, unknown>): number {
-    const start = report['periodStart'];
-    const end = report['periodEnd'];
-    let startDate: Date | null = null;
-    let endDate: Date | null = null;
-    if (typeof start === 'string' || start instanceof Date) startDate = new Date(start);
-    if (typeof end === 'string' || end instanceof Date) endDate = new Date(end);
-    if (typeof start === 'object' && start !== null && 'toDate' in start && typeof start.toDate === 'function') startDate = start.toDate();
-    if (typeof end === 'object' && end !== null && 'toDate' in end && typeof end.toDate === 'function') endDate = end.toDate();
-    if (!startDate || !endDate) return 0;
-    const diff = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    return diff + 1;
+    const id = this.getReportId(report);
+    return this.weeklyDailyReports[id]?.length ?? 0;
   }
 
   async onEdit(report: Record<string, unknown>) {
