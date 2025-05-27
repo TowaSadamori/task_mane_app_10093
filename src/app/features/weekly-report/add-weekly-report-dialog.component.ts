@@ -76,7 +76,7 @@ export class AddWeeklyReportDialogComponent {
       value['createdAt'] = Timestamp.now();
 
       // 既存画像URLをセット
-      let photoUrls = [...this.existingPhotoUrls];
+      const photoUrls = [...this.existingPhotoUrls];
       // 写真アップロード
       const storage = getStorage();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

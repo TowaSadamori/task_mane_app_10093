@@ -1,0 +1,113 @@
+.monthly-report-card-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  margin-top: 24px;
+}
+
+.monthly-report-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  padding: 24px 28px 20px 28px;
+  min-width: 340px;
+  max-width: 420px;
+  margin-bottom: 24px;
+  flex: 1 1 380px;
+  display: flex;
+  flex-direction: column;
+}
+
+.report-period {
+  font-size: 1.15em;
+  font-weight: bold;
+  color: #1976d2;
+  margin-bottom: 10px;
+}
+
+.period-label {
+  background: #e3f2fd;
+  border-radius: 6px;
+  padding: 4px 12px;
+  display: inline-block;
+}
+
+.report-content > div {
+  margin-bottom: 8px;
+}
+
+.workdays {
+  font-weight: bold;
+  color: #1976d2;
+}
+
+.worktime-total {
+  font-weight: bold;
+  color: #d32f2f;
+}
+
+.photo-section {
+  margin: 12px 0 8px 0;
+}
+
+.photo-thumbnails {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.thumbnail {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #b3e5fc;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+.thumbnail:hover {
+  box-shadow: 0 0 0 2px #1976d2;
+}
+
+.no-photo {
+  color: #888;
+  font-size: 0.95em;
+  margin-top: 4px;
+}
+
+.daily-log-section {
+  margin-top: 18px;
+  padding: 12px;
+  background: #f4fcff;
+  border: 1.5px solid #b3e5fc;
+  border-radius: 8px;
+}
+
+.daily-log-title {
+  color: #1976d2;
+  margin: 0 0 8px 0;
+  font-size: 1.08em;
+}
+
+.daily-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+.daily-log-table th, .daily-log-table td {
+  padding: 6px 8px;
+  border: 1px solid #b3e5fc;
+  text-align: left;
+}
+.daily-log-table th {
+  background: #e3f2fd;
+}
+.no-daily {
+  text-align: center;
+  color: #888;
+}
+.daily-link {
+  color: #1976d2;
+  text-decoration: underline;
+  cursor: pointer;
+}

@@ -3,4 +3,55 @@
   <button (click)="openAddDialog()" class="action-btn">月報追加</button>
 </div>
 
-<p>monthly-report works!</p>
+<div *ngIf="reports.length > 0" class="monthly-report-card-list">
+  <div *ngFor="let report of reports" class="monthly-report-card">
+    <div class="report-period">
+      <span class="period-label">{{ getPeriodDate(report, 'periodStart') }} ～ {{ getPeriodDate(report, 'periodEnd') }}</span>
+    </div>
+    <div class="report-content">
+      <div><strong>担当者:</strong> {{ getUserName(report['person'] ? report['person'].toString() : '') }}</div>
+      <div><strong>管理者:</strong> {{ getManagerNames(report) }}</div>
+      <div><strong>メモ:</strong> {{ report['memo'] }}</div>
+      <div><strong>勤務日数:</strong> <span class="workdays">{{ getWorkDays(report) }}日</span></div>
+      <div><strong>月間の勤務時間合計:</strong> <span class="worktime-total">{{ getMonthlyWorkTimeTotal(report) }}</span></div>
+      <div class="photo-section">
+        <div><strong>写真:</strong></div>
+        <div *ngIf="getPhotoUrls(report).length > 0" class="photo-thumbnails">
+          <span *ngFor="let url of getPhotoUrls(report)">
+            <img [src]="url" alt="photo" class="thumbnail" (click)="openImageDialog(url)" tabindex="0" (keyup.enter)="openImageDialog(url)">
+          </span>
+        </div>
+        <div *ngIf="getPhotoUrls(report).length === 0" class="no-photo">写真はありません</div>
+      </div>
+      <div class="daily-log-section">
+        <h4 class="daily-log-title">日報</h4>
+        <table class="daily-log-table">
+          <thead>
+            <tr>
+              <th>作業日</th>
+              <th>担当者</th>
+              <th>勤務時間</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let dr of monthlyDailyReports[getReportId(report)]">
+              <td>
+                <a [routerLink]="['/app/daily-report-detail', dr['id']]" class="daily-link">
+                  {{ dr['workDateDisplay'] }}
+                </a>
+              </td>
+              <td>{{ getUserName(dr['personUidDisplay']) }}</td>
+              <td>{{ dr['startTime'] }} - {{ dr['endTime'] }}（休憩: {{ dr['breakTime'] }}分）</td>
+            </tr>
+            <tr *ngIf="!monthlyDailyReports[getReportId(report)] || monthlyDailyReports[getReportId(report)].length === 0">
+              <td colspan="3" class="no-daily">（ここに日報データが入ります）</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<div *ngIf="reports.length === 0">
+  月報はまだありません。
+</div>
