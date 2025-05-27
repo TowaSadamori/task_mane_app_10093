@@ -9,11 +9,12 @@ import { User } from '../../core/models/user.model';
 import { MatIconModule } from '@angular/material/icon';
 import { DailyReportService } from '../daily-report/daily-report.service';
 import { RouterModule } from '@angular/router';
+import { WeeklyReportPdfExportComponent, WeeklyReportPdfData } from '../../pdf-export/weekly-report-pdf-export.component';
 
 @Component({
   selector: 'app-weekly-report',
   standalone: true,
-  imports: [CommonModule, AddWeeklyReportDialogComponent, MatIconModule, RouterModule],
+  imports: [CommonModule, AddWeeklyReportDialogComponent, MatIconModule, RouterModule, WeeklyReportPdfExportComponent],
   templateUrl: './weekly-report.component.html',
   styleUrl: './weekly-report.component.scss'
 })
@@ -21,6 +22,7 @@ export class WeeklyReportComponent {
   reports: Record<string, unknown>[] = [];
   users: User[] = [];
   weeklyDailyReports: Record<string, Record<string, unknown>[]> = {};
+  weeklyPdfFunctionUrl = 'https://asia-northeast1-kensyu10093.cloudfunctions.net/generateWeeklyPdf'; // 本番用URLに変更
   constructor(private router: Router, private dialog: MatDialog, private firestore: Firestore, private userService: UserService, private dailyReportService: DailyReportService) {
     this.userService.getUsers().subscribe(users => {
       this.users = users;
@@ -208,10 +210,6 @@ export class WeeklyReportComponent {
     await this.loadReports();
   }
 
-  onPdf(report: Record<string, unknown>) {
-    alert('PDF出力（仮）\n' + JSON.stringify(report, null, 2));
-  }
-
   getReportId(report: Record<string, unknown>): string {
     return String(report['id'] ?? '');
   }
@@ -239,5 +237,25 @@ export class WeeklyReportComponent {
     const dailyReports = this.weeklyDailyReports[id] ?? [];
     const totalMin = dailyReports.reduce((sum, dr) => sum + (typeof dr['workMinutes'] === 'number' ? dr['workMinutes'] : 0), 0);
     return this.formatMinutes(totalMin);
+  }
+
+  /**
+   * 週報データをWeeklyReportPdfData型に整形
+   */
+  buildWeeklyPdfData(report: Record<string, unknown>): WeeklyReportPdfData {
+    const period = `${this.getPeriodDate(report, 'periodStart')} ～ ${this.getPeriodDate(report, 'periodEnd')}`;
+    const staffName = this.getUserName(report['person'] ? report['person'].toString() : '');
+    const managerNames = this.getManagerNames(report);
+    const memo = report['memo'] as string || '';
+    const workDays = this.getWorkDays(report);
+    const workTimeTotal = this.getWeeklyWorkTimeTotal(report);
+    const photoUrls = this.getPhotoUrls(report);
+    const id = this.getReportId(report);
+    const dailyLogs = (this.weeklyDailyReports[id] || []).map(dr => ({
+      workDate: String(dr['workDateDisplay'] || ''),
+      assignee: this.getUserName(dr['personUidDisplay'] || ''),
+      workTime: String(dr['workDuration'] || '')
+    }));
+    return { period, staffName, managerNames, memo, workDays, workTimeTotal, photoUrls, dailyLogs };
   }
 }

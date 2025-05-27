@@ -12,9 +12,11 @@
       <button mat-icon-button type="button" title="削除" (click)="onDelete(report)" class="delete-btn">
         <span class="material-icons">delete</span>
       </button>
-      <button mat-icon-button type="button" title="PDF出力" (click)="onPdf(report)" class="pdf-btn">
-        <span class="material-icons">picture_as_pdf</span>
-      </button>
+      <app-weekly-report-pdf-export
+        [reportData]="buildWeeklyPdfData(report)"
+        [functionUrl]="weeklyPdfFunctionUrl"
+        style="margin-right:4px;"
+      ></app-weekly-report-pdf-export>
     </div>
     <div class="report-period">
       <span class="period-label">{{ getPeriodDate(report, 'periodStart') }} ～ {{ getPeriodDate(report, 'periodEnd') }}</span>
