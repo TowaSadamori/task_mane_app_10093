@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Auth, createUserWithEmailAndPassword, updateProfile } from '@angular/fire/auth';
-import { Firestore, doc, setDoc, serverTimestamp } from '@angular/fire/firestore';
+import { Firestore, doc, setDoc, serverTimestamp, collection, query, where, getDocs } from '@angular/fire/firestore';
 import { Router } from '@angular/router';
 
 @Component({
@@ -34,6 +34,17 @@ export class UserCreateComponent {
     this.error = null;
     this.success = false;
     const { email, password, displayName } = this.form.value as { email: string; password: string; displayName: string };
+
+    // 1. 表示名の重複チェック
+    const usersRef = collection(this.firestore, 'Users');
+    const q = query(usersRef, where('displayName', '==', displayName));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      this.error = 'この表示名は既に使用されています。';
+      this.loading = false;
+      return;
+    }
+
     try {
       // 1. Firebase Authでユーザー作成
       const cred = await createUserWithEmailAndPassword(this.auth, email, password);
