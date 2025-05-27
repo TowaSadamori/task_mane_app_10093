@@ -232,4 +232,8 @@ export class MonthlyReportComponent {
     await deleteDoc(doc(this.firestore, 'monthlyReports', report['id'] as string));
     await this.loadReports();
   }
+
+  onPdf(report: Record<string, unknown>) {
+    alert('PDF出力（仮）\n' + JSON.stringify(report, null, 2));
+  }
 }

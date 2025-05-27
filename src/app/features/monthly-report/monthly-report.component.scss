@@ -112,19 +112,50 @@
   cursor: pointer;
 }
 
-.download-btn {
-  background: none;
-  border: none;
-  padding: 0 0 0 4px;
-  margin-left: 2px;
-  cursor: pointer;
-  vertical-align: middle;
-  color: #1976d2;
-  font-size: 22px;
-  transition: color 0.2s;
+.edit-btn {
+  background: #1976d2;
+  color: #fff;
+  border-radius: 6px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
+  transition: background 0.2s;
 }
-.download-btn:hover {
-  color: #d32f2f;
+.edit-btn:hover {
+  background: #1565c0;
+}
+.delete-btn {
+  background: #d32f2f;
+  color: #fff !important;
+  border-radius: 6px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
+  transition: background 0.2s;
+}
+.delete-btn:hover {
+  background: #b71c1c;
+}
+.pdf-btn {
+  background: #ff9800;
+  color: #fff;
+  border-radius: 6px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
+  transition: background 0.2s;
+}
+.pdf-btn:hover {
+  background: #f57c00;
 }
 .material-icons {
   font-family: 'Material Icons';
@@ -140,9 +171,8 @@
   -webkit-font-smoothing: antialiased;
 }
 
-.delete-btn {
-  color: #d32f2f !important;
-}
-.delete-btn:hover {
-  color: #b71c1c !important;
+.report-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
