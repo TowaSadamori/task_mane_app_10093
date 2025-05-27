@@ -1,42 +1,44 @@
 <div class="login-page-container">
   <div class="login-card">
     <div class="login-title">新規アカウント作成</div>
-    <div *ngIf="registrationSuccess" class="registration-success-message" style="text-align:center;">
-      <p>アカウントの登録が完了しました。</p>
-      <a class="form-link" routerLink="/login">ログイン画面に戻る</a>
-    </div>
-    <form *ngIf="!registrationSuccess" [formGroup]="userCreateForm" (ngSubmit)="onSubmit()">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
       <div class="form-field">
         <label class="form-label" for="email">メールアドレス</label>
-        <input id="email" class="form-input" type="email" placeholder="例: new.user@example.com" formControlName="email" required>
-        <div class="error-message" *ngIf="userCreateForm.get('email')?.hasError('required') && userCreateForm.get('email')?.touched">
+        <input id="email" class="form-input" type="email" formControlName="email" required>
+        <div class="error-message" *ngIf="form.get('email')?.hasError('required') && form.get('email')?.touched">
           メールアドレスを入力してください
         </div>
-        <div class="error-message" *ngIf="userCreateForm.get('email')?.hasError('email') && userCreateForm.get('email')?.touched">
+        <div class="error-message" *ngIf="form.get('email')?.hasError('email') && form.get('email')?.touched">
           有効なメールアドレスを入力してください
         </div>
       </div>
       <div class="form-field">
         <label class="form-label" for="password">パスワード</label>
-        <input id="password" class="form-input" type="password" placeholder="パスワードを入力" formControlName="password" required>
-        <div class="error-message" *ngIf="userCreateForm.get('password')?.hasError('required') && userCreateForm.get('password')?.touched">
+        <input id="password" class="form-input" type="password" formControlName="password" required>
+        <div class="error-message" *ngIf="form.get('password')?.hasError('required') && form.get('password')?.touched">
           パスワードを入力してください
         </div>
-        <div class="error-message" *ngIf="userCreateForm.get('password')?.hasError('minlength') && userCreateForm.get('password')?.touched">
-          パスワードは {{ userCreateForm.get('password')?.errors?.['minlength']?.requiredLength }} 文字以上で入力してください
+        <div class="error-message" *ngIf="form.get('password')?.hasError('minlength') && form.get('password')?.touched">
+          パスワードは6文字以上で入力してください
         </div>
       </div>
       <div class="form-field">
         <label class="form-label" for="displayName">表示名</label>
-        <input id="displayName" class="form-input" type="text" placeholder="例: 鈴木 一郎" formControlName="displayName">
+        <input id="displayName" class="form-input" type="text" formControlName="displayName" required>
+        <div class="error-message" *ngIf="form.get('displayName')?.hasError('required') && form.get('displayName')?.touched">
+          表示名を入力してください
+        </div>
       </div>
       <div class="form-actions" style="margin-top: 20px; display: flex; justify-content: flex-end; align-items: center;">
-        <button class="submit-button" type="submit" [disabled]="userCreateForm.invalid || isLoading">
-          {{ isLoading ? '登録中...' : 'ユーザー登録' }}
+        <button class="submit-button" type="submit" [disabled]="form.invalid || loading">
+          {{ loading ? '登録中...' : 'ユーザー登録' }}
         </button>
       </div>
-      <div *ngIf="registrationError" class="server-error-message">
-        {{ registrationError }}
+      <div *ngIf="error" class="server-error-message">
+        {{ error }}
+      </div>
+      <div *ngIf="success" class="registration-success-message" style="text-align:center; color:green;">
+        アカウントの登録が完了しました。
       </div>
       <div class="links-container" style="text-align: center; margin-top: 1.5rem;">
         <a class="form-link" routerLink="/login">ログイン画面に戻る</a>
