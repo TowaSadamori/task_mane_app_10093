@@ -1,44 +1,18 @@
-<div class="daily-report-detail-card" *ngIf="workLog; else loading">
-  <h2>日次ログ詳細</h2>
-  <div *ngIf="taskName" class="task-name-row">
-    <span class="label">タスク名:</span>
-    <span>{{ taskName }}</span>
-  </div>
-  <div class="detail-row"><span class="label">作業日:</span><span>{{ workLog.workDate?.toDate() | date:'yyyy/MM/dd' }}</span></div>
-  <div *ngIf="managerNames" class="manager-names-row">
-    <span class="label">管理者:</span>
-    <span>{{ managerNames }}</span>
-  </div>
-  <div class="detail-row"><span class="label">担当者:</span><span>{{ workLog.supervisor }}</span></div>
-  <div class="detail-row"><span class="label">開始時刻:</span><span>{{ workLog.actualStartTime }}</span></div>
-  <div class="detail-row"><span class="label">終了時刻:</span><span>{{ workLog.actualEndTime }}</span></div>
-  <div class="detail-row"><span class="label">休憩(分):</span><span>{{ workLog.actualBreakTime }}</span></div>
-  <div class="detail-row"><span class="label">進捗率:</span><span>{{ workLog.progressRate }}%</span></div>
-  <div class="detail-row"><span class="label">作業員数:</span><span>{{ workLog.workerCount }}</span></div>
-  <div class="detail-row"><span class="label">コメント:</span><span>{{ workLog.comment }}</span></div>
-  <div class="detail-row">
-    <span class="label">写真:</span>
-    <span>
-      <ng-container *ngIf="workLog.photoUrls?.length; else noPhoto">
-        <span *ngFor="let url of workLog.photoUrls" class="photo-thumb">
-          <img [src]="url" alt="作業写真" />
-          <button class="download-btn" type="button" (click)="downloadPhoto(url)" aria-label="ダウンロード">
-            ⬇️
-          </button>
-        </span>
-      </ng-container>
-      <ng-template #noPhoto>なし</ng-template>
-    </span>
-  </div>
-  <button *ngIf="ganttTaskId" (click)="navigateToTaskDetail()" class="back-btn">
-    タスク詳細画面へ戻る
-  </button>
-  <button *ngIf="workLog && ganttTaskId" (click)="editDailyLog()" mat-icon-button class="edit-btn" aria-label="編集">
-    <mat-icon>edit</mat-icon>
-  </button>
-  <button *ngIf="workLog && ganttTaskId" (click)="deleteDailyLog()" mat-icon-button color="warn" class="delete-btn" aria-label="削除">
-    <mat-icon>delete</mat-icon>
-  </button>
+<div class="daily-report-detail-card" *ngIf="dailyReport as dr; else loading">
+  <button routerLink="/app/daily-report" mat-stroked-button color="primary" style="margin-bottom: 16px;">日報一覧に戻る</button>
+  <h2>日報詳細</h2>
+  <div><strong>作業日:</strong> {{ formatWorkDate(dr['workDate']) }}</div>
+  <div><strong>担当者:</strong> {{ dr['personUid'] }}</div>
+  <div><strong>管理者:</strong> {{ managerNames }}</div>
+  <div><strong>出勤:</strong> {{ dr['startTime'] }}</div>
+  <div><strong>退勤:</strong> {{ dr['endTime'] }}</div>
+  <div><strong>休憩:</strong> {{ dr['breakTime'] }}分</div>
+  <div><strong>勤務時間:</strong> {{ dr['workDuration'] }}</div>
+  <div><strong>報告事項:</strong> {{ dr['hasReport'] }}</div>
+  <div><strong>ケガ・事故:</strong> {{ dr['hasAccident'] }}</div>
+  <div><strong>体調不良:</strong> {{ dr['hasHealthIssue'] }}</div>
+  <div><strong>メモ:</strong> {{ dr['memo'] }}</div>
+  <!-- 写真や他の項目も必要に応じて追加 -->
 </div>
 <ng-template #loading>
   <p>読み込み中...</p>
