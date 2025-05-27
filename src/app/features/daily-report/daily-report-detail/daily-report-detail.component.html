@@ -1,5 +1,14 @@
 <div class="daily-report-detail-card" *ngIf="dailyReport as dr; else loading">
-  <button routerLink="/app/daily-report" mat-stroked-button color="primary" style="margin-bottom: 16px;">日報一覧に戻る</button>
+  <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+    <button routerLink="/app/daily-report" mat-stroked-button color="primary">日報一覧に戻る</button>
+    <button mat-icon-button color="primary" (click)="editDailyLog()" matTooltip="編集">
+      <mat-icon>edit</mat-icon>
+    </button>
+    <button mat-icon-button color="warn" (click)="deleteDailyLog()" matTooltip="削除">
+      <mat-icon>delete</mat-icon>
+    </button>
+    <app-pdf-export [reportData]="getReportDataForPdf()"></app-pdf-export>
+  </div>
   <h2>日報詳細</h2>
   <div><strong>作業日:</strong> {{ formatWorkDate(dr['workDate']) }}</div>
   <div><strong>担当者:</strong> {{ getDisplayNameByUid(dr['personUid']) }}</div>
@@ -25,15 +34,6 @@
       </ng-container>
     </ng-container>
     <ng-template #noPhotos>なし</ng-template>
-  </div>
-  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-    <button mat-icon-button color="primary" (click)="editDailyLog()" matTooltip="編集">
-      <mat-icon>edit</mat-icon>
-    </button>
-    <button mat-icon-button color="warn" (click)="deleteDailyLog()" matTooltip="削除">
-      <mat-icon>delete</mat-icon>
-    </button>
-    <app-pdf-export [reportData]="getReportDataForPdf()"></app-pdf-export>
   </div>
   <!-- 写真や他の項目も必要に応じて追加 -->
 </div>
