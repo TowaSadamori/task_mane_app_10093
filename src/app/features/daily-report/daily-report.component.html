@@ -13,6 +13,7 @@
         <mat-icon>delete</mat-icon>
       </button>
       <app-pdf-export [reportData]="getReportDataForPdf(report)" [functionUrl]="'https://asia-northeast1-kensyu10093.cloudfunctions.net/generatePdf'"></app-pdf-export>
+      <button mat-stroked-button color="primary" *ngIf="report.id" [routerLink]="['/app/daily-report-detail', report.id]" style="margin-left:8px;">詳細を開く</button>
     </div>
     <div class="report-created">
       作業日:
