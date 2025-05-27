@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Auth, createUserWithEmailAndPassword, updateProfile } from '@angular/fire/auth';
 import { Firestore, doc, setDoc, serverTimestamp } from '@angular/fire/firestore';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-user-create',
@@ -23,7 +24,8 @@ export class UserCreateComponent {
 
   constructor(
     private auth: Auth,
-    private firestore: Firestore
+    private firestore: Firestore,
+    private router: Router
   ) {}
 
   async onSubmit() {
@@ -60,5 +62,9 @@ export class UserCreateComponent {
     } finally {
       this.loading = false;
     }
+  }
+
+  goToLogin() {
+    this.router.navigate(['/login']);
   }
 }
