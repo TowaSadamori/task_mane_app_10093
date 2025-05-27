@@ -5,10 +5,12 @@ import { CommonModule } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { GanttDailyLogFormDialogComponent } from '../../gantt/gantt-daily-log-form-dialog/gantt-daily-log-form-dialog.component';
-import { GanttDailyLogService, GanttDailyLog } from '../../gantt/gantt-daily-log-form-dialog/gantt-daily-log.service';
+import { GanttDailyLogService } from '../../gantt/gantt-daily-log-form-dialog/gantt-daily-log.service';
 import { RouterModule } from '@angular/router';
 import { PdfExportComponent, DailyReportData } from '../../../pdf-export/pdf-export.component'
+import { EditDailyReportDialogComponent } from '../../daily-report/edit-daily-report-dialog.component';
+import { DailyReportService } from '../../daily-report/daily-report.service';
+import type { DailyReport } from '../../daily-report/daily-report.component';
 
 interface WorkLog {
   workDate?: { toDate: () => Date };
@@ -36,6 +38,7 @@ export class DailyReportDetailComponent implements OnInit {
   private firestore = inject(Firestore);
   private dialog = inject(MatDialog);
   private dailyLogService = inject(GanttDailyLogService);
+  private dailyReportService = inject(DailyReportService);
 
   dailyReportId: string | null = null;
   ganttTaskId: string | null = null;
@@ -148,32 +151,39 @@ export class DailyReportDetailComponent implements OnInit {
   }
 
   async editDailyLog() {
-    if (!this.ganttTaskId || !this.workLog) return;
-    const dialogRef = this.dialog.open(GanttDailyLogFormDialogComponent, {
+    if (!this.dailyReport || !this.dailyReportId) return;
+    // Ensure workDate is a Date and managerUids is a string array
+    let workDate: Date | null = null;
+    if (this.dailyReport['workDate']) {
+      if (typeof this.dailyReport['workDate'] === 'string') {
+        const d = new Date(this.dailyReport['workDate'] as string);
+        workDate = isNaN(d.getTime()) ? null : d;
+      } else if (this.dailyReport['workDate'] instanceof Date) {
+        workDate = this.dailyReport['workDate'] as Date;
+      } else if (typeof this.dailyReport['workDate'] === 'object' && 'toDate' in this.dailyReport['workDate'] && typeof (this.dailyReport['workDate'] as { toDate: () => Date }).toDate === 'function') {
+        workDate = (this.dailyReport['workDate'] as { toDate: () => Date }).toDate();
+      }
+    }
+    const managerUids = Array.isArray(this.dailyReport['managerUids']) ? this.dailyReport['managerUids'] : [];
+    const ref = this.dialog.open(EditDailyReportDialogComponent, {
       width: '500px',
       maxHeight: '90vh',
-      data: { ganttTaskId: this.ganttTaskId, log: { ...this.workLog, id: this.dailyReportId } as GanttDailyLog }
+      data: { ...this.dailyReport, id: this.dailyReportId, workDate, managerUids }
     });
-    dialogRef.afterClosed().subscribe(async (result: GanttDailyLog | undefined) => {
-      if (result) {
-        // 編集後は再取得
-        await this.reloadWorkLog();
+    ref.afterClosed().subscribe(async (result: Record<string, unknown> | undefined) => {
+      if (result && result['id']) {
+        await this.dailyReportService.updateDailyReport(result['id'] as string, result as unknown as DailyReport);
+        await this.reloadDailyReport();
       }
     });
   }
 
-  private async reloadWorkLog() {
+  private async reloadDailyReport() {
     if (!this.dailyReportId) return;
-    const q = query(
-      collectionGroup(this.firestore, 'WorkLogs'),
-      where('id', '==', this.dailyReportId)
-    );
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-      const docSnap = querySnapshot.docs[0];
-      const pathSegments = docSnap.ref.path.split('/');
-      this.ganttTaskId = pathSegments[1];
-      this.workLog = docSnap.data() as WorkLog;
+    const docRef = doc(this.firestore, 'dailyReports', this.dailyReportId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      this.dailyReport = docSnap.data();
     }
   }
 
