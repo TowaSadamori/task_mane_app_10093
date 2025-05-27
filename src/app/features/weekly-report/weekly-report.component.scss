@@ -141,8 +141,42 @@
 }
 
 .delete-btn {
-  color: #d32f2f !important;
+  background: #d32f2f;
+  color: #fff !important;
+  border-radius: 6px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
+  transition: background 0.2s;
 }
 .delete-btn:hover {
-  color: #b71c1c !important;
+  background: #b71c1c;
+}
+.delete-btn .material-icons {
+  color: #fff;
+}
+
+.pdf-btn {
+  background: #ff9800;
+  color: #fff;
+  border-radius: 6px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
+  transition: background 0.2s;
+}
+.pdf-btn:hover {
+  background: #f57c00;
+}
+
+.report-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
