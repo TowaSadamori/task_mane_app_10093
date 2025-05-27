@@ -63,6 +63,9 @@ export class AddWeeklyReportDialogComponent {
       this.dialogRef.close({ ...this.form.getRawValue(), photos: this.selectedPhotos });
     }
   }
+  removePhoto(i: number) {
+    this.selectedPhotos.splice(i, 1);
+  }
 
   // 期間バリデーション: 開始日<=終了日、かつ最大7日間
   static periodRangeValidator(control: import('@angular/forms').AbstractControl) {

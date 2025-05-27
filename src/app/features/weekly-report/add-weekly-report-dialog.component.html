@@ -68,7 +68,11 @@
       <div *ngIf="selectedPhotos.length" class="selected-file">
         選択中:
         <span *ngFor="let file of selectedPhotos; let i = index">
-          {{ file.name }}<span *ngIf="i < selectedPhotos.length - 1">, </span>
+          {{ file.name }}
+          <button mat-icon-button color="warn" type="button" (click)="removePhoto(i)" style="vertical-align: middle;">
+            <mat-icon>close</mat-icon>
+          </button>
+          <span *ngIf="i < selectedPhotos.length - 1">, </span>
         </span>
       </div>
     </div>
