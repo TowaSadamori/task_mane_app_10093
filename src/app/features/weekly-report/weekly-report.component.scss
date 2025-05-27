@@ -7,56 +7,98 @@
 
 .report-card.weekly-report-card {
   background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
-  padding: 28px 32px 24px 32px;
-  min-width: 340px;
-  max-width: 480px;
-  width: 100%;
-  margin: 0 auto;
-  position: relative;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+  padding: 24px 28px 18px 28px;
+  min-width: 320px;
+  max-width: 380px;
+  flex: 1 1 340px;
   display: flex;
   flex-direction: column;
+  margin-bottom: 12px;
+  border-left: 6px solid #2563eb;
+  position: relative;
   gap: 12px;
+}
+
+.report-created {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2563eb;
+  margin-bottom: 10px;
+}
+
+.report-content > div {
+  margin-bottom: 6px;
+  color: #222;
+  font-size: 1rem;
+}
+
+.report-content strong {
+  color: #374151;
 }
 
 .report-card-actions {
   display: flex;
-  gap: 10px;
-  position: absolute;
-  top: 18px;
-  right: 18px;
+  align-items: center;
+  gap: 8px;
 }
-
-.report-card-actions button.mat-icon-button {
-  background: transparent;
-  border-radius: 50%;
+.edit-btn {
+  background: #2563eb;
+  color: #fff;
+  border-radius: 6px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
   transition: background 0.2s;
 }
-.report-card-actions .edit-btn mat-icon {
-  color: #1976d2;
+.edit-btn:hover {
+  background: #1d4ed8;
 }
-.report-card-actions .delete-btn mat-icon {
-  color: #e57373;
+.edit-btn .mat-icon {
+  font-size: 24px;
+  color: #fff;
 }
-.report-card-actions .pdf-btn mat-icon {
-  color: #ff9800;
-}
-.report-card-actions button.mat-icon-button:hover {
-  background: #e3f2fd;
-}
-
-.report-created {
-  font-size: 1.1em;
-  font-weight: 600;
-  color: #1976d2;
-  margin-bottom: 8px;
-}
-
-.report-content {
+.delete-btn {
+  background: #f44336;
+  color: #fff;
+  border-radius: 6px;
+  width: 40px;
+  height: 40px;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
+  transition: background 0.2s;
+}
+.delete-btn:hover {
+  background: #d32f2f;
+}
+.delete-btn .mat-icon {
+  font-size: 24px;
+  color: #fff;
+}
+.pdf-btn {
+  background: #ff9800;
+  color: #fff;
+  border-radius: 6px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
+  transition: background 0.2s;
+}
+.pdf-btn:hover {
+  background: #f57c00;
+}
+.pdf-btn .mat-icon {
+  font-size: 24px;
+  color: #fff;
 }
 
 .photo-section {
