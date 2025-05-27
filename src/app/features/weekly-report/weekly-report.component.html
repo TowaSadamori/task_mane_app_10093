@@ -26,7 +26,7 @@
       <div><strong>管理者:</strong> {{ getManagerNames(report) }}</div>
       <div><strong>メモ:</strong> {{ report['memo'] }}</div>
       <div><strong>勤務日数:</strong> {{ getWorkDays(report) }}日</div>
-      <div><strong>一週間の勤務時間合計:</strong> <span class="worktime-total">（ここに合計時間が入ります）</span></div>
+      <div><strong>一週間の勤務時間合計:</strong> <span class="worktime-total">{{ getWeeklyWorkTimeTotal(report) }}</span></div>
       <div class="photo-section">
         <div><strong>写真:</strong></div>
         <div *ngIf="getPhotoUrls(report).length > 0" class="photo-thumbnails">

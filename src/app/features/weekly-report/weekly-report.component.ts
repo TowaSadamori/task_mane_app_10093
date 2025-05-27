@@ -75,14 +75,18 @@ export class WeeklyReportComponent {
         const personUidDisplay = typeof dr['personUid'] === 'string' ? dr['personUid'] : '';
         const startTime = typeof dr['startTime'] === 'string' ? dr['startTime'] : '';
         const endTime = typeof dr['endTime'] === 'string' ? dr['endTime'] : '';
-        const breakTime = typeof dr['breakTime'] === 'number' ? dr['breakTime'] : '';
+        const breakTime = typeof dr['breakTime'] === 'number' ? dr['breakTime'] : 0;
+        const workMinutes = this.calcWorkingMinutes(startTime, endTime, breakTime);
+        const workDuration = this.formatMinutes(workMinutes);
         return {
           id: dr['id'] ?? '',
           workDateDisplay,
           personUidDisplay,
           startTime,
           endTime,
-          breakTime
+          breakTime,
+          workDuration,
+          workMinutes
         };
       });
   }
@@ -180,5 +184,30 @@ export class WeeklyReportComponent {
 
   getReportId(report: Record<string, unknown>): string {
     return String(report['id'] ?? '');
+  }
+
+  calcWorkingMinutes(start: string, end: string, breakMin: number): number {
+    if (!start || !end || breakMin == null) return 0;
+    const [sh, sm] = start.split(':').map(Number);
+    const [eh, em] = end.split(':').map(Number);
+    if ([sh, sm, eh, em].some(isNaN)) return 0;
+    const startMin = sh * 60 + sm;
+    const endMin = eh * 60 + em;
+    let workMin = endMin - startMin - breakMin;
+    if (workMin < 0) workMin += 24 * 60;
+    return workMin;
+  }
+
+  formatMinutes(min: number): string {
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return `${h}時間${m}分`;
+  }
+
+  getWeeklyWorkTimeTotal(report: Record<string, unknown>): string {
+    const id = this.getReportId(report);
+    const dailyReports = this.weeklyDailyReports[id] ?? [];
+    const totalMin = dailyReports.reduce((sum, dr) => sum + (typeof dr['workMinutes'] === 'number' ? dr['workMinutes'] : 0), 0);
+    return this.formatMinutes(totalMin);
   }
 }
