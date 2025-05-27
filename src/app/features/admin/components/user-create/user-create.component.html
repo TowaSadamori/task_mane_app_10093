@@ -1,6 +1,9 @@
 <div class="login-page-container">
   <div class="login-card">
     <div class="login-title">新規アカウント作成</div>
+    <div style="text-align:center; color:#b91c1c; margin-bottom: 1.5rem; font-size: 0.95rem;">
+      ユーザー登録後、メールアドレスと表示名の変更はできません。
+    </div>
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
       <div class="form-field">
         <label class="form-label" for="email">メールアドレス</label>
@@ -19,7 +22,7 @@
           パスワードを入力してください
         </div>
         <div class="error-message" *ngIf="form.get('password')?.hasError('minlength') && form.get('password')?.touched">
-          パスワードは6文字以上で入力してください
+          パスワードは8文字以上で入力してください
         </div>
       </div>
       <div class="form-field">

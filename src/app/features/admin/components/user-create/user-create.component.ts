@@ -15,7 +15,7 @@ import { Router } from '@angular/router';
 export class UserCreateComponent {
   form = new FormGroup({
     email: new FormControl('', [Validators.required, Validators.email]),
-    password: new FormControl('', [Validators.required, Validators.minLength(6)]),
+    password: new FormControl('', [Validators.required, Validators.minLength(8)]),
     displayName: new FormControl('', [Validators.required])
   });
   loading = false;
