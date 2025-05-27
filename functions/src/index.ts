@@ -364,7 +364,7 @@ interface ReportData {
   reportDetails?: string;
   injuriesOrAccidents?: string;
   healthIssues?: string;
-  dailyLogs?: { workDate: string; assignee: string; comment: string }[];
+  dailyLogs?: { workDate: string; assignee: string; comment: string; taskName?: string }[];
 }
 
 export const generatePdf = functions
@@ -456,7 +456,7 @@ export const generatePdf = functions
                   <tr style="background:#e3f2fd;">
                     <th style="padding:6px 8px; border:1px solid #b3e5fc;">作業日</th>
                     <th style="padding:6px 8px; border:1px solid #b3e5fc;">担当者</th>
-                    <th style="padding:6px 8px; border:1px solid #b3e5fc;">コメント</th>
+                    <th style="padding:6px 8px; border:1px solid #b3e5fc;">タスク名</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -464,7 +464,7 @@ export const generatePdf = functions
                     <tr>
                       <td style="padding:6px 8px; border:1px solid #b3e5fc;">${log.workDate || ''}</td>
                       <td style="padding:6px 8px; border:1px solid #b3e5fc;">${log.assignee || ''}</td>
-                      <td style="padding:6px 8px; border:1px solid #b3e5fc;">${log.comment || ''}</td>
+                      <td style="padding:6px 8px; border:1px solid #b3e5fc;">${log.taskName || ''}</td>
                     </tr>
                   `).join('')}
                 </tbody>

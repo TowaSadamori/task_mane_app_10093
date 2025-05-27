@@ -203,6 +203,7 @@ export class DailyReportComponent {
     const dailyLogs = this.getLogsForReport(report).map(log => ({
       workDate: this.formatWorkLogDate(log.workDate),
       assignee: this.getDisplayNameByUid(log.assigneeId),
+      taskName: log.taskName || '',
       comment: log.comment || ''
     }));
     return {
@@ -226,10 +227,22 @@ export class DailyReportComponent {
     const q = collectionGroup(this.firestore, 'WorkLogs');
     const querySnapshot = await getDocs(q);
     const logs: WorkLogForDisplay[] = [];
-    querySnapshot.forEach(docSnap => {
+    for (const docSnap of querySnapshot.docs) {
       const pathSegments = docSnap.ref.path.split('/');
       const ganttTaskId = pathSegments[1];
       const data = docSnap.data();
+      // タスク名をFirestoreから取得
+      let taskName = '';
+      try {
+        const taskDocRef = (await import('@angular/fire/firestore')).doc(this.firestore, 'GanttChartTasks', ganttTaskId);
+        const taskDocSnap = await (await import('@angular/fire/firestore')).getDoc(taskDocRef);
+        if (taskDocSnap.exists()) {
+          const taskData = taskDocSnap.data() as { title?: string };
+          taskName = taskData.title || '';
+        }
+      } catch {
+        // ignore Firestore errors for taskName
+      }
       logs.push({
         ...data,
         id: docSnap.id,
@@ -242,9 +255,10 @@ export class DailyReportComponent {
         progressRate: data['progressRate'],
         workerCount: data['workerCount'],
         comment: data['comment'],
-        photoUrls: data['photoUrls']
+        photoUrls: data['photoUrls'],
+        taskName // ここでセット
       });
-    });
+    }
     this.allWorkLogs = logs;
   }
   // WorkLogの日付を安全にyyyy/MM/ddで返す
