@@ -47,10 +47,10 @@
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td style="padding: 8px 12px; text-align: center;">-</td>
-          <td style="padding: 8px 12px; text-align: center;">-</td>
-          <td style="padding: 8px 12px; text-align: center;">-</td>
+        <tr *ngFor="let log of filteredLogs">
+          <td style="padding: 8px 12px; text-align: center;">{{ formatWorkDate(log.workDate) || '-' }}</td>
+          <td style="padding: 8px 12px; text-align: center;">{{ getDisplayNameByUid(log.supervisor || log['assigneeId']) || '-' }}</td>
+          <td style="padding: 8px 12px; text-align: center;">{{ log['taskName'] || '-' }}</td>
         </tr>
       </tbody>
     </table>

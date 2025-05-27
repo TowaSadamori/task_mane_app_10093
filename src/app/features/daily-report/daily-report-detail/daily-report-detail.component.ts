@@ -48,6 +48,7 @@ export class DailyReportDetailComponent implements OnInit {
   managerNames: string | null = null;
   dailyReport: Record<string, unknown> | null = null;
   users: {id: string, displayName: string}[] = [];
+  allWorkLogs: WorkLog[] = [];
 
   getDisplayNameByUid(uid: unknown): string {
     if (typeof uid !== 'string') return '';
@@ -135,6 +136,14 @@ export class DailyReportDetailComponent implements OnInit {
       const data = doc.data() as { displayName?: string, id?: string };
       return { id: data.id || doc.id, displayName: data.displayName || doc.id };
     });
+    // Load all WorkLogs
+    const q = collectionGroup(this.firestore, 'WorkLogs');
+    const querySnapshot = await getDocs(q);
+    this.allWorkLogs = querySnapshot.docs.map(doc => doc.data() as WorkLog);
+  }
+
+  get filteredLogs(): WorkLog[] {
+    return this.allWorkLogs;
   }
 
   navigateToTaskDetail() {
