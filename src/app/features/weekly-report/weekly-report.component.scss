@@ -1,0 +1,107 @@
+.weekly-report-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  align-items: center;
+}
+
+.report-card.weekly-report-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  padding: 28px 32px 24px 32px;
+  min-width: 340px;
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.report-card-actions {
+  display: flex;
+  gap: 10px;
+  position: absolute;
+  top: 18px;
+  right: 18px;
+}
+
+.report-card-actions button.mat-icon-button {
+  background: transparent;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+.report-card-actions .edit-btn mat-icon {
+  color: #1976d2;
+}
+.report-card-actions .delete-btn mat-icon {
+  color: #e57373;
+}
+.report-card-actions .pdf-btn mat-icon {
+  color: #ff9800;
+}
+.report-card-actions button.mat-icon-button:hover {
+  background: #e3f2fd;
+}
+
+.report-created {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #1976d2;
+  margin-bottom: 8px;
+}
+
+.report-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.photo-section {
+  margin-top: 8px;
+}
+.photo-thumbnails {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+.thumbnail {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+.thumbnail:hover {
+  box-shadow: 0 0 0 2px #1976d2;
+}
+.no-photo {
+  color: #888;
+  font-size: 0.95em;
+  margin-top: 4px;
+}
+
+.daily-log-section {
+  margin-top: 18px;
+  padding: 12px;
+  background: #f4fcff;
+  border: 1.5px solid #b3e5fc;
+  border-radius: 8px;
+}
+.daily-log-section h4 {
+  color: #1976d2;
+  margin: 0 0 8px 0;
+}
+.daily-log-section table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+.daily-log-section th, .daily-log-section td {
+  padding: 6px 8px;
+  border: 1px solid #b3e5fc;
+}

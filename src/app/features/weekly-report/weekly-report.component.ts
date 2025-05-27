@@ -4,18 +4,25 @@ import { MatDialog } from '@angular/material/dialog';
 import { AddWeeklyReportDialogComponent } from './add-weekly-report-dialog.component';
 import { Firestore, collection, getDocs, query, orderBy } from '@angular/fire/firestore';
 import { CommonModule } from '@angular/common';
+import { UserService } from '../../core/user.service';
+import { User } from '../../core/models/user.model';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-weekly-report',
   standalone: true,
-  imports: [CommonModule, AddWeeklyReportDialogComponent],
+  imports: [CommonModule, AddWeeklyReportDialogComponent, MatIconModule],
   templateUrl: './weekly-report.component.html',
   styleUrl: './weekly-report.component.scss'
 })
 export class WeeklyReportComponent {
   reports: Record<string, unknown>[] = [];
-  constructor(private router: Router, private dialog: MatDialog, private firestore: Firestore) {
+  users: User[] = [];
+  constructor(private router: Router, private dialog: MatDialog, private firestore: Firestore, private userService: UserService) {
     this.loadReports();
+    this.userService.getUsers().subscribe(users => {
+      this.users = users;
+    });
   }
 
   async loadReports() {
@@ -38,9 +45,14 @@ export class WeeklyReportComponent {
     });
   }
 
+  getUserName(id: string): string {
+    const user = this.users.find(u => u.id === id);
+    return user ? user.displayName : id;
+  }
+
   getManagerNames(report: Record<string, unknown>): string {
     if (!report['manager'] || !Array.isArray(report['manager'])) return '';
-    return (report['manager'] as string[]).join(', ');
+    return (report['manager'] as string[]).map(id => this.getUserName(id)).join(', ');
   }
 
   getPeriodDate(report: Record<string, unknown>, key: 'periodStart' | 'periodEnd'): string {
@@ -53,5 +65,45 @@ export class WeeklyReportComponent {
       return (val as { toDate: () => Date }).toDate().toLocaleDateString('ja-JP');
     }
     return '';
+  }
+
+  getPhotoUrls(report: Record<string, unknown>): string[] {
+    const urls = report['photoUrls'];
+    return Array.isArray(urls) ? urls.filter(url => typeof url === 'string') : [];
+  }
+
+  openDetailDialog(report: Record<string, unknown>) {
+    // 詳細ダイアログは後で実装
+    alert('詳細ダイアログ（仮）\n' + JSON.stringify(report, null, 2));
+  }
+
+  openImageDialog(url: string) {
+    window.open(url, '_blank');
+  }
+
+  getWorkDays(report: Record<string, unknown>): number {
+    const start = report['periodStart'];
+    const end = report['periodEnd'];
+    let startDate: Date | null = null;
+    let endDate: Date | null = null;
+    if (typeof start === 'string' || start instanceof Date) startDate = new Date(start);
+    if (typeof end === 'string' || end instanceof Date) endDate = new Date(end);
+    if (typeof start === 'object' && start !== null && 'toDate' in start && typeof start.toDate === 'function') startDate = start.toDate();
+    if (typeof end === 'object' && end !== null && 'toDate' in end && typeof end.toDate === 'function') endDate = end.toDate();
+    if (!startDate || !endDate) return 0;
+    const diff = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    return diff + 1;
+  }
+
+  onEdit(report: Record<string, unknown>) {
+    alert('編集（仮）\n' + JSON.stringify(report, null, 2));
+  }
+
+  onDelete(report: Record<string, unknown>) {
+    alert('削除（仮）\n' + JSON.stringify(report, null, 2));
+  }
+
+  onPdf(report: Record<string, unknown>) {
+    alert('PDF出力（仮）\n' + JSON.stringify(report, null, 2));
   }
 }

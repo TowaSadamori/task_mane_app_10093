@@ -5,24 +5,57 @@
 
 <p>weekly-report works!</p>
 
-<table *ngIf="reports.length > 0" class="weekly-report-table">
-  <thead>
-    <tr>
-      <th>期間</th>
-      <th>担当者</th>
-      <th>管理者</th>
-      <th>メモ</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let report of reports">
-      <td>{{ getPeriodDate(report, 'periodStart') }} ～ {{ getPeriodDate(report, 'periodEnd') }}</td>
-      <td>{{ report['person'] }}</td>
-      <td>{{ getManagerNames(report) }}</td>
-      <td>{{ report['memo'] }}</td>
-    </tr>
-  </tbody>
-</table>
+<div *ngIf="reports.length > 0" class="weekly-report-card-list">
+  <div *ngFor="let report of reports" class="report-card weekly-report-card">
+    <div class="report-card-actions">
+      <button mat-icon-button type="button" title="編集" (click)="onEdit(report)" class="edit-btn">
+        <mat-icon>edit</mat-icon>
+      </button>
+      <button mat-icon-button type="button" title="削除" (click)="onDelete(report)" class="delete-btn">
+        <mat-icon>delete</mat-icon>
+      </button>
+      <button mat-icon-button type="button" title="PDF出力" (click)="onPdf(report)" class="pdf-btn">
+        <mat-icon>picture_as_pdf</mat-icon>
+      </button>
+    </div>
+    <div class="report-created">
+      {{ getPeriodDate(report, 'periodStart') }} ～ {{ getPeriodDate(report, 'periodEnd') }}
+    </div>
+    <div class="report-content">
+      <div><strong>担当者:</strong> {{ getUserName(report['person'] ? report['person'].toString() : '') }}</div>
+      <div><strong>管理者:</strong> {{ getManagerNames(report) }}</div>
+      <div><strong>メモ:</strong> {{ report['memo'] }}</div>
+      <div><strong>勤務日数:</strong> {{ getWorkDays(report) }}日</div>
+      <div><strong>一週間の勤務時間合計:</strong> <span class="worktime-total">（ここに合計時間が入ります）</span></div>
+      <div class="photo-section">
+        <div><strong>写真:</strong></div>
+        <div *ngIf="getPhotoUrls(report).length > 0" class="photo-thumbnails">
+          <span *ngFor="let url of getPhotoUrls(report)">
+            <img [src]="url" alt="photo" class="thumbnail" (click)="openImageDialog(url)" tabindex="0" (keyup.enter)="openImageDialog(url)">
+          </span>
+        </div>
+        <div *ngIf="getPhotoUrls(report).length === 0" class="no-photo">写真はありません</div>
+      </div>
+      <div class="daily-log-section" style="margin-top: 18px; padding: 12px; background: #f4fcff; border: 1.5px solid #b3e5fc; border-radius: 8px;">
+        <h4 style="color:#1976d2; margin:0 0 8px 0;">日報</h4>
+        <table style="width:100%; border-collapse:collapse; background:#fff;">
+          <thead>
+            <tr style="background:#e3f2fd;">
+              <th style="padding:6px 8px; border:1px solid #b3e5fc;">作業日</th>
+              <th style="padding:6px 8px; border:1px solid #b3e5fc;">担当者</th>
+              <th style="padding:6px 8px; border:1px solid #b3e5fc;">勤務時間</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="3" style="text-align:center; color:#888;">（ここに日報データが入ります）</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 <div *ngIf="reports.length === 0">
   週報はまだありません。
 </div>
