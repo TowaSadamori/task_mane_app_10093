@@ -47,7 +47,12 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
+            <tr *ngFor="let dr of weeklyDailyReports[getReportId(report)]">
+              <td>{{ dr['workDateDisplay'] }}</td>
+              <td>{{ getUserName(dr['personUidDisplay']) }}</td>
+              <td>{{ dr['startTime'] }} - {{ dr['endTime'] }}（休憩: {{ dr['breakTime'] }}分）</td>
+            </tr>
+            <tr *ngIf="!weeklyDailyReports[getReportId(report)] || weeklyDailyReports[getReportId(report)].length === 0">
               <td colspan="3" style="text-align:center; color:#888;">（ここに日報データが入ります）</td>
             </tr>
           </tbody>

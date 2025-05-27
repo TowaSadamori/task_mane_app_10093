@@ -7,6 +7,7 @@ import { CommonModule } from '@angular/common';
 import { UserService } from '../../core/user.service';
 import { User } from '../../core/models/user.model';
 import { MatIconModule } from '@angular/material/icon';
+import { DailyReportService } from '../daily-report/daily-report.service';
 
 @Component({
   selector: 'app-weekly-report',
@@ -18,11 +19,70 @@ import { MatIconModule } from '@angular/material/icon';
 export class WeeklyReportComponent {
   reports: Record<string, unknown>[] = [];
   users: User[] = [];
-  constructor(private router: Router, private dialog: MatDialog, private firestore: Firestore, private userService: UserService) {
-    this.loadReports();
+  weeklyDailyReports: Record<string, Record<string, unknown>[]> = {};
+  constructor(private router: Router, private dialog: MatDialog, private firestore: Firestore, private userService: UserService, private dailyReportService: DailyReportService) {
     this.userService.getUsers().subscribe(users => {
       this.users = users;
+      this.loadReports();
     });
+  }
+
+  async loadDailyReportsForWeeklyReport(report: Record<string, unknown>) {
+    const personDisplayName = report['person'];
+    const user = this.users.find(u => u.displayName === personDisplayName);
+    if (!user) {
+      this.weeklyDailyReports[report['id'] as string] = [];
+      return;
+    }
+    const personUid = user.id;
+    const startRaw = report['periodStart'];
+    const endRaw = report['periodEnd'];
+    let start: Date | null = null;
+    let end: Date | null = null;
+    if (typeof startRaw === 'string' || startRaw instanceof Date) start = new Date(startRaw);
+    if (typeof endRaw === 'string' || endRaw instanceof Date) end = new Date(endRaw);
+    if (typeof startRaw === 'object' && startRaw !== null && typeof (startRaw as { toDate?: unknown }).toDate === 'function') start = (startRaw as { toDate: () => Date }).toDate();
+    if (typeof endRaw === 'object' && endRaw !== null && typeof (endRaw as { toDate?: unknown }).toDate === 'function') end = (endRaw as { toDate: () => Date }).toDate();
+    if (!start || !end) {
+      this.weeklyDailyReports[report['id'] as string] = [];
+      return;
+    }
+    const allDailyReports = (await this.dailyReportService.getDailyReports() as unknown) as Record<string, unknown>[];
+    this.weeklyDailyReports[report['id'] as string] = allDailyReports
+      .filter(dr => {
+        let workDate: Date | null = null;
+        if (dr['workDate'] instanceof Date) workDate = dr['workDate'] as Date;
+        else if (typeof dr['workDate'] === 'string') workDate = new Date(dr['workDate'] as string);
+        else if (typeof dr['workDate'] === 'object' && dr['workDate'] !== null && typeof (dr['workDate'] as { toDate?: unknown }).toDate === 'function') workDate = (dr['workDate'] as { toDate: () => Date }).toDate();
+        if (!workDate) return false;
+        return (
+          dr['personUid'] === personUid &&
+          workDate >= start &&
+          workDate <= end
+        );
+      })
+      .map(dr => {
+        let workDateDisplay = '';
+        if (dr['workDate'] instanceof Date) {
+          workDateDisplay = dr['workDate'].toLocaleDateString('ja-JP');
+        } else if (typeof dr['workDate'] === 'string') {
+          const d = new Date(dr['workDate'] as string);
+          workDateDisplay = isNaN(d.getTime()) ? '' : d.toLocaleDateString('ja-JP');
+        } else if (typeof dr['workDate'] === 'object' && dr['workDate'] !== null && typeof (dr['workDate'] as { toDate?: unknown }).toDate === 'function') {
+          workDateDisplay = (dr['workDate'] as { toDate: () => Date }).toDate().toLocaleDateString('ja-JP');
+        }
+        const personUidDisplay = typeof dr['personUid'] === 'string' ? dr['personUid'] : '';
+        const startTime = typeof dr['startTime'] === 'string' ? dr['startTime'] : '';
+        const endTime = typeof dr['endTime'] === 'string' ? dr['endTime'] : '';
+        const breakTime = typeof dr['breakTime'] === 'number' ? dr['breakTime'] : '';
+        return {
+          workDateDisplay,
+          personUidDisplay,
+          startTime,
+          endTime,
+          breakTime
+        };
+      });
   }
 
   async loadReports() {
@@ -30,6 +90,9 @@ export class WeeklyReportComponent {
     const q = query(col, orderBy('createdAt', 'desc'));
     const snap = await getDocs(q);
     this.reports = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    for (const report of this.reports) {
+      await this.loadDailyReportsForWeeklyReport(report);
+    }
   }
 
   goHome() {
@@ -45,7 +108,8 @@ export class WeeklyReportComponent {
     });
   }
 
-  getUserName(id: string): string {
+  getUserName(id: string | unknown): string {
+    if (typeof id !== 'string') return '';
     const user = this.users.find(u => u.id === id);
     return user ? user.displayName : id;
   }
@@ -119,5 +183,9 @@ export class WeeklyReportComponent {
 
   onPdf(report: Record<string, unknown>) {
     alert('PDF出力（仮）\n' + JSON.stringify(report, null, 2));
+  }
+
+  getReportId(report: Record<string, unknown>): string {
+    return String(report['id'] ?? '');
   }
 }
