@@ -50,7 +50,7 @@
         <tr *ngFor="let log of filteredLogs">
           <td style="padding: 8px 12px; text-align: center;">
             <ng-container *ngIf="log['id']; else noLink">
-              <a [routerLink]="['/app/daily-report-detail', log['id']]" style="color: #1976d2; text-decoration: underline; cursor: pointer;">
+              <a [routerLink]="['/app/gantt-daily-log-detail', log['ganttTaskId'], log['id']]" style="color: #1976d2; text-decoration: underline; cursor: pointer;">
                 {{ formatWorkDate(log.workDate) || '-' }}
               </a>
             </ng-container>
