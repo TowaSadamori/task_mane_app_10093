@@ -11,6 +11,7 @@ import { PdfExportComponent, DailyReportData } from '../../../pdf-export/pdf-exp
 import { EditDailyReportDialogComponent } from '../../daily-report/edit-daily-report-dialog.component';
 import { DailyReportService } from '../../daily-report/daily-report.service';
 import type { DailyReport } from '../../daily-report/daily-report.component';
+import { ConfirmDialogComponent } from '../../daily-report/daily-report.component';
 
 interface WorkLog {
   workDate?: { toDate: () => Date };
@@ -28,7 +29,7 @@ interface WorkLog {
 @Component({
   selector: 'app-daily-report-detail',
   standalone: true,
-  imports: [CommonModule, MatIconModule, MatButtonModule, RouterModule, PdfExportComponent],
+  imports: [CommonModule, MatIconModule, MatButtonModule, RouterModule, PdfExportComponent, ConfirmDialogComponent],
   templateUrl: './daily-report-detail.component.html',
   styleUrl: './daily-report-detail.component.scss'
 })
@@ -188,15 +189,20 @@ export class DailyReportDetailComponent implements OnInit {
   }
 
   async deleteDailyLog() {
-    if (!this.ganttTaskId || !this.dailyReportId) return;
-    const confirmed = window.confirm('この日次ログを削除しますか？');
-    if (!confirmed) return;
-    // Firestoreから削除
-    const logRefPath = `GanttChartTasks/${this.ganttTaskId}/WorkLogs/${this.dailyReportId}`;
-    const logRef = (await import('@angular/fire/firestore')).doc(this.firestore, logRefPath);
-    await (await import('@angular/fire/firestore')).deleteDoc(logRef);
-    // タスク詳細画面に戻る
-    this.navigateToTaskDetail();
+    if (!this.dailyReportId) return;
+    const ref = this.dialog.open(ConfirmDialogComponent);
+    const result = await ref.afterClosed().toPromise();
+    if (result !== 'yes') return;
+    // WorkLogも削除（ganttTaskIdがある場合のみ）
+    if (this.ganttTaskId) {
+      const logRefPath = `GanttChartTasks/${this.ganttTaskId}/WorkLogs/${this.dailyReportId}`;
+      const logRef = (await import('@angular/fire/firestore')).doc(this.firestore, logRefPath);
+      await (await import('@angular/fire/firestore')).deleteDoc(logRef);
+    }
+    // dailyReportsは必ず削除
+    await this.dailyReportService.deleteDailyReport(this.dailyReportId);
+    // 一覧に戻る
+    this.router.navigate(['/app/daily-report']);
   }
 
   // Add this method for template date formatting
