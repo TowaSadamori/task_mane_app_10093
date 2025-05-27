@@ -50,12 +50,10 @@
           <ng-container *ngIf="workLog.photoUrls?.length; else noPhoto">
             <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px;">
               <span *ngFor="let url of workLog.photoUrls" style="display: flex; flex-direction: column; align-items: center;">
-                <img [src]="url" alt="作業写真" style="max-height: 70px; border-radius: 6px; box-shadow: 0 1px 4px #e3eafc; margin-bottom: 4px;" />
-                <a [href]="url" download target="_blank">
-                  <button mat-icon-button type="button" aria-label="ダウンロード">
-                    <mat-icon>download</mat-icon>
-                  </button>
-                </a>
+                <img [src]="url" alt="作業写真" style="max-height: 70px; border-radius: 6px; box-shadow: 0 1px 4px #e3eafc; margin-bottom: 4px; cursor: pointer;" (click)="openImageDialog(url)" tabindex="0" (keyup.enter)="openImageDialog(url)" />
+                <button mat-icon-button type="button" aria-label="ダウンロード" (click)="downloadPhoto(url)">
+                  <mat-icon>download</mat-icon>
+                </button>
               </span>
             </div>
           </ng-container>
