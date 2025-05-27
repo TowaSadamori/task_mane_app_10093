@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Firestore, doc, getDoc } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-gantt-daily-log-detail',
@@ -13,10 +14,14 @@ export class GanttDailyLogDetailComponent implements OnInit {
   logId: string | null = null;
   workLog: any = null;
 
-  constructor(private router: Router) {}
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private firestore = inject(Firestore);
 
   async ngOnInit() {
-    // ... 既存のngOnInit ...
+    this.ganttTaskId = this.route.snapshot.paramMap.get('ganttTaskId');
+    this.logId = this.route.snapshot.paramMap.get('logId');
+    // Firestoreからデータ取得処理は今後追加
   }
 
   goBack() {
