@@ -139,11 +139,39 @@ export class DailyReportDetailComponent implements OnInit {
     // Load all WorkLogs
     const q = collectionGroup(this.firestore, 'WorkLogs');
     const querySnapshot = await getDocs(q);
-    this.allWorkLogs = querySnapshot.docs.map(doc => doc.data() as WorkLog);
+    const logs: WorkLog[] = [];
+    for (const docSnap of querySnapshot.docs) {
+      const data = docSnap.data() as WorkLog;
+      const pathSegments = docSnap.ref.path.split('/');
+      const ganttTaskIdIndex = pathSegments.findIndex(seg => seg === 'GanttChartTasks') + 1;
+      const ganttTaskId = ganttTaskIdIndex > 0 && ganttTaskIdIndex < pathSegments.length ? pathSegments[ganttTaskIdIndex] : '';
+      // タスク名をFirestoreから取得
+      let taskName = '';
+      if (ganttTaskId) {
+        try {
+          const taskDocRef = (await import('@angular/fire/firestore')).doc(this.firestore, 'GanttChartTasks', ganttTaskId);
+          const taskDocSnap = await (await import('@angular/fire/firestore')).getDoc(taskDocRef);
+          if (taskDocSnap.exists()) {
+            const taskData = taskDocSnap.data() as { title?: string };
+            taskName = taskData.title || '';
+          }
+        } catch {
+          // ignore Firestore errors for taskName
+        }
+      }
+      logs.push({ ...data, id: docSnap.id, ganttTaskId, taskName });
+    }
+    this.allWorkLogs = logs;
   }
 
   get filteredLogs(): WorkLog[] {
-    return this.allWorkLogs;
+    if (!this.dailyReport) return [];
+    const reportDateStr = this.formatWorkDate(this.dailyReport['workDate']);
+    const reportPersonName = this.getDisplayNameByUid(this.dailyReport['personUid']);
+    return this.allWorkLogs.filter(log =>
+      this.formatWorkDate(log.workDate) === reportDateStr &&
+      this.getDisplayNameByUid(log['assigneeId'] || log['supervisor']) === reportPersonName
+    );
   }
 
   navigateToTaskDetail() {
