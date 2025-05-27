@@ -40,6 +40,7 @@ export class AddWeeklyReportDialogComponent {
   }, AddWeeklyReportDialogComponent.periodRangeValidator);
   selectedPhotos: File[] = [];
   users: User[] = [];
+  existingPhotoUrls: string[] = [];
   constructor(
     private dialogRef: MatDialogRef<AddWeeklyReportDialogComponent>,
     private userService: UserService,
@@ -74,10 +75,11 @@ export class AddWeeklyReportDialogComponent {
       if (value['periodEnd'] instanceof Date) value['periodEnd'] = Timestamp.fromDate(value['periodEnd'] as Date);
       value['createdAt'] = Timestamp.now();
 
+      // 既存画像URLをセット
+      let photoUrls = [...this.existingPhotoUrls];
       // 写真アップロード
       const storage = getStorage();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const photoUrls = Array.isArray((this.data as any)?.['photoUrls']) ? [...((this.data as any)['photoUrls'])] : [];
       for (const file of this.selectedPhotos) {
         const storageRef = ref(storage, `weeklyReports/${Date.now()}_${file.name}`);
         await uploadBytes(storageRef, file);
@@ -102,6 +104,9 @@ export class AddWeeklyReportDialogComponent {
   }
   removePhoto(i: number) {
     this.selectedPhotos.splice(i, 1);
+  }
+  removeExistingPhoto(i: number) {
+    this.existingPhotoUrls.splice(i, 1);
   }
 
   // 期間バリデーション: 開始日<=終了日、かつ最大7日間
@@ -134,6 +139,10 @@ export class AddWeeklyReportDialogComponent {
     // personフィールドが存在する場合はセット
     if (patch['person']) {
       this.form.get('person')?.setValue(patch['person'] as string);
+    }
+    // 既存画像URLをセット
+    if (patch['photoUrls'] && Array.isArray(patch['photoUrls'])) {
+      this.existingPhotoUrls = patch['photoUrls'] as string[];
     }
     this.form.patchValue(patch);
   }
