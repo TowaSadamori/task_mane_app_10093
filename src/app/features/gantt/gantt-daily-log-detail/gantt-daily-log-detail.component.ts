@@ -49,7 +49,44 @@ export class GanttDailyLogDetailComponent implements OnInit {
         const taskRef = doc(this.firestore, 'GanttChartTasks', this.ganttTaskId);
         const taskSnap = await getDoc(taskRef);
         if (taskSnap.exists()) {
-          this.workLog['taskName'] = taskSnap.data()['title'] || '';
+          const taskData = taskSnap.data();
+          this.workLog['taskName'] = taskData['title'] || '';
+          // 管理者名取得（プロジェクト経由）
+          if (taskData['projectId']) {
+            const projectRef = doc(this.firestore, 'Projects', taskData['projectId']);
+            const projectSnap = await getDoc(projectRef);
+            if (projectSnap.exists()) {
+              const projectData = projectSnap.data();
+              let managerIds: string[] = [];
+              if (Array.isArray(projectData['managerIds'])) {
+                managerIds = projectData['managerIds'];
+              } else if (projectData['managerId']) {
+                managerIds = [projectData['managerId']];
+              }
+              if (managerIds.length > 0) {
+                // UsersコレクションからdisplayName取得
+                const usersCol = (await import('@angular/fire/firestore')).collection(this.firestore, 'Users');
+                const usersSnap = await (await import('@angular/fire/firestore')).getDocs(usersCol);
+                const names: string[] = [];
+                usersSnap.forEach(doc => {
+                  const data = doc.data();
+                  if (
+                    (data['id'] && managerIds.includes(data['id'])) ||
+                    managerIds.includes(doc.id)
+                  ) {
+                    if (data['displayName']) names.push(data['displayName']);
+                  }
+                });
+                this.workLog['managerNames'] = names.join(', ');
+              } else {
+                this.workLog['managerNames'] = '';
+              }
+            } else {
+              this.workLog['managerNames'] = '';
+            }
+          } else {
+            this.workLog['managerNames'] = '';
+          }
         }
       }
     }
