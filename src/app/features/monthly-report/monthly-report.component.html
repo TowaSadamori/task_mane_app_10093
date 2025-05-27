@@ -5,6 +5,14 @@
 
 <div *ngIf="reports.length > 0" class="monthly-report-card-list">
   <div *ngFor="let report of reports" class="monthly-report-card">
+    <div class="report-card-actions">
+      <button mat-icon-button type="button" title="編集" (click)="onEdit(report)" class="edit-btn">
+        <span class="material-icons">edit</span>
+      </button>
+      <button mat-icon-button type="button" title="削除" (click)="onDelete(report)" class="delete-btn">
+        <span class="material-icons">delete</span>
+      </button>
+    </div>
     <div class="report-period">
       <span class="period-label">{{ getPeriodDate(report, 'periodStart') }} ～ {{ getPeriodDate(report, 'periodEnd') }}</span>
     </div>

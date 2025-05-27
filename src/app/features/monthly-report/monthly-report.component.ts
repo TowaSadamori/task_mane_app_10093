@@ -193,8 +193,30 @@ export class MonthlyReportComponent {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(objectUrl);
-    } catch (e) {
+    } catch {
       alert('ダウンロードに失敗しました');
     }
+  }
+
+  async onEdit(report: Record<string, unknown>) {
+    const dialogRef = this.dialog.open(AddMonthlyReportDialogComponent, {
+      width: '500px',
+      maxHeight: '90vh',
+      data: { ...report }
+    });
+    dialogRef.afterClosed().subscribe(async (result: Record<string, unknown> | undefined) => {
+      if (result) {
+        await this.loadReports();
+      }
+    });
+  }
+
+  async onDelete(report: Record<string, unknown>) {
+    if (!report['id']) return;
+    const ok = window.confirm('本当に削除しますか？');
+    if (!ok) return;
+    const { doc, deleteDoc } = await import('@angular/fire/firestore');
+    await deleteDoc(doc(this.firestore, 'monthlyReports', report['id'] as string));
+    await this.loadReports();
   }
 }
