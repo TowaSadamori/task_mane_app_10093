@@ -70,6 +70,10 @@ export const routes: Routes = [
         path: 'daily-report-detail/:dailyReportId',
         loadComponent: () => import('./features/daily-report/daily-report-detail/daily-report-detail.component').then(m => m.DailyReportDetailComponent)
       },
+      {
+        path: 'gantt-daily-log-detail/:ganttTaskId/:logId',
+        loadComponent: () => import('./features/gantt/gantt-daily-log-detail/gantt-daily-log-detail.component').then(m => m.GanttDailyLogDetailComponent)
+      },
       // {
       //   path: 'projects/create', // 新規作成画面のパス
       //   loadComponent: () => import('./features/project/components/project-create/project-create.component').then(m => m.ProjectCreateComponent)
