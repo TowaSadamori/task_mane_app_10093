@@ -12,11 +12,11 @@
   <h2>日報詳細</h2>
   <div><strong>作業日:</strong> {{ formatWorkDate(dr['workDate']) }}</div>
   <div><strong>担当者:</strong> {{ getDisplayNameByUid(dr['personUid']) }}</div>
-  <div><strong>管理者:</strong> {{ managerNames ? managerNames : 'なし' }}</div>
+  <div><strong>管理者:</strong> {{ getManagerNamesByUids(getManagerUids(dr)) || 'なし' }}</div>
   <div><strong>出勤:</strong> {{ dr['startTime'] }}</div>
   <div><strong>退勤:</strong> {{ dr['endTime'] }}</div>
   <div><strong>休憩:</strong> {{ dr['breakTime'] }}分</div>
-  <div><strong>勤務時間:</strong> {{ dr['workDuration'] }}</div>
+  <div><strong>勤務時間:</strong> {{ calcWorkingTime(getStartTime(dr), getEndTime(dr), getBreakTime(dr)) }}</div>
   <div><strong>報告事項:</strong> {{ dr['hasReport'] }}</div>
   <div><strong>ケガ・事故:</strong> {{ dr['hasAccident'] }}</div>
   <div><strong>体調不良:</strong> {{ dr['hasHealthIssue'] }}</div>

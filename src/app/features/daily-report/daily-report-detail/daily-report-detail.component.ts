@@ -55,6 +55,15 @@ export class DailyReportDetailComponent implements OnInit {
     return user ? user.displayName : uid;
   }
 
+  getManagerNamesByUids(uids: string[] = []): string {
+    return uids.map(uid => this.getDisplayNameByUid(uid)).join(', ');
+  }
+
+  getManagerUids(dr: Record<string, unknown>): string[] {
+    const uids = dr['managerUids'];
+    return Array.isArray(uids) ? uids.filter(uid => typeof uid === 'string') : [];
+  }
+
   async ngOnInit() {
     this.dailyReportId = this.route.snapshot.paramMap.get('dailyReportId');
     if (this.dailyReportId) {
@@ -260,5 +269,33 @@ export class DailyReportDetailComponent implements OnInit {
       photoPaths: this.getPhotoUrls(dr),
       // dailyLogs: ... // 必要に応じて追加
     };
+  }
+
+  calcWorkingTime(start: string, end: string, breakMin: number): string {
+    if (!start || !end || breakMin == null) return '不明';
+    const [sh, sm] = start.split(':').map(Number);
+    const [eh, em] = end.split(':').map(Number);
+    if ([sh, sm, eh, em].some(isNaN)) return '不明';
+    const startMin = sh * 60 + sm;
+    const endMin = eh * 60 + em;
+    let workMin = endMin - startMin - breakMin;
+    if (workMin < 0) workMin += 24 * 60; // 日をまたぐ場合
+    const h = Math.floor(workMin / 60);
+    const m = workMin % 60;
+    return `${h}時間${m}分`;
+  }
+
+  getString(val: unknown): string {
+    return typeof val === 'string' ? val : '';
+  }
+
+  getBreakTime(dr: Record<string, unknown>): number {
+    return typeof dr['breakTime'] === 'number' ? dr['breakTime'] : 0;
+  }
+  getStartTime(dr: Record<string, unknown>): string {
+    return typeof dr['startTime'] === 'string' ? dr['startTime'] : '';
+  }
+  getEndTime(dr: Record<string, unknown>): string {
+    return typeof dr['endTime'] === 'string' ? dr['endTime'] : '';
   }
 }
