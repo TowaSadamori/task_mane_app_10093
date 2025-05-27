@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { GanttDailyLogFormDialogComponent } from '../../gantt/gantt-daily-log-form-dialog/gantt-daily-log-form-dialog.component';
 import { GanttDailyLogService, GanttDailyLog } from '../../gantt/gantt-daily-log-form-dialog/gantt-daily-log.service';
 import { RouterModule } from '@angular/router';
+import { PdfExportComponent, DailyReportData } from '../../../pdf-export/pdf-export.component'
 
 interface WorkLog {
   workDate?: { toDate: () => Date };
@@ -25,7 +26,7 @@ interface WorkLog {
 @Component({
   selector: 'app-daily-report-detail',
   standalone: true,
-  imports: [CommonModule, MatIconModule, MatButtonModule, RouterModule],
+  imports: [CommonModule, MatIconModule, MatButtonModule, RouterModule, PdfExportComponent],
   templateUrl: './daily-report-detail.component.html',
   styleUrl: './daily-report-detail.component.scss'
 })
@@ -42,6 +43,13 @@ export class DailyReportDetailComponent implements OnInit {
   taskName: string | null = null;
   managerNames: string | null = null;
   dailyReport: Record<string, unknown> | null = null;
+  users: {id: string, displayName: string}[] = [];
+
+  getDisplayNameByUid(uid: unknown): string {
+    if (typeof uid !== 'string') return '';
+    const user = this.users.find(u => u.id === uid);
+    return user ? user.displayName : uid;
+  }
 
   async ngOnInit() {
     this.dailyReportId = this.route.snapshot.paramMap.get('dailyReportId');
@@ -106,6 +114,14 @@ export class DailyReportDetailComponent implements OnInit {
         }
       }
     }
+    // Load users
+    const usersSnap = await (await import('@angular/fire/firestore')).getDocs(
+      (await import('@angular/fire/firestore')).collection(this.firestore, 'Users')
+    );
+    this.users = usersSnap.docs.map(doc => {
+      const data = doc.data() as { displayName?: string, id?: string };
+      return { id: data.id || doc.id, displayName: data.displayName || doc.id };
+    });
   }
 
   navigateToTaskDetail() {
@@ -190,5 +206,43 @@ export class DailyReportDetailComponent implements OnInit {
     const m = (date.getMonth() + 1).toString().padStart(2, '0');
     const d = date.getDate().toString().padStart(2, '0');
     return `${y}/${m}/${d}`;
+  }
+
+  public exportPdf(): void {
+    // PDF export logic will go here
+    alert('PDF出力は未実装です');
+  }
+
+  public goToList(): void {
+    this.router.navigate(['/app/daily-report']);
+  }
+
+  public openImageDialog(url: string): void {
+    // TODO: Replace with actual dialog logic if needed
+    window.open(url, '_blank');
+  }
+
+  public getPhotoUrls(dr: Record<string, unknown>): string[] {
+    const urls = dr['photoUrls'];
+    return Array.isArray(urls) ? urls.filter(url => typeof url === 'string') : [];
+  }
+
+  public getReportDataForPdf(): DailyReportData {
+    const dr = this.dailyReport;
+    if (!dr) return {};
+    return {
+      reportDate: this.formatWorkDate(dr['workDate']),
+      staffName: this.getDisplayNameByUid(dr['personUid']),
+      checkInTime: dr['startTime'] as string,
+      checkOutTime: dr['endTime'] as string,
+      breakTime: dr['breakTime'] ? String(dr['breakTime']) : '',
+      workDuration: dr['workDuration'] as string,
+      reportDetails: dr['hasReport'] === 'yes' ? 'あり' : 'なし',
+      injuriesOrAccidents: dr['hasAccident'] === 'yes' ? 'あり' : 'なし',
+      healthIssues: dr['hasHealthIssue'] === 'yes' ? 'あり' : 'なし',
+      memo: dr['memo'] as string,
+      photoPaths: this.getPhotoUrls(dr),
+      // dailyLogs: ... // 必要に応じて追加
+    };
   }
 }

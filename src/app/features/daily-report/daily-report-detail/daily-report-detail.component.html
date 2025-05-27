@@ -2,8 +2,8 @@
   <button routerLink="/app/daily-report" mat-stroked-button color="primary" style="margin-bottom: 16px;">日報一覧に戻る</button>
   <h2>日報詳細</h2>
   <div><strong>作業日:</strong> {{ formatWorkDate(dr['workDate']) }}</div>
-  <div><strong>担当者:</strong> {{ dr['personUid'] }}</div>
-  <div><strong>管理者:</strong> {{ managerNames }}</div>
+  <div><strong>担当者:</strong> {{ getDisplayNameByUid(dr['personUid']) }}</div>
+  <div><strong>管理者:</strong> {{ managerNames ? managerNames : 'なし' }}</div>
   <div><strong>出勤:</strong> {{ dr['startTime'] }}</div>
   <div><strong>退勤:</strong> {{ dr['endTime'] }}</div>
   <div><strong>休憩:</strong> {{ dr['breakTime'] }}分</div>
@@ -11,7 +11,30 @@
   <div><strong>報告事項:</strong> {{ dr['hasReport'] }}</div>
   <div><strong>ケガ・事故:</strong> {{ dr['hasAccident'] }}</div>
   <div><strong>体調不良:</strong> {{ dr['hasHealthIssue'] }}</div>
-  <div><strong>メモ:</strong> {{ dr['memo'] }}</div>
+  <div><strong>メモ:</strong> {{ dr['memo'] ? dr['memo'] : 'なし' }}</div>
+  <div style="margin: 12px 0 0 0; display: flex; align-items: flex-end; gap: 16px;">
+    <strong style="min-width: 40px;">写真:</strong>
+    <ng-container *ngIf="getPhotoUrls(dr).length > 0; else noPhotos">
+      <ng-container *ngFor="let url of getPhotoUrls(dr)">
+        <div style="display: flex; flex-direction: column; align-items: center; margin-right: 8px;">
+          <img [src]="url" alt="写真" style="width: 64px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 4px; cursor: pointer;" (click)="openImageDialog(url)" tabindex="0" (keyup.enter)="openImageDialog(url)" />
+          <button mat-icon-button (click)="downloadPhoto(url)" matTooltip="ダウンロード">
+            <mat-icon>download</mat-icon>
+          </button>
+        </div>
+      </ng-container>
+    </ng-container>
+    <ng-template #noPhotos>なし</ng-template>
+  </div>
+  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+    <button mat-icon-button color="primary" (click)="editDailyLog()" matTooltip="編集">
+      <mat-icon>edit</mat-icon>
+    </button>
+    <button mat-icon-button color="warn" (click)="deleteDailyLog()" matTooltip="削除">
+      <mat-icon>delete</mat-icon>
+    </button>
+    <app-pdf-export [reportData]="getReportDataForPdf()"></app-pdf-export>
+  </div>
   <!-- 写真や他の項目も必要に応じて追加 -->
 </div>
 <ng-template #loading>
