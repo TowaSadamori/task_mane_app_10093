@@ -134,4 +134,16 @@ export class GanttDailyLogDetailComponent implements OnInit {
       })
       .catch(() => alert('ダウンロードに失敗しました'));
   }
+
+  async confirmDelete() {
+    const result = window.confirm('本当に削除しますか？');
+    if (!result) return;
+    // WorkLog削除
+    if (this.ganttTaskId && this.logId) {
+      const logRef = doc(this.firestore, `GanttChartTasks/${this.ganttTaskId}/WorkLogs/${this.logId}`);
+      await (await import('@angular/fire/firestore')).deleteDoc(logRef);
+    }
+    // タスク詳細画面に戻る
+    this.goBack();
+  }
 }

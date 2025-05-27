@@ -68,7 +68,7 @@
       <button mat-icon-button color="primary" aria-label="編集" disabled>
         <mat-icon>edit</mat-icon>
       </button>
-      <button mat-icon-button color="warn" aria-label="削除" disabled>
+      <button mat-icon-button aria-label="削除" (click)="confirmDelete()" style="color: #f44336; background: none; border: none; box-shadow: none;">
         <mat-icon>delete</mat-icon>
       </button>
     </div>
