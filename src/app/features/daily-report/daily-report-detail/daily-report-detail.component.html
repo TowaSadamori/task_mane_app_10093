@@ -36,6 +36,25 @@
     <ng-template #noPhotos>なし</ng-template>
   </div>
   <!-- 写真や他の項目も必要に応じて追加 -->
+  <div style="margin-top: 24px; padding: 16px; background: #f7fbfe; border-radius: 10px; border: 1px solid #b6d6f6;">
+    <h3 style="margin-top: 0; color: #1976d2;">日次ログ</h3>
+    <table style="width: 100%; background: #fff; border-radius: 6px; border-collapse: separate; border-spacing: 0; box-shadow: 0 1px 2px #e3e3e3;">
+      <thead>
+        <tr style="background: #e3f2fd;">
+          <th style="padding: 8px 12px; border-bottom: 1px solid #b6d6f6;">作業日</th>
+          <th style="padding: 8px 12px; border-bottom: 1px solid #b6d6f6;">担当者</th>
+          <th style="padding: 8px 12px; border-bottom: 1px solid #b6d6f6;">タスク名</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding: 8px 12px; text-align: center;">-</td>
+          <td style="padding: 8px 12px; text-align: center;">-</td>
+          <td style="padding: 8px 12px; text-align: center;">-</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 <ng-template #loading>
   <p>読み込み中...</p>
