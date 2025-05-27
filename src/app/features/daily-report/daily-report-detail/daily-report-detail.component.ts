@@ -299,12 +299,13 @@ export class DailyReportDetailComponent implements OnInit {
       }
       return null;
     }
-    // 日次ログデータをfilteredLogsから整形
+    // 日次ログデータをfilteredLogsから整形（photoUrlsも含める）
     const dailyLogs = this.filteredLogs.map(log => ({
       workDate: this.formatWorkDate(log.workDate),
       assignee: this.getDisplayNameByUid(log['assigneeId'] || log['supervisor']),
       taskName: log['taskName'] || '',
-      comment: log['comment'] || ''
+      comment: log['comment'] || '',
+      photoUrls: Array.isArray(log['photoUrls']) ? log['photoUrls'].filter(url => typeof url === 'string') : []
     }));
     return {
       reportDate: this.formatWorkDate(dr['workDate']),

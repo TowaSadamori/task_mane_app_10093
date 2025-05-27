@@ -471,6 +471,25 @@ export const generatePdf = functions
               </table>
             </div>
           `;
+        } else {
+          // 日次ログが空でも必ずテーブルの枠を出す
+          dailyLogsHtml += `
+            <div class="section">
+              <h2>日次ログ</h2>
+              <table style="width:100%; border-collapse:collapse; background:#fff; margin-top:8px;">
+                <thead>
+                  <tr style="background:#e3f2fd;">
+                    <th style="padding:6px 8px; border:1px solid #b3e5fc;">作業日</th>
+                    <th style="padding:6px 8px; border:1px solid #b3e5fc;">担当者</th>
+                    <th style="padding:6px 8px; border:1px solid #b3e5fc;">タスク名</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td colspan="3" style="padding:6px 8px; border:1px solid #b3e5fc; text-align:center; color:#888;">日次ログなし</td></tr>
+                </tbody>
+              </table>
+            </div>
+          `;
         }
 
         // 日報データをHTMLに埋め込む
