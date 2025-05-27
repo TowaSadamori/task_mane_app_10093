@@ -7,7 +7,7 @@
     <button mat-icon-button color="warn" (click)="deleteDailyLog()" matTooltip="削除">
       <mat-icon>delete</mat-icon>
     </button>
-    <app-pdf-export [reportData]="getReportDataForPdf()"></app-pdf-export>
+    <app-pdf-export [reportData]="getReportDataForPdf()" [functionUrl]="'https://asia-northeast1-kensyu10093.cloudfunctions.net/generatePdf'"></app-pdf-export>
   </div>
   <h2>日報詳細</h2>
   <div><strong>作業日:</strong> {{ formatWorkDate(dr['workDate']) }}</div>

@@ -292,19 +292,39 @@ export class DailyReportDetailComponent implements OnInit {
   public getReportDataForPdf(): DailyReportData {
     const dr = this.dailyReport;
     if (!dr) return {};
+    function extractStoragePathFromUrl(url: string): string | null {
+      const match = url.match(/\/o\/([^?]+)/);
+      if (match && match[1]) {
+        return decodeURIComponent(match[1]);
+      }
+      return null;
+    }
+    // 日次ログデータをfilteredLogsから整形
+    const dailyLogs = this.filteredLogs.map(log => ({
+      workDate: this.formatWorkDate(log.workDate),
+      assignee: this.getDisplayNameByUid(log['assigneeId'] || log['supervisor']),
+      taskName: log['taskName'] || '',
+      comment: log['comment'] || ''
+    }));
     return {
       reportDate: this.formatWorkDate(dr['workDate']),
       staffName: this.getDisplayNameByUid(dr['personUid']),
       checkInTime: dr['startTime'] as string,
       checkOutTime: dr['endTime'] as string,
       breakTime: dr['breakTime'] ? String(dr['breakTime']) : '',
-      workDuration: dr['workDuration'] as string,
+      workDuration: this.calcWorkingTime(
+        this.getStartTime(dr),
+        this.getEndTime(dr),
+        this.getBreakTime(dr)
+      ),
       reportDetails: dr['hasReport'] === 'yes' ? 'あり' : 'なし',
       injuriesOrAccidents: dr['hasAccident'] === 'yes' ? 'あり' : 'なし',
       healthIssues: dr['hasHealthIssue'] === 'yes' ? 'あり' : 'なし',
       memo: dr['memo'] as string,
-      photoPaths: this.getPhotoUrls(dr),
-      // dailyLogs: ... // 必要に応じて追加
+      photoPaths: this.getPhotoUrls(dr)
+        ? this.getPhotoUrls(dr).map(url => extractStoragePathFromUrl(url)).filter((path): path is string => !!path)
+        : [],
+      dailyLogs
     };
   }
 
