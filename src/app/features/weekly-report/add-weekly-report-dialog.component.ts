@@ -14,6 +14,7 @@ import { MatOptionModule } from '@angular/material/core';
 import { UserService } from '../../core/user.service';
 import { AuthService } from '../../core/auth.service';
 import { User } from '../../core/models/user.model';
+import { Firestore, collection, addDoc, Timestamp } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-add-weekly-report-dialog',
@@ -40,7 +41,8 @@ export class AddWeeklyReportDialogComponent {
   constructor(
     private dialogRef: MatDialogRef<AddWeeklyReportDialogComponent>,
     private userService: UserService,
-    private authService: AuthService
+    private authService: AuthService,
+    private firestore: Firestore
   ) {
     this.userService.getUsers().subscribe(users => {
       this.users = users;
@@ -58,9 +60,15 @@ export class AddWeeklyReportDialogComponent {
     const input = event.target as HTMLInputElement;
     this.selectedPhotos = input.files ? Array.from(input.files) : [];
   }
-  onSubmit() {
+  async onSubmit() {
     if (this.form.valid) {
-      this.dialogRef.close({ ...this.form.getRawValue(), photos: this.selectedPhotos });
+      const value: Record<string, unknown> = { ...this.form.getRawValue(), photos: this.selectedPhotos };
+      const col = collection(this.firestore, 'weeklyReports');
+      if (value['periodStart'] instanceof Date) value['periodStart'] = Timestamp.fromDate(value['periodStart'] as Date);
+      if (value['periodEnd'] instanceof Date) value['periodEnd'] = Timestamp.fromDate(value['periodEnd'] as Date);
+      value['createdAt'] = Timestamp.now();
+      await addDoc(col, value);
+      this.dialogRef.close(value);
     }
   }
   removePhoto(i: number) {

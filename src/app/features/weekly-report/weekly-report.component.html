@@ -4,3 +4,25 @@
 </div>
 
 <p>weekly-report works!</p>
+
+<table *ngIf="reports.length > 0" class="weekly-report-table">
+  <thead>
+    <tr>
+      <th>期間</th>
+      <th>担当者</th>
+      <th>管理者</th>
+      <th>メモ</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let report of reports">
+      <td>{{ getPeriodDate(report, 'periodStart') }} ～ {{ getPeriodDate(report, 'periodEnd') }}</td>
+      <td>{{ report['person'] }}</td>
+      <td>{{ getManagerNames(report) }}</td>
+      <td>{{ report['memo'] }}</td>
+    </tr>
+  </tbody>
+</table>
+<div *ngIf="reports.length === 0">
+  週報はまだありません。
+</div>
