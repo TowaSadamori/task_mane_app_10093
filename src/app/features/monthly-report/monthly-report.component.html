@@ -51,15 +51,17 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let dr of monthlyDailyReports[getReportId(report)]">
-              <td>
-                <a [routerLink]="['/app/daily-report-detail', dr['id']]" class="daily-link">
-                  {{ dr['workDateDisplay'] }}
-                </a>
-              </td>
-              <td>{{ getUserName(dr['personUidDisplay']) }}</td>
-              <td>{{ dr['startTime'] }} - {{ dr['endTime'] }}（休憩: {{ dr['breakTime'] }}分）</td>
-            </tr>
+            <ng-container *ngFor="let dr of monthlyDailyReports[getReportId(report)]">
+              <tr *ngIf="getUserName(dr['personUidDisplay']) || getManagerNames(report)">
+                <td>
+                  <a [routerLink]="['/app/daily-report-detail', dr['id']]" class="daily-link">
+                    {{ dr['workDateDisplay'] }}
+                  </a>
+                </td>
+                <td>{{ getUserName(dr['personUidDisplay']) }}</td>
+                <td>{{ dr['startTime'] }} - {{ dr['endTime'] }}（休憩: {{ dr['breakTime'] }}分）</td>
+              </tr>
+            </ng-container>
             <tr *ngIf="!monthlyDailyReports[getReportId(report)] || monthlyDailyReports[getReportId(report)].length === 0">
               <td colspan="3" class="no-daily">（ここに日報データが入ります）</td>
             </tr>
