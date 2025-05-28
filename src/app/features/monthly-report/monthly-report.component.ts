@@ -10,6 +10,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { DailyReportService } from '../daily-report/daily-report.service';
 import { RouterModule } from '@angular/router';
 import { MonthlyReportPdfExportComponent, MonthlyReportPdfData } from '../../pdf-export/monthly-report-pdf-export.component';
+import { AuthService } from '../../core/auth.service';
+
+interface MonthlyReport {
+  id: string;
+  person: string; // displayName
+  manager: string[]; // UID配列
+  [key: string]: unknown;
+}
 
 @Component({
   selector: 'app-monthly-report',
@@ -19,11 +27,18 @@ import { MonthlyReportPdfExportComponent, MonthlyReportPdfData } from '../../pdf
   styleUrl: './monthly-report.component.scss'
 })
 export class MonthlyReportComponent {
-  reports: Record<string, unknown>[] = [];
+  reports: MonthlyReport[] = [];
   users: User[] = [];
   monthlyDailyReports: Record<string, Record<string, unknown>[]> = {};
   monthlyPdfFunctionUrl = 'https://asia-northeast1-kensyu10093.cloudfunctions.net/generateMonthlyPdf'; // 本番用URLに変更
-  constructor(private router: Router, private dialog: MatDialog, private firestore: Firestore, private userService: UserService, private dailyReportService: DailyReportService) {
+  currentUserUid: string | null = null;
+  constructor(private router: Router, private dialog: MatDialog, private firestore: Firestore, private userService: UserService, private dailyReportService: DailyReportService, private authService: AuthService) {
+    this.init();
+  }
+
+  async init() {
+    const user = await this.authService.getCurrentUser();
+    this.currentUserUid = user?.uid || null;
     this.userService.getUsers().subscribe(users => {
       this.users = users;
       this.loadReports();
@@ -109,7 +124,15 @@ export class MonthlyReportComponent {
     const col = collection(this.firestore, 'monthlyReports');
     const q = query(col, orderBy('createdAt', 'desc'));
     const snap = await getDocs(q);
-    this.reports = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const allReports: MonthlyReport[] = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as MonthlyReport));
+    this.reports = allReports.filter(report => {
+      if (!this.currentUserUid) return false;
+      const me = this.users.find(u => u.id === this.currentUserUid);
+      if (!me) return false;
+      const isPerson = report.person === me.displayName;
+      const isManager = Array.isArray(report.manager) && report.manager.includes(this.currentUserUid);
+      return isPerson || isManager;
+    });
     for (const report of this.reports) {
       await this.loadDailyReportsForMonthlyReport(report);
     }
