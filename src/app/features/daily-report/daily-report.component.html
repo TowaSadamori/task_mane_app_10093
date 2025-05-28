@@ -1,6 +1,7 @@
 <div class="daily-report-header">
   <button (click)="goHome()" class="action-btn">ホームに戻る</button>
   <button (click)="openAddDialog()" class="action-btn">日報追加</button>
+  <span style="margin-left: 12px; font-weight: bold; font-size: 1.1em; color: #1976d2; vertical-align: middle;">日次報告書</span>
 </div>
 <div *ngIf="reports.length === 0" class="no-report">まだ日報がありません。</div>
 <div class="report-list">
