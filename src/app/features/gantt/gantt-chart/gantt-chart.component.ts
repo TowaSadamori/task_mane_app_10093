@@ -574,6 +574,9 @@ openEditTaskDialog(taskToEdit: GanttChartTask): void {
       if (Object.prototype.hasOwnProperty.call(result, 'progress')) {
         updatedTaskData.progress = result.progress;
       }
+      if (Object.prototype.hasOwnProperty.call(result, 'assignees')) {
+        updatedTaskData.assignees = result.assignees;
+      }
       // undefined のプロパティを削除
       Object.keys(updatedTaskData).forEach(keyStr => {
         const key = keyStr as keyof Partial<GanttChartTask>;
