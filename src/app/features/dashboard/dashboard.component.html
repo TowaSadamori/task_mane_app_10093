@@ -59,7 +59,8 @@
             </div>
           </div>
           <div class="project-actions">
-            <button mat-icon-button color="primary" aria-label="プロジェクトを編集" (click)="openEditProjectDialog(project)" matTooltip="編集します。">
+            <button mat-icon-button color="primary" aria-label="プロジェクトを編集" (click)="openEditProjectDialog(project)" matTooltip="編集します。"
+              *ngIf="(project.managerIds ?? (project.managerId ? [project.managerId] : [])).includes(currentUserUid || '')">
               <mat-icon>edit</mat-icon>
             </button>
             <button mat-icon-button color="warn" aria-label="プロジェクトを削除" (click)="confirmDeleteProject(project)" matTooltip="削除します。">
