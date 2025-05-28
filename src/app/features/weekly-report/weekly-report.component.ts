@@ -10,6 +10,15 @@ import { MatIconModule } from '@angular/material/icon';
 import { DailyReportService } from '../daily-report/daily-report.service';
 import { RouterModule } from '@angular/router';
 import { WeeklyReportPdfExportComponent, WeeklyReportPdfData } from '../../pdf-export/weekly-report-pdf-export.component';
+import { AuthService } from '../../core/auth.service';
+
+// WeeklyReport型を定義
+interface WeeklyReport {
+  id: string;
+  person: string; // displayName
+  manager: string[]; // UID配列
+  [key: string]: unknown;
+}
 
 @Component({
   selector: 'app-weekly-report',
@@ -19,11 +28,18 @@ import { WeeklyReportPdfExportComponent, WeeklyReportPdfData } from '../../pdf-e
   styleUrl: './weekly-report.component.scss'
 })
 export class WeeklyReportComponent {
-  reports: Record<string, unknown>[] = [];
+  reports: WeeklyReport[] = [];
   users: User[] = [];
   weeklyDailyReports: Record<string, Record<string, unknown>[]> = {};
   weeklyPdfFunctionUrl = 'https://asia-northeast1-kensyu10093.cloudfunctions.net/generateWeeklyPdf'; // 本番用URLに変更
-  constructor(private router: Router, private dialog: MatDialog, private firestore: Firestore, private userService: UserService, private dailyReportService: DailyReportService, private cdr: ChangeDetectorRef) {
+  currentUserUid: string | null = null;
+  constructor(private router: Router, private dialog: MatDialog, private firestore: Firestore, private userService: UserService, private dailyReportService: DailyReportService, private cdr: ChangeDetectorRef, private authService: AuthService) {
+    this.init();
+  }
+
+  async init() {
+    const user = await this.authService.getCurrentUser();
+    this.currentUserUid = user?.uid || null;
     this.userService.getUsers().subscribe(users => {
       this.users = users;
       this.loadReports();
@@ -109,7 +125,15 @@ export class WeeklyReportComponent {
     const col = collection(this.firestore, 'weeklyReports');
     const q = query(col, orderBy('createdAt', 'desc'));
     const snap = await getDocs(q);
-    this.reports = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const allReports: WeeklyReport[] = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as WeeklyReport));
+    this.reports = allReports.filter(report => {
+      if (!this.currentUserUid) return false;
+      const me = this.users.find(u => u.id === this.currentUserUid);
+      if (!me) return false;
+      const isPerson = report.person === me.displayName;
+      const isManager = Array.isArray(report.manager) && report.manager.includes(this.currentUserUid);
+      return isPerson || isManager;
+    });
     for (const report of this.reports) {
       await this.loadDailyReportsForWeeklyReport(report);
     }
