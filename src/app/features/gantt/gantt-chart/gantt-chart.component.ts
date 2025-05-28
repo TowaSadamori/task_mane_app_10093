@@ -419,20 +419,42 @@ openAddTaskDialog(): void {
 
   dialogRef.afterClosed().subscribe(result => {
     if (result && result.title && result.plannedStartDate && result.plannedEndDate) {
+      const toTimestamp = (val: unknown): Timestamp | null => {
+        if (!val) return null;
+        if (val instanceof Timestamp) return val;
+        if (val instanceof Date) return Timestamp.fromDate(val);
+        if (typeof val === 'string' || typeof val === 'number') {
+          const d = new Date(val);
+          return isNaN(d.getTime()) ? null : Timestamp.fromDate(d);
+        }
+        if (typeof val === 'object' && val !== null && 'toDate' in val && typeof (val as { toDate: unknown }).toDate === 'function') {
+          return Timestamp.fromDate((val as { toDate: () => Date }).toDate());
+        }
+        return null;
+      };
+      const plannedStartDate = toTimestamp(result.plannedStartDate);
+      const plannedEndDate = toTimestamp(result.plannedEndDate);
+      const dueDate = toTimestamp(result.dueDate);
+      const actualStartDate = toTimestamp(result.actualStartDate);
+      const actualEndDate = toTimestamp(result.actualEndDate);
+      if (!plannedStartDate || !plannedEndDate) {
+        alert('開始日または終了日が不正です。');
+        return;
+      }
       const newTaskData: Omit<GanttChartTask, 'id' | 'createdAt'> = {
         projectId: this.projectId!,
         title: result.title,
-        plannedStartDate: Timestamp.fromDate(new Date(result.plannedStartDate)),
-        plannedEndDate: Timestamp.fromDate(new Date(result.plannedEndDate)),
+        plannedStartDate,
+        plannedEndDate,
         status: result.status,
         assigneeId: result.assigneeId ?? null,
-        dueDate: result.dueDate ?? null,
+        dueDate,
         blockerStatus: null,
-        actualStartDate: null,
-        actualEndDate: null,
+        actualStartDate,
+        actualEndDate,
         progress: 0,
       };
-
+      console.log('Firestoreに保存するnewTaskData:', newTaskData);
       this.taskService.addGanttChartTask(newTaskData) // TaskServiceのメソッド呼び出し
         .then(() => {
           alert('タスク「' + newTaskData.title + '」を保存しました！');
