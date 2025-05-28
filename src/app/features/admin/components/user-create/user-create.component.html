@@ -1,6 +1,9 @@
 <div class="login-page-container">
   <div class="login-card">
     <div class="login-title">新規アカウント作成</div>
+    <div style="text-align:center; color:#888; font-size:0.95em; margin-bottom:1.5em;">
+      登録したメールアドレスと名前は変更できません。
+    </div>
     <div *ngIf="registrationSuccess" class="registration-success-message" style="text-align:center;">
       <p>アカウントの登録が完了しました。</p>
       <a class="form-link" routerLink="/login">ログイン画面に戻る</a>
@@ -28,7 +31,10 @@
       </div>
       <div class="form-field">
         <label class="form-label" for="displayName">表示名</label>
-        <input id="displayName" class="form-input" type="text" placeholder="例: 鈴木 一郎" formControlName="displayName">
+        <input id="displayName" class="form-input" type="text" placeholder="例: 鈴木 一郎" formControlName="displayName" required>
+        <div class="error-message" *ngIf="userCreateForm.get('displayName')?.hasError('required') && userCreateForm.get('displayName')?.touched">
+          名前を入力してください
+        </div>
       </div>
       <div class="form-actions" style="margin-top: 20px; display: flex; justify-content: flex-end; align-items: center;">
         <button class="submit-button" type="submit" [disabled]="userCreateForm.invalid || isLoading">
