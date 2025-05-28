@@ -111,13 +111,15 @@ export class DailyReportComponent {
   async loadUsersAndReports() {
     this.userService.getUsers().subscribe(users => {
       this.users = users;
-    });
-    const allReports = await this.dailyReportService.getDailyReports();
-    this.reports = allReports.filter(report => {
-      if (!this.currentUserUid) return false;
-      const isPerson = report.personUid === this.currentUserUid;
-      const isManager = Array.isArray(report.managerUids) && report.managerUids.includes(this.currentUserUid);
-      return isPerson || isManager;
+      // ユーザー一覧取得後に日報取得・セット
+      this.dailyReportService.getDailyReports().then(allReports => {
+        this.reports = allReports.filter(report => {
+          if (!this.currentUserUid) return false;
+          const isPerson = report.personUid === this.currentUserUid;
+          const isManager = Array.isArray(report.managerUids) && report.managerUids.includes(this.currentUserUid);
+          return isPerson || isManager;
+        });
+      });
     });
   }
   getDisplayNameByUid(uid: string): string {
