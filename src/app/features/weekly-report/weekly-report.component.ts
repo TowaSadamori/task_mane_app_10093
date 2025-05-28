@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { AddWeeklyReportDialogComponent } from './add-weekly-report-dialog.component';
@@ -23,7 +23,7 @@ export class WeeklyReportComponent {
   users: User[] = [];
   weeklyDailyReports: Record<string, Record<string, unknown>[]> = {};
   weeklyPdfFunctionUrl = 'https://asia-northeast1-kensyu10093.cloudfunctions.net/generateWeeklyPdf'; // 本番用URLに変更
-  constructor(private router: Router, private dialog: MatDialog, private firestore: Firestore, private userService: UserService, private dailyReportService: DailyReportService) {
+  constructor(private router: Router, private dialog: MatDialog, private firestore: Firestore, private userService: UserService, private dailyReportService: DailyReportService, private cdr: ChangeDetectorRef) {
     this.userService.getUsers().subscribe(users => {
       this.users = users;
       this.loadReports();
@@ -113,6 +113,7 @@ export class WeeklyReportComponent {
     for (const report of this.reports) {
       await this.loadDailyReportsForWeeklyReport(report);
     }
+    this.cdr.detectChanges();
   }
 
   goHome() {
@@ -189,10 +190,15 @@ export class WeeklyReportComponent {
   }
 
   async onEdit(report: Record<string, unknown>) {
+    const data = {
+      ...report,
+      manager: Array.isArray(report['manager']) ? [...report['manager']] : [],
+      photoUrls: Array.isArray(report['photoUrls']) ? [...report['photoUrls']] : []
+    };
     const dialogRef = this.dialog.open(AddWeeklyReportDialogComponent, {
       width: '500px',
       maxHeight: '90vh',
-      data: { ...report }
+      data
     });
     dialogRef.afterClosed().subscribe(async (result: Record<string, unknown> | undefined) => {
       if (result) {
