@@ -10,7 +10,7 @@
       <button mat-icon-button type="button" title="編集" (click)="openEditDialog(report)" class="edit-btn" *ngIf="canEditReport(report)">
         <mat-icon>edit</mat-icon>
       </button>
-      <button mat-icon-button type="button" title="削除" *ngIf="report.id" (click)="deleteReport(report.id)" class="delete-btn">
+      <button mat-icon-button type="button" title="削除" *ngIf="report.id && canEditReport(report)" (click)="deleteReport(report.id)" class="delete-btn">
         <mat-icon>delete</mat-icon>
       </button>
       <app-pdf-export [reportData]="getReportDataForPdf(report)" [functionUrl]="'https://asia-northeast1-kensyu10093.cloudfunctions.net/generatePdf'"></app-pdf-export>
