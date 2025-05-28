@@ -58,6 +58,7 @@ export class DashboardComponent implements OnInit {
   progressMap: Record<string, number> = {};
   userMap: Record<string, AppUser> = {};
   currentUserUid: string | null = null;
+  currentUserDisplayName = '';
   projectMap: Record<string, Project> = {};
   myDailyReports: WorkLogWithTaskProject[] = [];
   private dailyReportService: DailyReportService = inject(DailyReportService);
@@ -74,7 +75,8 @@ export class DashboardComponent implements OnInit {
   ngOnInit(): void {
     this.authService.getCurrentUser().then(user => {
       this.currentUserUid = user?.uid || null;
-    this.loadProjects();
+      this.currentUserDisplayName = user?.displayName || '';
+      this.loadProjects();
       this.loadMyTasks();
       this.loadMyDailyReports();
     });
@@ -302,5 +304,11 @@ export class DashboardComponent implements OnInit {
   getDisplayNameByUid(uid: string): string {
     const user = this.userMap[uid];
     return user ? user.displayName : uid;
+  }
+
+  // 管理者名リストに自分の名前が含まれているか判定
+  isCurrentUserManagerByName(project: Project): boolean {
+    const managerNames = this.getUserNamesByIds(project.managerIds ?? (project.managerId ? [project.managerId] : []));
+    return managerNames.includes(this.currentUserDisplayName);
   }
 }
