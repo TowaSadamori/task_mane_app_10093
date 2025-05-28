@@ -7,7 +7,7 @@
 <div class="report-list">
   <div *ngFor="let report of reports" class="report-card">
     <div class="report-card-actions">
-      <button mat-icon-button type="button" title="編集" (click)="openEditDialog(report)" class="edit-btn">
+      <button mat-icon-button type="button" title="編集" (click)="openEditDialog(report)" class="edit-btn" *ngIf="canEditReport(report)">
         <mat-icon>edit</mat-icon>
       </button>
       <button mat-icon-button type="button" title="削除" *ngIf="report.id" (click)="deleteReport(report.id)" class="delete-btn">

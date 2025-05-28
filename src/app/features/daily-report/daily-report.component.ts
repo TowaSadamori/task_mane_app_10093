@@ -304,4 +304,8 @@ export class DailyReportComponent {
       this.getDisplayNameByUid(log.assigneeId) === reportPersonName
     );
   }
+  // 日報の編集権限: 担当者のみ
+  canEditReport(report: DailyReport): boolean {
+    return this.currentUserUid === report.personUid;
+  }
 }
