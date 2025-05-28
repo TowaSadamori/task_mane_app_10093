@@ -290,4 +290,11 @@ export class WeeklyReportComponent {
     }));
     return { period, staffName, managerNames, memo, workDays, workTimeTotal, photoUrls, dailyLogs };
   }
+
+  // 週報の編集権限: 担当者のみ
+  canEditReport(report: WeeklyReport): boolean {
+    const me = this.users.find(u => u.id === this.currentUserUid);
+    if (!me) return false;
+    return report.person === me.displayName;
+  }
 }
