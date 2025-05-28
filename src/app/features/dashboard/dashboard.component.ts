@@ -303,4 +303,11 @@ export class DashboardComponent implements OnInit {
     const user = this.userMap[uid];
     return user ? user.displayName : uid;
   }
+
+  canEditProject(project: Project): boolean {
+    if (!this.currentUserUid || !this.userMap[this.currentUserUid]) return false;
+    const myDisplayName = this.userMap[this.currentUserUid].displayName;
+    const managerDisplayNames = this.getUserNamesByIds(project.managerIds ?? (project.managerId ? [project.managerId] : []));
+    return managerDisplayNames.includes(myDisplayName);
+  }
 }
