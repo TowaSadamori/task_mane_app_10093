@@ -112,6 +112,8 @@ export class DailyReportComponent {
     return uids.map(uid => this.getDisplayNameByUid(uid)).join(', ');
   }
   openAddDialog() {
+    const confirmed = window.confirm('日次ログは適切に追加、修正しましたか？');
+    if (!confirmed) return;
     const ref = this.dialog.open(AddDailyReportDialogComponent, { width: '400px', maxHeight: '80vh' });
     ref.afterClosed().subscribe(async (result: DailyReport | undefined) => {
       if (result) {
