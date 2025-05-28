@@ -17,6 +17,7 @@ import { UserService } from '../../core/user.service';
 import { User } from '../../core/models/user.model';
 import { Firestore, collectionGroup, getDocs } from '@angular/fire/firestore';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../core/auth.service';
 
 export interface DailyReport {
   workDate: Date | string;
@@ -88,21 +89,36 @@ export class DailyReportComponent {
   reports: DailyReport[] = [];
   users: User[] = [];
   allWorkLogs: WorkLogForDisplay[] = [];
+  currentUserUid: string | null = null;
   constructor(
     private dialog: MatDialog,
     private dailyReportService: DailyReportService,
     private router: Router,
     private userService: UserService,
-    private firestore: Firestore
+    private firestore: Firestore,
+    private authService: AuthService
   ) {
-    this.loadUsersAndReports();
+    this.init();
+  }
+
+  async init() {
+    const user = await this.authService.getCurrentUser();
+    this.currentUserUid = user?.uid || null;
+    await this.loadUsersAndReports();
     this.loadAllWorkLogs();
   }
+
   async loadUsersAndReports() {
     this.userService.getUsers().subscribe(users => {
       this.users = users;
     });
-    this.reports = await this.dailyReportService.getDailyReports();
+    const allReports = await this.dailyReportService.getDailyReports();
+    this.reports = allReports.filter(report => {
+      if (!this.currentUserUid) return false;
+      const isPerson = report.personUid === this.currentUserUid;
+      const isManager = Array.isArray(report.managerUids) && report.managerUids.includes(this.currentUserUid);
+      return isPerson || isManager;
+    });
   }
   getDisplayNameByUid(uid: string): string {
     const user = this.users.find(u => u.id === uid);
