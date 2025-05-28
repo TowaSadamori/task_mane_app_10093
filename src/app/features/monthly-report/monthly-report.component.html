@@ -7,7 +7,7 @@
 <div *ngIf="reports.length > 0" class="monthly-report-card-list">
   <div *ngFor="let report of reports" class="monthly-report-card">
     <div class="report-card-actions">
-      <button mat-icon-button type="button" title="編集" (click)="onEdit(report)" class="edit-btn">
+      <button mat-icon-button type="button" title="編集" (click)="onEdit(report)" class="edit-btn" *ngIf="canEditReport(report)">
         <span class="material-icons">edit</span>
       </button>
       <button mat-icon-button type="button" title="削除" (click)="onDelete(report)" class="delete-btn" *ngIf="canEditReport(report)">
