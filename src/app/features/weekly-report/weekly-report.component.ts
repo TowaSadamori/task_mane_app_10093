@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { DailyReportService } from '../daily-report/daily-report.service';
 import { RouterModule } from '@angular/router';
 import { WeeklyReportPdfExportComponent, WeeklyReportPdfData } from '../../pdf-export/weekly-report-pdf-export.component';
+import { AuthService } from '../../core/auth.service';
 
 @Component({
   selector: 'app-weekly-report',
@@ -23,7 +24,14 @@ export class WeeklyReportComponent {
   users: User[] = [];
   weeklyDailyReports: Record<string, Record<string, unknown>[]> = {};
   weeklyPdfFunctionUrl = 'https://asia-northeast1-kensyu10093.cloudfunctions.net/generateWeeklyPdf'; // 本番用URLに変更
-  constructor(private router: Router, private dialog: MatDialog, private firestore: Firestore, private userService: UserService, private dailyReportService: DailyReportService) {
+  currentUserDisplayName = '';
+  constructor(private router: Router, private dialog: MatDialog, private firestore: Firestore, private userService: UserService, private dailyReportService: DailyReportService, private authService: AuthService) {
+    this.init();
+  }
+
+  async init() {
+    const user = await this.authService.getCurrentUser();
+    this.currentUserDisplayName = user?.displayName || '';
     this.userService.getUsers().subscribe(users => {
       this.users = users;
       this.loadReports();
@@ -109,7 +117,15 @@ export class WeeklyReportComponent {
     const col = collection(this.firestore, 'weeklyReports');
     const q = query(col, orderBy('createdAt', 'desc'));
     const snap = await getDocs(q);
-    this.reports = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    let allReports: Record<string, unknown>[] = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    if (this.currentUserDisplayName) {
+      allReports = allReports.filter((report: Record<string, unknown>) => {
+        const person = report['person'];
+        const managers = Array.isArray(report['manager']) ? report['manager'] : [];
+        return person === this.currentUserDisplayName || managers.includes(this.currentUserDisplayName);
+      });
+    }
+    this.reports = allReports;
     for (const report of this.reports) {
       await this.loadDailyReportsForWeeklyReport(report);
     }
