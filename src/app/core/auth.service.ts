@@ -15,7 +15,7 @@ import {
    reauthenticateWithCredential
   } from '@angular/fire/auth';
 import { Observable } from 'rxjs';
-import { doc, updateDoc } from '@angular/fire/firestore';
+import { doc, setDoc } from '@angular/fire/firestore';
 import { Firestore } from '@angular/fire/firestore';
 
 
@@ -47,7 +47,7 @@ export class AuthService {
     // 2. FirestoreのUsersコレクションも更新
     if (profileData.displayName) {
       const userDocRef = doc(this.firestore, 'Users', user.uid);
-      await updateDoc(userDocRef, { displayName: profileData.displayName });
+      await setDoc(userDocRef, { displayName: profileData.displayName }, { merge: true });
     }
   }
 
