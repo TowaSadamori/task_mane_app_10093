@@ -279,4 +279,11 @@ export class MonthlyReportComponent {
     }));
     return { period, staffName, managerNames, memo, workDays, workTimeTotal, photoUrls, dailyLogs };
   }
+
+  // 月報の編集・削除権限: 担当者のみ
+  canEditReport(report: MonthlyReport): boolean {
+    const me = this.users.find(u => u.id === this.currentUserUid);
+    if (!me) return false;
+    return report.person === me.displayName;
+  }
 }
