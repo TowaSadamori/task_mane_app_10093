@@ -17,6 +17,7 @@ import { UserService } from '../../core/user.service';
 import { User } from '../../core/models/user.model';
 import { Firestore, collectionGroup, getDocs } from '@angular/fire/firestore';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../core/auth.service';
 
 export interface DailyReport {
   workDate: Date | string;
@@ -88,28 +89,46 @@ export class DailyReportComponent {
   reports: DailyReport[] = [];
   users: User[] = [];
   allWorkLogs: WorkLogForDisplay[] = [];
+  currentUserUid: string | null = null;
   constructor(
     private dialog: MatDialog,
     private dailyReportService: DailyReportService,
     private router: Router,
     private userService: UserService,
-    private firestore: Firestore
+    private firestore: Firestore,
+    private authService: AuthService
   ) {
-    this.loadUsersAndReports();
+    this.init();
+  }
+
+  async init() {
+    const user = await this.authService.getCurrentUser();
+    this.currentUserUid = user?.uid || null;
+    await this.loadUsersAndReports();
     this.loadAllWorkLogs();
   }
+
   async loadUsersAndReports() {
     this.userService.getUsers().subscribe(users => {
       this.users = users;
     });
-    this.reports = await this.dailyReportService.getDailyReports();
+    const allReports = await this.dailyReportService.getDailyReports();
+    if (this.currentUserUid) {
+      this.reports = allReports.filter(report =>
+        report.personUid === this.currentUserUid ||
+        (report.managerUids && report.managerUids.includes(this.currentUserUid ?? ''))
+      );
+    } else {
+      this.reports = [];
+    }
   }
   getDisplayNameByUid(uid: string): string {
+    if (!uid) return '';
     const user = this.users.find(u => u.id === uid);
     return user ? user.displayName : uid;
   }
-  getManagerNamesByUids(uids: string[] = []): string {
-    return uids.map(uid => this.getDisplayNameByUid(uid)).join(', ');
+  getManagerNamesByUids(uids: (string | null)[] = []): string {
+    return uids.filter((uid): uid is string => !!uid).map(uid => this.getDisplayNameByUid(uid)).join(', ');
   }
   openAddDialog() {
     const ref = this.dialog.open(AddDailyReportDialogComponent, { width: '400px', maxHeight: '80vh' });

@@ -27,6 +27,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { UserService } from '../../../core/user.service';
 import { User as AppUser } from '../../../core/models/user.model';
+import { GanttDailyLogFormDialogComponent } from '../gantt-daily-log-form-dialog/gantt-daily-log-form-dialog.component';
 
 interface TimelineDay {
   dayNumber: number; // 日 (1, 2, ..., 31)
@@ -939,6 +940,30 @@ navigateToHome(): void {
 getUserNamesByIds(ids: string[] | undefined): string[] {
   if (!ids) return [];
   return ids.map(id => this.userMap[id]?.displayName || id);
+}
+
+onAddDailyReportClick() {
+  const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+    width: '350px',
+    data: { message: '日次ログを追加・修正しましたか？' }
+  });
+
+  dialogRef.afterClosed().subscribe(result => {
+    if (result === true) {
+      // 「はい」→ 日次ログ追加ダイアログを開く
+      this.openDailyLogDialog();
+    } else {
+      // 「いいえ」→ 日報画面に遷移
+      this.router.navigate(['/app/daily-report']); // ルートは実際のものに合わせてください
+    }
+  });
+}
+
+openDailyLogDialog() {
+  this.dialog.open(GanttDailyLogFormDialogComponent, {
+    width: '400px',
+    // data: { ... } 必要に応じて渡す
+  });
 }
 
 }// GanttChartComponent クラスの閉じ括弧
