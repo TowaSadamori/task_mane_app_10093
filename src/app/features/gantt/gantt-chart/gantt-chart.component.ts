@@ -483,11 +483,19 @@ openEditTaskDialog(taskToEdit: GanttChartTask): void {
     return;
   }
 
+  // assigneesがなければassigneeIdから生成
+  const taskForDialog = { ...taskToEdit };
+  if (!taskForDialog.assignees || taskForDialog.assignees.length === 0) {
+    if (taskForDialog.assigneeId) {
+      taskForDialog.assignees = [taskForDialog.assigneeId];
+    }
+  }
+
   const dialogRef = this.dialog.open(AddTaskDialogComponent, {
     width: '400px',
     data: {
       isEditMode: true,
-      task: { ...taskToEdit },
+      task: taskForDialog,
       projectId: this.projectId,
       minDate: this.projectStartDate ? this.projectStartDate.toISOString().slice(0, 10) : null,
       maxDate: this.projectEndDate ? this.projectEndDate.toISOString().slice(0, 10) : null
