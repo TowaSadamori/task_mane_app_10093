@@ -477,11 +477,19 @@ openEditTaskDialog(taskToEdit: GanttChartTask): void {
     return;
   }
 
+  // --- 修正: assigneesが未定義でassigneeIdがある場合はassigneesに変換 ---
+  const dialogTask: GanttChartTask = {
+    ...taskToEdit,
+    assignees: Array.isArray(taskToEdit.assignees) && taskToEdit.assignees.length > 0
+      ? taskToEdit.assignees
+      : (taskToEdit.assigneeId ? [taskToEdit.assigneeId] : []),
+  };
+
   const dialogRef = this.dialog.open(AddTaskDialogComponent, {
     width: '400px',
     data: {
       isEditMode: true,
-      task: { ...taskToEdit },
+      task: dialogTask,
       projectId: this.projectId,
       minDate: this.projectStartDate ? this.projectStartDate.toISOString().slice(0, 10) : null,
       maxDate: this.projectEndDate ? this.projectEndDate.toISOString().slice(0, 10) : null
