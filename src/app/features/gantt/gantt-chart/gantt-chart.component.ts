@@ -418,22 +418,49 @@ openAddTaskDialog(): void {
   });
 
   dialogRef.afterClosed().subscribe(result => {
-    if (result && result.title && result.plannedStartDate && result.plannedEndDate) {
+    // 型ごとにDateへ変換
+    const getValidDate = (val: unknown): Date | null => {
+      if (!val) return null;
+      if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+      if (typeof val === 'string') {
+        const d = new Date(val);
+        return isNaN(d.getTime()) ? null : d;
+      }
+      if (typeof val === 'object' && val !== null && 'toDate' in val && typeof (val as { toDate: unknown }).toDate === 'function') {
+        const d = (val as { toDate: () => Date }).toDate();
+        return isNaN(d.getTime()) ? null : d;
+      }
+      return null;
+    };
+
+    const plannedStartDate = getValidDate(result?.plannedStartDate);
+    const plannedEndDate = getValidDate(result?.plannedEndDate);
+    const actualStartDate = getValidDate(result?.actualStartDate);
+    const actualEndDate = getValidDate(result?.actualEndDate);
+    const dueDate = getValidDate(result?.dueDate);
+
+    if (
+      result &&
+      result.title &&
+      plannedStartDate &&
+      plannedEndDate
+    ) {
       const newTaskData: Omit<GanttChartTask, 'id' | 'createdAt'> = {
         projectId: this.projectId!,
         title: result.title,
-        plannedStartDate: Timestamp.fromDate(new Date(result.plannedStartDate)),
-        plannedEndDate: Timestamp.fromDate(new Date(result.plannedEndDate)),
+        plannedStartDate: Timestamp.fromDate(plannedStartDate),
+        plannedEndDate: Timestamp.fromDate(plannedEndDate),
         status: result.status,
-        assigneeId: result.assigneeId ?? null,
-        dueDate: result.dueDate ?? null,
+        assigneeId: result.assignees && result.assignees.length > 0 ? result.assignees[0] : null,
+        dueDate: dueDate ? Timestamp.fromDate(dueDate) : null,
         blockerStatus: null,
-        actualStartDate: null,
-        actualEndDate: null,
+        actualStartDate: actualStartDate ? Timestamp.fromDate(actualStartDate) : null,
+        actualEndDate: actualEndDate ? Timestamp.fromDate(actualEndDate) : null,
         progress: 0,
+        memo: result.memo ?? '',
       };
 
-      this.taskService.addGanttChartTask(newTaskData) // TaskServiceのメソッド呼び出し
+      this.taskService.addGanttChartTask(newTaskData)
         .then(() => {
           alert('タスク「' + newTaskData.title + '」を保存しました！');
           if (this.projectId) {
@@ -443,6 +470,8 @@ openAddTaskDialog(): void {
         .catch(() => {
           alert('タスクの保存に失敗しました。コンソールを確認してください。');
         });
+    } else {
+      alert('日付が正しく入力されていません。');
     }
   });
 }
