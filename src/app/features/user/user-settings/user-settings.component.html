@@ -13,21 +13,13 @@
       </div>
       <div style="font-size: 0.85em; color: #888; margin-top: 4px;">メールアドレスはログインIDとして使用されるため変更できません。</div>
     </div>
-    <form [formGroup]="displayNameForm" (ngSubmit)="onDisplayNameSubmit()">
+    <!-- <form [formGroup]="displayNameForm">
       <div class="form-field">
         <label class="form-label" for="displayName">表示名</label>
-        <input id="displayName" class="form-input" formControlName="displayName" autocomplete="off">
-        <div class="error-message" *ngIf="displayNameForm.get('displayName')?.hasError('required')">
-          表示名は必須です
-        </div>
-      </div>
-      <div class="form-actions">
-        <button class="submit-button" type="submit" [disabled]="displayNameForm.invalid || isLoadingDisplayName">
-          {{ isLoadingDisplayName ? '変更中...' : '表示名を変更' }}
-        </button>
+        <input id="displayName" class="form-input" formControlName="displayName" autocomplete="off" readonly>
       </div>
     </form>
-    <hr style="margin: 2.5rem 0; border: none; border-top: 1px solid #eee;">
+    <hr style="margin: 2.5rem 0; border: none; border-top: 1px solid #eee;"> -->
     <form [formGroup]="passwordForm" (ngSubmit)="onPasswordSubmit()">
       <div class="form-field">
         <label class="form-label" for="currentPassword">現在のパスワード</label>
