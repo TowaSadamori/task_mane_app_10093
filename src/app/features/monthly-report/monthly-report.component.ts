@@ -120,7 +120,7 @@ export class MonthlyReportComponent {
   }
 
   openAddDialog() {
-    const confirmed = window.confirm('日次報告書(日報)は適切に修正しましたか？');
+    const confirmed = window.confirm('日次報告書(日報)は適切に追加、修正しましたか？');
     if (!confirmed) return;
     const dialogRef = this.dialog.open(AddMonthlyReportDialogComponent, { width: '400px', maxHeight: '80vh' });
     dialogRef.afterClosed().subscribe(result => {
